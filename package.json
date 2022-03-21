@@ -1,0 +1,30 @@
+{
+    "name": "bitburner-files",
+    "version": "1.0.0",
+    "description": "",
+    "type": "module",
+    "config": {
+        "bitburnerAuthToken": "Htb8SOXVXyVjpxE+Fsx8hZcc+YpvWE/2FZf40+Ny8t1eqv9Imx967Fwx2kKcVCcS",
+        "bitburnerScriptRoot": "./dist",
+        "bitburnerAllowDelete": false
+    },
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "bb-get": "bitburner-sync --get",
+        "bb-sync": "bitburner-sync --watch",
+        "tsc": "tsc --watch",
+        "start-dev": "npm-run-all -p tsc bb-sync",
+        "start-test": "tsc --watch -p tsconfig.test.json"
+    },
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@types/jasmine": "^3.10.3",
+        "bitburner-sync": "^1.2.0",
+        "jasmine": "^4.0.2",
+        "jasmine-spec-reporter": "^7.0.0",
+        "jasmine-ts": "^0.4.0",
+        "npm-run-all": "^4.1.5",
+        "ts-node": "^10.7.0"
+    }
+}

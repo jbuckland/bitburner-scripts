@@ -21,13 +21,13 @@ export async function main(ns: NS) {
         if (forecast < 0 && newForecast > 0) {
             //success, info, warning, error
             let msg = `${stock} has flipped from - to  + forecast. Time to buy!! ${forecast} to ${newForecast}`;
-            ns.toast(msg, 'info', null);
+            ns.toast(msg, 'info', TOAST_DURATION);
             ns.print(msg);
             forecast = newForecast;
 
         } else if (forecast < 0 && newForecast > 0) {
             let msg = `${stock} has flipped from + to - forecast. Time to sell!! ${forecast} to ${newForecast}`;
-            ns.toast(msg, 'info', null);
+            ns.toast(msg, 'info', TOAST_DURATION);
             ns.print(msg);
             forecast = newForecast;
 

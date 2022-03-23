@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="Main" pattern="file[rider.module]:*/&amp;&amp;!file[rider.module]:dist//*&amp;&amp;!file:NetscriptDefinitions.d.ts" />
+</component>

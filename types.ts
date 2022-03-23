@@ -1,3 +1,5 @@
+import { EventType } from './consts';
+
 export interface ServerInfo {
     hostname: string;
     hasRoot: boolean;
@@ -9,6 +11,8 @@ export interface ServerInfo {
     weakenTime: number;
     reqHackSkill: number;
     hackTime: number;
+    growTime: number;
+    targetValue: number;
 }
 
 export interface RunnerInfo {
@@ -16,7 +20,14 @@ export interface RunnerInfo {
     freeRam: number;
 }
 
-export type TaskType = 'hack' | 'weaken' | 'grow';
+export enum TaskType {
+    hack = 'hack',
+    weaken = 'weaken',
+    grow = 'grow',
+    batchHack = 'batch-hack',
+    batchWeaken = 'batch-weaken',
+    batchGrow = 'batch-grow',
+}
 
 export interface ServerThreads {
     hostname: string;
@@ -25,9 +36,8 @@ export interface ServerThreads {
 
 }
 
-export type EventType = 'hackComplete' | 'weakenComplete' | 'growComplete';
-
 export interface ServerEvent {
+    timestamp: number,
     eventType: EventType;
     hostname: string;
     target: string;
@@ -52,18 +62,20 @@ export interface IFaction {
     name: string;
 }
 
-export interface IHackFaction extends IFaction {
+export interface IServerFaction extends IFaction {
     hostname: string;
+}
+
+export interface IHackFaction extends IServerFaction {
 }
 
 export interface ICityFaction extends IFaction {
     homeCity: string;
 }
 
-export interface ICompanyFaction extends IFaction {
-    name: string;
-    hostname: string;
+export interface ICompanyFaction extends IServerFaction {
     city: string;
+    repNeededForInvite: number;
 }
 
 export interface IDarkwebTool {
@@ -72,10 +84,28 @@ export interface IDarkwebTool {
     createSkill: number;
 }
 
-export type TOAST_VARIANT = 'success' | 'info' | 'warning' | 'error';
-
 export type RunMode = 'normal' | 'takeall' | 'share';
 
 export interface IGlobalSettings {
-    mode: RunMode;
+    isDebug?: boolean;
+}
+
+export interface ITargetWorkInfo {
+    readyForBatch: boolean;
+    target: ServerInfo;
+    threadInfos: { [key: string]: ThreadInfo };
+    //weakenThreadsNeeded: ThreadInfo,
+    //growThreadsNeeded: ThreadInfo;
+}
+
+export interface ThreadInfo {
+    task: TaskType;
+    inProgress: number;
+    moreNeeded: number;
+    total: number;//this value will increase as grow happens
+}
+
+export interface ICompanyJob {
+    copmpanyName: string,
+    jobName: string;
 }

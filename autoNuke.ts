@@ -1,7 +1,6 @@
-import { DARK_DATA, HOME } from './consts';
+import { DARK_DATA, HOME, TOAST_VARIANT } from './consts';
 import { NS } from './NetscriptDefinitions';
-import { TOAST_VARIANT } from './types';
-import { getAllHosts, longConnect } from './utils';
+import { getAllHosts } from './utils';
 
 export async function main(ns: NS) {
     ns.disableLog('ALL');
@@ -19,14 +18,11 @@ export async function main(ns: NS) {
 
     doNuking();
 
-    //doBackdooring();
-
     function doNuking() {
         let nukedCount = 0;
         let newNukedCount = 0;
 
         for (let i = 0; i < getAllHosts(ns).length; i++) {
-            ns.connect(HOME);
 
             let hostname = getAllHosts(ns)[i];
 
@@ -78,13 +74,16 @@ export async function main(ns: NS) {
         }
 
         if (newNukedCount > 0) {
-            ns.toast(`${newNukedCount} new servers nuked!`, 'info' as TOAST_VARIANT, null);
+            ns.toast(`${newNukedCount} new servers nuked!`, TOAST_VARIANT.success, TOAST_DURATION);
         }
 
         ns.print(`NUKE: ${newNukedCount} new and ${nukedCount} total!`);
         ns.print('');
     }
 
+    //doBackdooring();
+
+    /*
     async function doBackdooring() {
         let backedCount = 0;
         let newBackedCount = 0;
@@ -123,6 +122,8 @@ export async function main(ns: NS) {
         ns.print('');
         ns.print(`BACKDOOR: ${newBackedCount} new and ${backedCount} total!`);
     }
+    
+     */
 }
 
 

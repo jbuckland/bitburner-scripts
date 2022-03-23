@@ -8,7 +8,13 @@ export async function main(ns: NS) {
     ns.disableLog('sleep');
     ns.tail();
 
-    let port = ns.getPortHandle(PORTS.scriptCom);
+    let flags = ns.flags([['port', PORTS.scriptCom]]);
+
+    const PORT_NUM = flags.port;
+
+    ns.print(`portWatcher, flags:${flags}, PORT_NUM:${PORT_NUM}`);
+
+    let port = ns.getPortHandle(PORT_NUM);
 
     port.clear();
 

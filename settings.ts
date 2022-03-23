@@ -1,26 +1,36 @@
-import { NULL_PORT_DATA, SETTINGS_PORT } from './consts';
 import { NS } from './NetscriptDefinitions';
-import { IGlobalSettings } from './types';
+import { getSettings, setSettings, timestamp } from './utils';
+
+let SLEEP_TIME = 1000;
 
 export async function main(ns: NS) {
 
     let flags = ns.flags([
-        ['mode', '']
+        ['watch', false],
+        ['isDebug', ''],
+        ['isdebug', '']
     ]);
+    let watch = flags.watch;
+
+    let debugString = ((flags.isDebug || flags.isdebug) as string).toLowerCase();
+    ns.print(debugString);
+    if (debugString === 'true') {
+        setSettings(ns, { isDebug: true });
+    } else if (debugString === 'false') {
+        setSettings(ns, { isDebug: false });
+    }
 
     //default is to read the settings out
 
-    let settingsPort = ns.getPortHandle(SETTINGS_PORT);
+    while (watch) {
+        ns.tail();
+        let currSettings = getSettings(ns);
+        ns.clearLog();
+        ns.print(`${timestamp()}`);
+        ns.print(`Global Settings:`);
+        ns.print(JSON.stringify(currSettings, null, 4));
 
-    let portData = settingsPort.peek();
-    if (portData === NULL_PORT_DATA) {
-        let settings: IGlobalSettings = {
-            mode: 'normal'
-        };
-
-        settingsPort.write(JSON.stringify(settings));
+        await ns.sleep(SLEEP_TIME);
     }
-
-    //ns.print('globalSettings:', settings);
 
 }

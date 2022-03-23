@@ -1,4 +1,4 @@
-import { SCRIPT_COMM_PORT } from './consts';
+import { EventType, PORTS } from './consts';
 import { NS } from './NetscriptDefinitions';
 import { ServerEvent } from './types';
 import { round } from './utils';
@@ -19,13 +19,14 @@ export async function main(ns: NS) {
         let extraString = `security weakened by ${round(results, 2)}`;
 
         let data: ServerEvent = {
-            eventType: 'weakenComplete',
+            timestamp: new Date().getTime(),
+            eventType: EventType.weakenComplete,
             hostname: ns.getHostname(),
             target: target,
             extra: extraString
         };
 
-        let bumpedData = await ns.writePort(SCRIPT_COMM_PORT, JSON.stringify(data));
+        let bumpedData = await ns.writePort(PORTS.scriptCom, JSON.stringify(data));
         if (bumpedData) {
             ns.print(`${ns.getScriptName()} did writePort(SCRIPT_COMM_PORT), but bumped data!`, bumpedData);
         }

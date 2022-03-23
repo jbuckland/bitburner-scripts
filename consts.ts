@@ -1,6 +1,6 @@
-import { ICityFaction, ICompanyFaction, IHackFaction } from './types';
+import { ICityFaction, ICompanyFaction, IHackFaction, IServerFaction } from './types';
 
-export const HOME_RESERVED_RAM = 32;
+export const HOME_RESERVED_RAM = 64;
 export const HOME = 'home';
 
 export const MIN_MONEY = 400;
@@ -22,7 +22,7 @@ export const HOSTS = [
     'omega-net',
     'phantasy',
     'silver-helix',
-    'comptek',
+    //'comptek',
     'johnson-ortho',
     'netlink',
     'crush-fitness',
@@ -75,7 +75,8 @@ export const HOSTS = [
     'megacorp',
     'The-Cave',
     'ecorp',
-    'fulcrumassets'
+    'fulcrumassets',
+    'w0r1d_d43m0n'
 
 ];
 
@@ -84,10 +85,36 @@ export const FACTION_WORK_FIELD = 'field';
 export const FACTION_WORK_SECURITY = 'security';
 
 export const NULL_PORT_DATA = 'NULL PORT DATA';
-export const SETTINGS_PORT = 1;
-export const SCRIPT_COMM_PORT = 3;
+
+export enum PORTS {
+    settings = 1,
+    scriptCom = 3,
+    targetStats = 4,
+    batchStatus = 6
+}
+
+export enum EventType {
+    hackComplete = 'hackComplete',
+    weakenComplete = 'weakenComplete',
+    growComplete = 'growComplete',
+
+    batchHackComplete = 'batchHackComplete',
+    batchWeakenComplete = 'batchWeakenComplete',
+    batchGrowComplete = 'batchGrowComplete',
+
+    batchHackStarted = 'batchHackStarted',
+    batchWeakenStarted = 'batchWeakenStarted',
+    batchGrowStarted = 'batchGrowStarted',
+}
 
 export const TOAST_DURATION: number = 5000;
+
+export enum TOAST_VARIANT {
+    success = 'success',
+    info = 'info',
+    warning = 'warning',
+    error = 'error'
+}
 
 export const DARK_DATA = {
     torCost: 200000,
@@ -113,7 +140,7 @@ export const HACK_FACTIONS = {
     daedalus: { name: 'Daedalus', hostname: '' } as IHackFaction
 };
 
-export const WORLD_DAEMON: IHackFaction = { name: '', hostname: 'w0r1d_d43m0n' };
+export const WORLD_DAEMON: IServerFaction = { name: '', hostname: 'w0r1d_d43m0n' };
 
 export const CITY_FACTIONS = {
     aevum: { name: 'Aevum', homeCity: 'Aevum' } as ICityFaction,
@@ -126,17 +153,30 @@ export const CITY_FACTIONS = {
 };
 
 export const COMPANY_FACTIONS = {
-    mega: { name: 'MegaCorp', hostname: 'megacorp', city: CITY_FACTIONS.sec12.homeCity } as ICompanyFaction,
-    nwo: { name: 'NWO', hostname: 'nwo', city: CITY_FACTIONS.vol.homeCity } as ICompanyFaction,
-    fultech: { name: 'Fulcrum Secret Technologies', hostname: 'fulcrumassets', city: CITY_FACTIONS.aevum.homeCity } as ICompanyFaction,
-    ecor: { name: 'ECorp', hostname: '', city: CITY_FACTIONS.aevum.homeCity },
-    kuai: { name: 'KuaiGong International', hostname: '', city: CITY_FACTIONS.aevum.homeCity },
-    fourSig: { name: 'Four Sigma', hostname: '', city: CITY_FACTIONS.sec12.homeCity },
-    blade: { name: 'Blade Industries', hostname: 'blade', city: CITY_FACTIONS.sec12.homeCity },
-    otech: { name: 'OmniTek Incorporated', hostname: '', city: CITY_FACTIONS.vol.homeCity },
-    bach: { name: 'Bachman & Associates', hostname: '', city: CITY_FACTIONS.aevum.homeCity },
-    clark: { name: 'Clarke Incorporated', hostname: '', city: CITY_FACTIONS.aevum.homeCity }
+    mega: { name: 'MegaCorp', hostname: 'megacorp', city: CITY_FACTIONS.sec12.homeCity, repNeededForInvite: 200000 } as ICompanyFaction,
+    nwo: { name: 'NWO', hostname: 'nwo', city: CITY_FACTIONS.vol.homeCity, repNeededForInvite: 200000 } as ICompanyFaction,
+    fultech: {
+        name: 'Fulcrum Secret Technologies', hostname: 'fulcrumassets', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 250000
+    } as ICompanyFaction,
+    blade: { name: 'Blade Industries', hostname: 'blade', city: CITY_FACTIONS.sec12.homeCity, repNeededForInvite: 200000 } as ICompanyFaction,
+    clark: { name: 'Clarke Incorporated', hostname: 'clarkinc', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 200000 } as ICompanyFaction,
+
+    kuai: { name: 'KuaiGong International', hostname: '', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 200000 } as ICompanyFaction,
+    fourSig: { name: 'Four Sigma', hostname: '', city: CITY_FACTIONS.sec12.homeCity, repNeededForInvite: 200000 } as ICompanyFaction,
+    ecor: { name: 'ECorp', hostname: '', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 200000 } as ICompanyFaction,
+    otech: { name: 'OmniTek Incorporated', hostname: '', city: CITY_FACTIONS.vol.homeCity, repNeededForInvite: 200000 } as ICompanyFaction,
+    bach: { name: 'Bachman & Associates', hostname: '', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 200000 } as ICompanyFaction
 };
+
+export enum JOB_FIELDS {
+    Software = 'Software'
+}
+
+export enum WORK_TYPE {
+    Faction = 'Working for Faction',
+    Company = 'Working for Company'
+
+}
 
 export enum LocationName {
     // Cities
@@ -221,11 +261,21 @@ export enum LocationName {
 }
 
 export const TRAVEL_COST = 200000;
-export const WEAKEN_SCRIPT = 'weaken.js';
-export const GROW_SCRIPT = 'grow.js';
-export const HACK_SCRIPT = 'hack.js';
-export const SHARE_SCRIPT = 'share.js';
-export const CONTROLLER_SCRIPT = 'controller.js';
+
+export enum SCRIPTS {
+    backdoor = 'backdoor.js',
+    weaken = 'weaken.js',
+    grow = 'grow.js',
+    batchWeaken = 'batch-weaken.js',
+    batchGrow = 'batch-grow.js',
+    batchHack = 'batch-hack.js',
+    hack = 'hack.js',
+    share = 'share.js',
+    controller = 'basic-controller.js',
+    autoNuke = 'autoNuke.js',
+    addScripts = 'addScripts.js',
+
+}
 
 export const OVERVIEW_EXTRA_0_ID = 'overview-extra-hook-0';
 export const OVERVIEW_EXTRA_1_ID = 'overview-extra-hook-1';
@@ -233,3 +283,37 @@ export const OVERVIEW_EXTRA_2_ID = 'overview-extra-hook-2';
 
 export const THE_RED_PILL = 'The Red Pill';
 
+export const NON_HACKING_AUGMENTS = [
+    'Augmented Targeting I',
+    'Augmented Targeting II',
+    'Combat Rib I',
+    'Combat Rib II',
+    'INFRARET Enhancement',
+    'Nanofiber Weave',
+    'NutriGen Implant',
+    'Speech Processor Implant',
+    'Wired Reflexes',
+    'DermaForce Particle Barrier'
+];
+
+export const HACKING_AUGMENTS = [
+    'Artificial Synaptic Potentiation',
+    'BitWire',
+    'CashRoot Starter Kit',
+    'Cranial Signal Processors - Gen I',
+    'Cranial Signal Processors - Gen II',
+    'Cranial Signal Processors - Gen II',
+    'Cranial Signal Processors - Gen III',
+    'CRTX42-AA Gene Modification',
+    'DataJack',
+    'Embedded Netburner Module',
+    'Neural-Retention Enhancement',
+    'Neuralstimulator',
+    'Neurotrainer II',
+    'PCMatrix'
+];
+
+export const COMPANY_QUIT_PENALTY = {
+    default: 0.5,
+    withBackdoor: 0.25
+};

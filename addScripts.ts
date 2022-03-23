@@ -1,4 +1,4 @@
-
+import { SCRIPTS } from './consts';
 import { NS } from './NetscriptDefinitions';
 import { getAllHosts } from './utils';
 
@@ -7,9 +7,13 @@ export async function main(ns: NS) {
     ns.tail();
 
     const scriptList = [
-        'hack.js',
-        'weaken.js',
-        'grow.js',
+        SCRIPTS.hack,
+        SCRIPTS.weaken,
+        SCRIPTS.grow,
+        SCRIPTS.batchHack,
+        SCRIPTS.batchWeaken,
+        SCRIPTS.batchGrow,
+
         'share.js',
         'consts.js',
         'utils.js'

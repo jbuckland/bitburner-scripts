@@ -40,23 +40,47 @@ export async function main(ns: NS) {
         ...Object.values(COMPANY_FACTIONS).map(c => c.name)
     ];
 
-    let remainingCompAugs: string[] = [];
+    let remainingCompAugs: { name: string, factions: string[] }[] = [];
+    let remainingAugsComp: { faction: string, augs: string[] }[] = [];
 
     factionsToCheck.forEach(f => {
-        let augs = getRemainingFactionAugmentations(ns, COMPANY_FACTIONS.kuai.name);
+        let augs = getRemainingFactionAugmentations(ns, f);
 
         augs.forEach(a => {
-            if (!remainingCompAugs.includes(a)) {
-                remainingCompAugs.push(a);
+
+            let compAugs = remainingCompAugs.find(item => item.name === a);
+
+            if (!compAugs) {
+                compAugs = { name: a, factions: [] };
+                remainingCompAugs.push(compAugs);
             }
+            compAugs.factions.push(f);
+
+            let augComps = remainingAugsComp.find(item => item.faction === f);
+            if (!augComps) {
+                augComps = { faction: f, augs: [] };
+                remainingAugsComp.push(augComps);
+            }
+            augComps.augs.push(a);
+
         });
+
     });
 
+    //show augmentations and which companies sell it
+    /*
     remainingCompAugs.forEach(a => {
         ns.print(a);
-        let stats = ns.getAugmentationStats(a);
-        //ns.print(JSON.stringify(stats, null, 4));
-        //ns.print('');
+        let stats = ns.getAugmentationStats(a.name);
+        ns.print('---', stats);
+
+    });
+*/
+    //show companies, and which augs they sell
+    remainingAugsComp.forEach(c => {
+        ns.print(c.faction);
+        ns.print('---', c.augs);
+
     });
 
 }

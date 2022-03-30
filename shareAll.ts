@@ -1,31 +1,40 @@
-import { HOME, HOSTS, SCRIPTS } from './consts';
+import { SCRIPTS } from './consts';
 import { NS } from './NetscriptDefinitions';
-import { getThreadsAvailableForScript } from './utils';
+import { formatBigNumber, getAllServerInfo, getRandomId, getThreadsAvailableForScript, round, timestamp } from './utils';
 
 export async function main(ns: NS) {
 
-    let totalThreads = 0;
+    ns.tail();
+    ns.disableLog('ALL');
 
-    for (let i = 0; i < HOSTS.length; i++) {
-        let hostname = HOSTS[i];
+    const SHARE_FRACTION = .75;
 
-        if (hostname === HOME) {
-            ns.scriptKill(SCRIPTS.hack, hostname);
-            ns.scriptKill(SCRIPTS.weaken, hostname);
-            ns.scriptKill(SCRIPTS.grow, hostname);
-        } else {
-            ns.killall(hostname);
+    while (true) {
+
+        let totalThreads = 0;
+
+        let serverInfo = getAllServerInfo(ns);
+
+        for (let i = 0; i < serverInfo.length; i++) {
+            const server = serverInfo[i];
+
+            if (server.hasRoot) {
+
+                let numThreads = getThreadsAvailableForScript(ns, server.hostname, SCRIPTS.share);
+                let threadsToRun = round(numThreads * SHARE_FRACTION);
+
+                if (threadsToRun > 0) {
+                    totalThreads += threadsToRun;
+                    ns.exec(SCRIPTS.share, server.hostname, threadsToRun, getRandomId());
+                }
+
+            }
+
         }
 
-        let numThreads = getThreadsAvailableForScript(ns, hostname, SCRIPTS.share);
-        totalThreads += numThreads;
-        if (numThreads > 0) {
-            ns.exec(SCRIPTS.share, hostname, numThreads);
-        }
-
+        ns.print(`${timestamp()} SHARE for ${formatBigNumber(totalThreads).padStart(6)} threads!`);
+        await ns.sleep(1000);
     }
-
-    ns.tprint(`Sharing ALL available server power!! (${totalThreads} threads)`);
 
 }
 

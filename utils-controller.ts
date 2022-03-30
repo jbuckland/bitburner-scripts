@@ -1,7 +1,16 @@
-import { SCRIPTS } from './consts';
-import { NS, RunningScript } from './NetscriptDefinitions';
-import { ServerInfo, Task, TaskType } from './types';
-import { getAllHosts, getThreadsNeededToGrowHost, getThreadsNeededToHackAllHost, getThreadsNeededToWeakenHost } from './utils';
+import {DebugLevel, SCRIPTS} from './consts';
+import {NS, ProcessInfo, RunningScript} from './NetscriptDefinitions';
+import {ITargetWorkInfo, ServerInfo, Task, TaskType} from './types';
+import {
+    debugLog,
+    getAllHosts,
+    getAllRunnerNames,
+    getAllServerInfo,
+    getPriorityServers,
+    getThreadsNeededToGrowHost,
+    getThreadsNeededToHackAllHost,
+    getThreadsNeededToWeakenHost
+} from './utils';
 
 const MIN_MONEY = 5000;
 const HACK_FRACTION_INITIAL: number = 0.1; //what percent to take when hacking
@@ -184,4 +193,139 @@ export function getNumRunningThreads(ns: NS, taskList: Task[], serverInfo: Serve
     });
 
     return threads;
+}
+
+
+export function getWorkInfo(ns: NS): ITargetWorkInfo[] {
+
+    let workInfo: ITargetWorkInfo[] = makeWorkInfoForTargets(ns);
+
+    //at this point, we should have a PrepWork item for every target server
+
+    //find existing threads that are currently running on each Runner
+    let runnerNames = getAllRunnerNames(ns);
+    for (let i = 0; i < runnerNames.length; i++) {
+        const runnerName = runnerNames[i];
+
+        let processes: ProcessInfo[] = ns.ps(runnerName);
+        for (let j = 0; j < processes.length; j++) {
+            const process = processes[j];
+            let scriptName = process.filename;
+
+            let taskType: TaskType | undefined;
+
+            if (scriptName === SCRIPTS.grow) {
+                taskType = TaskType.grow;
+            } else if (scriptName === SCRIPTS.batchGrow) {
+                taskType = TaskType.batchGrow;
+            } else if (scriptName === SCRIPTS.hack) {
+                taskType = TaskType.hack;
+            } else if (scriptName === SCRIPTS.batchHack) {
+                taskType = TaskType.batchHack;
+            } else if (scriptName === SCRIPTS.weaken) {
+                taskType = TaskType.weaken;
+            } else if (scriptName === SCRIPTS.batchWeaken) {
+                taskType = TaskType.batchWeaken;
+            }
+
+            if (taskType) {
+                let targetName = process.args[0];
+                let workItem = workInfo.find(w => w.target.hostname === targetName);
+                if (workItem) {
+                    updateThreadInfo(workItem, taskType, process);
+                } else {
+                    //this could happen because we've filtered out this server,
+                    //but some other process is running tasks on it
+                    debugLog(ns, DebugLevel.warn, `didn't find a PrepWork item for ${targetName}!`);
+                }
+            } else {
+                //some other script we don't care about
+            }
+
+        }
+
+    }
+
+    for (let i = 0; i < workInfo.length; i++) {
+        const w = workInfo[i];
+        if (!w.readyForBatch) {
+            w.readyForBatch = isReadyForBatch(w);
+        }
+
+    }
+
+    workInfo.sort((a, b) => {
+        return (b.readyForBatch ? 1 : 0) - (a.readyForBatch ? 1 : 0) ||
+            b.target.targetValue - a.target.targetValue ||
+            a.target.currSecurity - b.target.currSecurity;
+    });
+
+    return workInfo;
+}
+
+
+export function makeWorkInfoForTargets(ns: NS): ITargetWorkInfo[] {
+    let workInfo: ITargetWorkInfo[] = [];
+
+    //we start with the data from last pass
+    let targetServers = getPriorityServers(ns, getAllServerInfo(ns));
+
+    //targetServers = targetServers.filter(s => {
+    //    return s.hostname !== 'sigma-cosmetics' && s.hostname !== 'harakiri-sushi';
+    //});
+
+
+    for (let i = 0; i < targetServers.length; i++) {
+        const server = targetServers[i];
+
+        let work: ITargetWorkInfo = {target: server, readyForBatch: false, threadInfos: {}};
+
+        work.threadInfos[TaskType.hack] = {task: TaskType.hack, inProgress: 0, moreNeeded: 0, total: 0};
+
+        let growThreadsTotalNeeded = Math.ceil(getThreadsNeededForTask(ns, server, TaskType.grow));
+        work.threadInfos[TaskType.grow] = {
+            task: TaskType.grow,
+            inProgress: 0,
+            moreNeeded: growThreadsTotalNeeded,
+            total: growThreadsTotalNeeded
+        };
+
+        let weakenThreadsTotalNeeded = Math.ceil(getThreadsNeededForTask(ns, server, TaskType.weaken));
+        work.threadInfos[TaskType.weaken] = {
+            task: TaskType.weaken,
+            inProgress: 0,
+            moreNeeded: weakenThreadsTotalNeeded,
+            total: weakenThreadsTotalNeeded
+        };
+
+        work.threadInfos[TaskType.batchGrow] = {task: TaskType.batchGrow, inProgress: 0, moreNeeded: 0, total: 0};
+        work.threadInfos[TaskType.batchWeaken] = {
+            task: TaskType.batchWeaken,
+            inProgress: 0,
+            moreNeeded: 0,
+            total: 0
+        };
+        work.threadInfos[TaskType.batchHack] = {task: TaskType.batchHack, inProgress: 0, moreNeeded: 0, total: 0};
+
+        workInfo.push(work);
+
+    }
+    return workInfo;
+}
+
+
+export function updateThreadInfo(workItem: ITargetWorkInfo, task: TaskType, process: ProcessInfo) {
+    let threadCount = process.threads;
+    let threadInfo = workItem.threadInfos[task];
+    threadInfo.inProgress += threadCount;
+    threadInfo.moreNeeded = threadInfo.total - threadInfo.inProgress;
+}
+
+
+export function isReadyForBatch(workItem: ITargetWorkInfo): boolean {
+
+    return workItem.threadInfos[TaskType.weaken].inProgress === 0 &&
+        workItem.threadInfos[TaskType.weaken].total === 0 &&
+        workItem.threadInfos[TaskType.grow].inProgress === 0 &&
+        workItem.threadInfos[TaskType.grow].total === 0;
 }

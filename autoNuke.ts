@@ -1,4 +1,4 @@
-import { DARK_DATA, HOME, TOAST_VARIANT } from './consts';
+import { DARK_DATA, HOME, TOAST_DURATION, TOAST_VARIANT } from './consts';
 import { NS } from './NetscriptDefinitions';
 import { getAllHosts } from './utils';
 

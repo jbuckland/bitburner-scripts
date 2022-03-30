@@ -45,7 +45,7 @@ export async function main(ns: NS) {
             }
 
         } else {
-            ns.print(`ERROR! could not find ${target}!`);
+            ns.tprint(`ERROR! could not find ${target}!`);
         }
 
     }

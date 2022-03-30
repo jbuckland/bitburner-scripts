@@ -1,4 +1,4 @@
-import { HOME, TOAST_VARIANT } from './consts';
+import { HOME, TOAST_DURATION, TOAST_VARIANT } from './consts';
 import { NS } from './NetscriptDefinitions';
 import { IServerFaction } from './types';
 import { longConnect } from './utils';

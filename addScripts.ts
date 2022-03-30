@@ -1,25 +1,31 @@
-import { SCRIPTS } from './consts';
-import { NS } from './NetscriptDefinitions';
-import { getAllHosts } from './utils';
+import {SCRIPTS} from './consts';
+
+import {NS} from './NetscriptDefinitions';
+import {getAllHosts} from './utils';
 
 export async function main(ns: NS) {
 
-    ns.tail();
-
     const scriptList = [
-        SCRIPTS.hack,
-        SCRIPTS.weaken,
-        SCRIPTS.grow,
+        SCRIPTS.backdoor,
+        SCRIPTS.batchGrow,
         SCRIPTS.batchHack,
         SCRIPTS.batchWeaken,
-        SCRIPTS.batchGrow,
+        SCRIPTS.donate,
+        SCRIPTS.grow,
+        SCRIPTS.hack,
+        SCRIPTS.reset,
+        SCRIPTS.weaken,
 
+
+        //these are utility files
         'share.js',
         'consts.js',
         'utils.js'
+
     ];
 
     let flags = ns.flags([['force', false]]);
+
 
     for (let i = 0; i < getAllHosts(ns).length; i++) {
         let host = getAllHosts(ns)[i];

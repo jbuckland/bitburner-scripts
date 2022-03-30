@@ -1,3 +1,4 @@
+import { TOAST_DURATION } from './consts';
 import { NS } from './NetscriptDefinitions';
 import { round, timestamp } from './utils';
 

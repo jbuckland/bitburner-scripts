@@ -1,5 +1,6 @@
 import { NS } from './NetscriptDefinitions';
-import { getAllHosts, timestamp } from './utils';
+import { debug, formatBigNumber, formatBigRam, getAllHosts, timestamp } from './utils';
+import { ITableData, Table } from './utils-table';
 
 interface IRunningScriptStats {
     name: string;
@@ -10,19 +11,21 @@ interface IRunningScriptStats {
 
 export async function main(ns: NS) {
     const SLEEP_TIME = 1000;
-    let flags = ns.flags([
-        ['refresh', true],
-        ['debug', false]
-    ]);
 
-    const REFRESH: boolean = flags.refresh;
-    const DEBUG: boolean = flags.debug;
     ns.tail();
     ns.disableLog('ALL');
 
-    do {
+    while (true) {
         ns.clearLog();
 
+        displayScriptStats();
+
+        ns.print(`(Auto-refresh:${SLEEP_TIME / 1000}s)`);
+        await ns.sleep(SLEEP_TIME);
+
+    }
+
+    function displayScriptStats() {
         let scriptStats: IRunningScriptStats[] = [];
 
         for (let i = 0; i < getAllHosts(ns).length; i++) {
@@ -32,7 +35,7 @@ export async function main(ns: NS) {
             if (ns.hasRootAccess(host) && ns.getServerMaxRam(host) > 0) {
 
                 let runningScripts = ns.ps(host);
-                if (DEBUG) ns.print(`${timestamp()} found ${runningScripts.length} running scripts on ${host}`);
+                debug(ns, `${timestamp()} found ${runningScripts.length} running scripts on ${host}`);
 
                 for (let j = 0; j < runningScripts.length; j++) {
                     let script = runningScripts[j];
@@ -58,23 +61,35 @@ export async function main(ns: NS) {
         }
 
         scriptStats.sort((a, b) => {
-            return a.name.localeCompare(b.name);
+            return a.totalRamUsage - b.totalRamUsage;
         });
 
+        let scriptsTable: Table = new Table(ns);
+
+        let tableData: ITableData[] = scriptStats.map(item => {
+            return {
+                'Script Name': item.name,
+                'Ram': formatBigRam(item.totalRamUsage),
+                'Threads': formatBigNumber(item.totalThreadUsage)
+            };
+        });
+        scriptsTable.setData(tableData);
+
+        ns.print(' Running Scripts:');
+        scriptsTable.print();
+
+        /*
         let maxNameLength: number = Math.max(...scriptStats.map(s => s.name.length)); //find length of longest string
 
+        //ns.print(`Running Scripts:`);
         for (let i = 0; i < scriptStats.length; i++) {
             let stats = scriptStats[i];
 
-            ns.print(`${stats.name.padEnd(maxNameLength)} | RAM usage ${stats.totalRamUsage.toString().padStart(5)}, Threads ${
-                stats.totalThreadUsage.toString().padStart(4)}`);
+            ns.print(`${stats.name.padEnd(maxNameLength)} | RAM usage ${formatBigRam(stats.totalRamUsage).padStart(7)}, Threads ${
+                formatBigNumber(stats.totalThreadUsage).padStart(6)}`);
         }
-        ns.print(timestamp());
-
-        if (REFRESH) {
-            ns.print(`(Auto-refresh:${SLEEP_TIME / 1000}s)`);
-            await ns.sleep(SLEEP_TIME);
-        }
-    } while (REFRESH);
+        
+         */
+    }
 
 }

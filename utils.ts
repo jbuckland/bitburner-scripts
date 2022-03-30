@@ -1,15 +1,44 @@
 import {
-    CITY_FACTIONS, COMPANY_FACTIONS, DARK_DATA, HACK_FACTIONS, HOME, HOME_RESERVED_RAM, HOSTS, MIN_MONEY, NULL_PORT_DATA, PORTS, SCRIPTS, THE_RED_PILL
+    CITY_FACTIONS,
+    COMPANY_FACTIONS,
+    DARK_DATA,
+    DebugLevel,
+    DEFAULT_RAM_BUFFER,
+    DEFAULT_TARGET_HACK_PERCENT,
+    HACK_FACTIONS,
+    HOME,
+    HOSTS,
+    MIN_MONEY,
+    NULL_PORT_DATA,
+    PORTS,
+    SCRIPTS,
+    THE_RED_PILL
 } from './consts';
-import { NS } from './NetscriptDefinitions';
-import { IFaction, IGlobalSettings, ITargetWorkInfo, IServerNode, RunnerInfo, ServerInfo } from './types';
+import {NS} from './NetscriptDefinitions';
+import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from './types';
+
 
 export function debug(ns: NS, msg: string, ...data: any[]) {
     let settings = getSettings(ns);
 
-    if (settings.isDebug) {
+    if (settings.debug) {
         ns.print(`${timestamp()} !DEBUG! ${msg}`, ...data);
     }
+}
+
+export function debugLog(ns: NS, debugLevel: DebugLevel, msg: string, ...data: any[]) {
+    let debugMsg: IDebugMessage = {
+        time: new Date().getTime(),
+        source: ns.getScriptName(),
+        msg: msg,
+        level: debugLevel
+    };
+    if (data && data.length > 0) {
+        debugMsg.extraData = data;
+    }
+
+
+    writeDebugMessage(ns, debugMsg);
 
 }
 
@@ -27,7 +56,7 @@ export function longConnect(ns: NS, target: string) {
         }
 
     } else {
-        ns.print(`ERROR! could not find ${target}!`);
+        debugLog(ns, DebugLevel.error, `could not find ${target}!`);
     }
 
 }
@@ -74,7 +103,7 @@ export function findServerNodeRecursive(currentNode: IServerNode, targetHostname
  * gets the server node tree starting with HOME
  */
 export function getServerTree(ns: NS): IServerNode {
-    let rootNode: IServerNode = { hostname: HOME, children: [] };
+    let rootNode: IServerNode = {hostname: HOME, children: []};
     rootNode.children = getChildrenRecursive(rootNode);
 
     return rootNode;
@@ -107,6 +136,72 @@ export function getServerTree(ns: NS): IServerNode {
 
 }
 
+export function getNextPlayerControllerScript(ns: NS): string | undefined {
+
+    let nextScript: string | undefined;
+
+
+    let currScript = getPlayerControllerScript(ns);
+
+
+    return nextScript;
+}
+
+export function getPlayerControllerScript(ns: NS): string | undefined {
+
+
+    let playerControllers: { name: string, ramReq: number, isRunning: boolean }[] = [
+        {name: SCRIPTS.playerController, ramReq: 0, isRunning: false},
+        {name: SCRIPTS.playerController0, ramReq: 0, isRunning: false},
+        {name: SCRIPTS.playerController1, ramReq: 0, isRunning: false},
+        {name: SCRIPTS.playerController2, ramReq: 0, isRunning: false}
+    ];
+
+    for (let i = 0; i < playerControllers.length; i++) {
+        const controller = playerControllers[i];
+        controller.ramReq = ns.getScriptRam(controller.name);
+        controller.isRunning = ns.isRunning(controller.name, HOME);
+    }
+
+    playerControllers.sort((a, b) => {
+        return b.ramReq - a.ramReq;
+    });
+
+    //find the first one that's runnable based on home computer ram
+    let homeRam = ns.getServerMaxRam(HOME);
+
+    let buffer = getSettings(ns).ramBuffer ?? 0;
+
+
+    let controllerScript = playerControllers.find(c => c.ramReq + buffer < homeRam)?.name;
+
+    if (!controllerScript) {
+        debugLog(ns, DebugLevel.error, `Could not determine which player-controller script to use!`);
+    }
+
+    return controllerScript;
+
+}
+
+export function getReservedHomeRam(ns: NS) {
+    //which player controller 'could' we run?
+
+    let controller = getPlayerControllerScript(ns);
+
+    let ramForController = 0;
+
+    if (controller) {
+        let isRunning = ns.isRunning(controller, HOME);
+        if (!isRunning) {
+            ramForController = ns.getScriptRam(controller);
+        }
+    }
+
+    //reserve enough for that, plus some amount
+    let buffer = getSettings(ns).ramBuffer ?? 0;
+    return ramForController + buffer;
+}
+
 export function getFirstRunnerWithFreeRam(ns: NS, amountFree: number): string | undefined {
     let availableRunnerName: string | undefined;
 
@@ -118,11 +213,6 @@ export function getFirstRunnerWithFreeRam(ns: NS, amountFree: number): string | 
 
     for (let i = 0; i < runners.length; i++) {
         let runner = runners[i];
-
-        //hack to reserve some ram on home
-        if (runner.hostname == HOME) {
-            runner.freeRam = Math.max(0, runner.freeRam -= HOME_RESERVED_RAM);
-        }
 
         if (runner.freeRam >= amountFree) {
             availableRunnerName = runner.hostname;
@@ -156,11 +246,6 @@ export function getFirstAvailableRunnerForScriptThreads(ns: NS, scriptName: stri
 
         let ramNeeded = ns.getScriptRam(scriptName, runner.hostname) * threadCount;
 
-        //hack to reserve some ram on home
-        if (runner.hostname == HOME) {
-            runner.freeRam = Math.max(0, runner.freeRam -= HOME_RESERVED_RAM);
-        }
-
         if (ramNeeded > 0) {
             if (runner.freeRam >= ramNeeded) {
                 availableHost = runner;
@@ -169,7 +254,7 @@ export function getFirstAvailableRunnerForScriptThreads(ns: NS, scriptName: stri
 
             }
         } else {
-            ns.print(`ERROR! '${scriptName}' does not exist on ${runner.hostname}`);
+            debugLog(ns, DebugLevel.error, `ns.getScriptRam('${scriptName}', '${runner.hostname}') returned 0!`);
         }
 
     }
@@ -191,14 +276,18 @@ export function getFirstAvailableRunnerForScript(ns: NS, scriptName: string): st
     return getFirstAvailableRunnerForScriptThreads(ns, scriptName, 1);
 }
 
-export function timestamp(): string {
+export function timestamp(time: number = 0): string {
 
-    let time = new Date();
+    let date = new Date();
+    if (time > 0) {
+        date.setTime(time);
+    }
 
-    let hourString = time.getHours().toString().padStart(2, '0');
-    let minString = time.getMinutes().toString().padStart(2, '0');
-    let secString = time.getSeconds().toString().padStart(2, '0');
-    let msString = time.getMilliseconds().toString().padStart(3, '0');
+
+    let hourString = date.getHours().toString().padStart(2, '0');
+    let minString = date.getMinutes().toString().padStart(2, '0');
+    let secString = date.getSeconds().toString().padStart(2, '0');
+    let msString = date.getMilliseconds().toString().padStart(3, '0');
 
     let timeString = `|${hourString}:${minString}:${secString}:${msString}|`;
     return timeString;
@@ -217,6 +306,7 @@ export function getServerInfo(ns: NS, host: string) {
     let hackTime = ns.getHackTime(host);
     let growTime = ns.getGrowTime(host);
 
+
     let info: ServerInfo = {
         hostname: host,
         hasRoot,
@@ -232,7 +322,7 @@ export function getServerInfo(ns: NS, host: string) {
         targetValue: 0
     };
 
-    info.targetValue = getTargetValue(info);
+    info.targetValue = getTargetValue(ns, info);
 
     return info;
 }
@@ -261,10 +351,16 @@ export function getAllRunners(ns: NS): RunnerInfo[] {
     for (let i = 0; i < hosts.length; i++) {
         let hostname = hosts[i];
 
-        runners.push({
+        let runner = {
             hostname: hostname,
             freeRam: getServerFreeRam(ns, hostname)
-        });
+        }
+        if (runner.hostname === HOME) {
+            let adjustedFreeRam = Math.max(0, (runner.freeRam - getReservedHomeRam(ns)))
+            runner.freeRam = adjustedFreeRam
+        }
+
+        runners.push(runner);
 
     }
     return runners;
@@ -292,7 +388,7 @@ export function getServerFreeRam(ns: NS, hostname: string) {
 export function getThreadsNeededToGrowHost(ns: NS, hostname: string): number {
     //example
     //max = 1000
-    //curr = 250    
+    //curr = 250
     //needed = 1000-250 = 750
     //growthMultiplier = (750/250)+1 = (3)+1 = 4
 
@@ -370,7 +466,7 @@ export function getThreadsAvailableForScript(ns: NS, hostname: string, scriptNam
 
     //Hack to reserve some free ram on HOME
     if (hostname === HOME) {
-        hostFreeRam = Math.max(0, hostFreeRam - HOME_RESERVED_RAM);
+        hostFreeRam = Math.max(0, hostFreeRam - getReservedHomeRam(ns));
     }
 
     let scriptRamUsage = ns.getScriptRam(scriptName);
@@ -426,7 +522,12 @@ export function formatBigRam(value: number): string {
 export function formatBigTime(value: number): string {
     let scaledValue = value / 1000;
     let letter = '';
-    if (scaledValue > 3600) {
+    if (scaledValue > 86400) {
+        //display $x.ym
+        letter = 'd';
+        scaledValue = scaledValue / 86400;
+
+    } else if (scaledValue > 3600) {
         //display $x.ym
         letter = 'h';
         scaledValue = scaledValue / 3600;
@@ -445,7 +546,7 @@ export function formatBigTime(value: number): string {
     return `${scaledValue}${letter}`;
 }
 
-export function formatBigNumber(value: number): string {
+export function formatBigNumber(value: number, roundPlaces: number = 1): string {
 
     let scaledValue = value;
     let letter = '';
@@ -473,7 +574,7 @@ export function formatBigNumber(value: number): string {
 
     }
 
-    scaledValue = round(scaledValue, 1);
+    scaledValue = round(scaledValue, roundPlaces);
 
     return `${scaledValue}${letter}`;
 }
@@ -495,33 +596,20 @@ export function getPriorityServers(ns: NS, serverList: ServerInfo[]): ServerInfo
         //&&            serv.hackTime > 3000;
     });
 
-    if (player.hacking > 300) {
+    let tools = getPlayerTools(ns);
+    if (tools.brute && tools.ftp && tools.http && tools.smtp) {
         priorityList = priorityList.filter(s => s.hostname !== 'n00dles');
     }
 
     priorityList.sort((a, b) => {
-        return b.currSecurity - a.currSecurity; //this is directly proportional to weakenTime
+        return b.targetValue - a.targetValue; //this is directly proportional to weakenTime
     });
-    /*
-        if (player.hacking >= 3500) {
-            priorityList = priorityList.filter(serv => {
-                return serv.maxMoney > 1e10; //remove anything with less
-            });
-        } else if (player.hacking >= 3000) {
-            priorityList = priorityList.filter(serv => {
-                return serv.maxMoney > 1e9; //remove anything with less
-            });
-        } else if (player.hacking >= 2500) {
-            priorityList = priorityList.filter(serv => {
-                return serv.maxMoney > 1e8; //remove anything with less
-            });
-    
-        }
-    */
+
     return priorityList;
 }
 
 export function runHack(ns: NS, runner: string, target: string, numThreads: number) {
+    debug(ns, `HACK [${target}] with [${runner}] using ${numThreads} threads`);
     return ns.exec(SCRIPTS.hack, runner, numThreads, target, getRandomId());
 }
 
@@ -530,6 +618,7 @@ export function runBatchHack(ns: NS, runner: string, target: string, numThreads:
 }
 
 export function runWeaken(ns: NS, runner: string, target: string, numThreads: number) {
+    debug(ns, `WEAKEN [${target}] with [${runner}] using ${numThreads} threads`);
     return ns.exec(SCRIPTS.weaken, runner, numThreads, target, getRandomId());
 }
 
@@ -538,11 +627,21 @@ export function runBatchWeaken(ns: NS, runner: string, target: string, numThread
 }
 
 export function runGrow(ns: NS, runner: string, target: string, numThreads: number) {
+    debug(ns, `GROW [${target}] with [${runner}] using ${numThreads} threads`);
     return ns.exec(SCRIPTS.grow, runner, numThreads, target, getRandomId());
 }
 
 export function runBatchGrow(ns: NS, runner: string, target: string, numThreads: number, batchId: number, delayMs: number) {
     return ns.exec(SCRIPTS.batchGrow, runner, numThreads, target, delayMs, batchId);
+}
+
+
+export function hasAllPlayerTools(ns: NS) {
+
+    let tools = getPlayerTools(ns);
+
+    return tools.sql && tools.brute;
+
 }
 
 export function getPlayerTools(ns: NS) {
@@ -576,39 +675,39 @@ export function hasRedPillInstalled(ns: NS): boolean {
     return ns.getOwnedAugmentations().includes(THE_RED_PILL);
 }
 
+
 export function getAllHosts(ns: NS): string[] {
 
     let hosts = HOSTS;
     let purchasedServers: string[] = ns.getPurchasedServers();
 
-    return [...hosts, ...purchasedServers];
+    return [...purchasedServers, ...hosts];
 
 }
 
-export function writeTargetStats(ns: NS, currentWork: ITargetWorkInfo[]) {
-    ns.clearPort(PORTS.targetStats);
-    ns.writePort(PORTS.targetStats, JSON.stringify(currentWork));
-}
 
-export function readTargetStats(ns: NS): ITargetWorkInfo[] {
-    let rawData = ns.peek(PORTS.targetStats) as string;
+export function getTargetValue(ns: NS, target: ServerInfo): number {
+    let value = -1;
 
-    if (rawData !== NULL_PORT_DATA) {
-        return JSON.parse(rawData) as ITargetWorkInfo[];
-    } else {
-        return [];
-    }
+    //value = target.growthParam / (target.growTime / 1000);
 
-}
+    let moneyPerGrowThread = (target.currMoney * 0.1) / (ns.growthAnalyze(target.hostname, 1.1));
+    let moneyPerGrowSecond = moneyPerGrowThread / target.growTime;
+    value = moneyPerGrowSecond;
 
-export function getTargetValue(target: ServerInfo) {
-    return target.growthParam / (target.growTime / 1000);
+    return value;
+
+
 }
 
 export function getSettings(ns: NS): IGlobalSettings {
     //default settings
     let settings: IGlobalSettings = {
-        isDebug: false
+        debug: false,
+        hackPercent: DEFAULT_TARGET_HACK_PERCENT,
+        ramBuffer: DEFAULT_RAM_BUFFER,
+        expGain: false,
+        share: true
     };
 
     let settingsPort = ns.getPortHandle(PORTS.settings);
@@ -617,7 +716,8 @@ export function getSettings(ns: NS): IGlobalSettings {
     if (portData === NULL_PORT_DATA) {
         settingsPort.write(JSON.stringify(settings));
     } else {
-        settings = JSON.parse(portData as string);
+        let storedSettings = JSON.parse(portData as string);
+        settings = Object.assign(settings, storedSettings);
     }
 
     return settings;
@@ -638,3 +738,75 @@ export function setSettings(ns: NS, newSettings: IGlobalSettings): IGlobalSettin
 }
 
 
+export function readDebugMessage(ns: NS): IDebugMessage | undefined {
+    let msg: IDebugMessage | undefined = undefined;
+
+    let debugPort = ns.getPortHandle(PORTS.debug);
+    let rawData = debugPort.read() as string;
+    if (rawData && rawData !== NULL_PORT_DATA) {
+        try {
+            msg = JSON.parse(rawData) as IDebugMessage;
+        } catch (error) {
+            ns.print('ERROR! trying to read JSON data from debug port!', error, rawData);
+        }
+
+    }
+
+    return msg;
+}
+
+
+export function writeDebugMessage(ns: NS, msg: IDebugMessage): any {
+    let debugPort = ns.getPortHandle(PORTS.debug);
+    let json = JSON.stringify(msg);
+    return debugPort.write(json);
+}
+
+export function readTargetStats(ns: NS): ITargetWorkInfo[] {
+    let rawData = ns.peek(PORTS.targetStats) as string;
+
+    if (rawData !== NULL_PORT_DATA) {
+        return JSON.parse(rawData) as ITargetWorkInfo[];
+    } else {
+        return [];
+    }
+
+}
+
+export function writeTargetStats(ns: NS, currentWork: ITargetWorkInfo[]) {
+    //ns.clearPort(PORTS.targetStats);
+    let port = ns.getPortHandle(PORTS.targetStats);
+    port.clear();
+    port.write(JSON.stringify(currentWork));
+
+}
+
+export function runReset(ns: NS, force: boolean): number {
+    let procId = -1;
+
+    let runner = getFirstAvailableRunnerForScript(ns, SCRIPTS.reset);
+    if (runner) {
+
+        if (force) {
+            procId = ns.exec(SCRIPTS.reset, runner, 1, 'force');
+        } else {
+            procId = ns.exec(SCRIPTS.reset, runner, 1);
+        }
+
+    }
+    return procId;
+}
+
+
+export function runDonate(ns: NS, faction: string, amount: number) {
+    let procId = -1;
+
+    let scriptName = SCRIPTS.donate;
+
+    let runner = getFirstAvailableRunnerForScript(ns, scriptName);
+    if (runner) {
+        procId = ns.exec(scriptName, runner, 1, faction, amount);
+    }
+    return procId;
+
+}

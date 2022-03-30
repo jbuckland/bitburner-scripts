@@ -4,7 +4,7 @@
     "description": "",
     "type": "module",
     "config": {
-        "bitburnerAuthToken": "Htb8SOXVXyVjpxE+Fsx8hZcc+YpvWE/2FZf40+Ny8t1eqv9Imx967Fwx2kKcVCcS",
+        "bitburnerAuthToken": "ewCEagUcwLMwN3qggSNugfg4EcWSVf+g4MGABuLZMsmcsgXWTof4uF7IGFviILsU",
         "bitburnerScriptRoot": "./dist",
         "bitburnerAllowDelete": false
     },

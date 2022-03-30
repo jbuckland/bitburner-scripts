@@ -1,23 +1,30 @@
-import { EventType } from './consts';
+import {DebugLevel, EventType} from './consts';
 
 export interface ServerInfo {
-    hostname: string;
-    hasRoot: boolean;
-    growthParam: number;
-    minSecurity: number;
-    currSecurity: number;
     currMoney: number;
-    maxMoney: number;
-    weakenTime: number;
-    reqHackSkill: number;
-    hackTime: number;
+    currSecurity: number;
     growTime: number;
+    growthParam: number;
+    hackTime: number;
+    hasRoot: boolean;
+    hostname: string;
+    maxMoney: number;
+    minSecurity: number;
+    reqHackSkill: number;
     targetValue: number;
+    weakenTime: number;
 }
 
 export interface RunnerInfo {
-    hostname: string;
     freeRam: number;
+    hostname: string;
+}
+
+
+export enum TaskCategory {
+    batch = 'batch',
+    prep = 'prep',
+    share = 'share'
 }
 
 export enum TaskType {
@@ -37,25 +44,25 @@ export interface ServerThreads {
 }
 
 export interface ServerEvent {
-    timestamp: number,
     eventType: EventType;
+    extra?: string;
     hostname: string;
     target: string;
-    extra?: string;
+    timestamp: number,
 
 }
 
 export interface Task {
-    taskType: TaskType;
-    hostname: string;
-    threadsNeeded: number;
     allocatedThreads: ServerThreads[];
+    hostname: string;
+    taskType: TaskType;
+    threadsNeeded: number;
 }
 
 export interface IServerNode {
+    children: IServerNode[];
     hostname: string;
     parent?: IServerNode;
-    children: IServerNode[];
 }
 
 export interface IFaction {
@@ -79,15 +86,19 @@ export interface ICompanyFaction extends IServerFaction {
 }
 
 export interface IDarkwebTool {
-    name: string;
     cost: number;
     createSkill: number;
+    name: string;
 }
 
 export type RunMode = 'normal' | 'takeall' | 'share';
 
 export interface IGlobalSettings {
-    isDebug?: boolean;
+    debug?: boolean;
+    expGain?: boolean;
+    hackPercent?: number;
+    ramBuffer?: number;
+    share?: boolean;
 }
 
 export interface ITargetWorkInfo {
@@ -99,13 +110,49 @@ export interface ITargetWorkInfo {
 }
 
 export interface ThreadInfo {
-    task: TaskType;
     inProgress: number;
     moreNeeded: number;
-    total: number;//this value will increase as grow happens
+    task: TaskType;
+    total: number;
 }
 
 export interface ICompanyJob {
     copmpanyName: string,
     jobName: string;
 }
+
+export interface IRunnerServer {
+    freeRam: number;
+    hostname: string;
+    maxRam: number;
+    usedRam: number;
+}
+
+export interface IDebugMessage {
+    extraData?: any;
+    level: DebugLevel,
+    msg: string,
+    source: string,
+    time: number,
+}
+
+
+export interface IBatchRequest {
+    batchId: number,
+    delayUntilGrow: number,
+    delayUntilHack: number,
+    delayUntilWeakenGrow: number,
+    delayUntilWeakenHack: number,
+    growThreadsNeeded: number,
+    growTime: number;
+    hackThreadCount: number,
+    hackTime: number;
+    target: string;
+    totalRamNeeded: number;
+    weakenThreadsNeededFromGrow: number,
+    weakenThreadsNeededFromHack: number,
+    weakenTime: number;
+}
+
+
+

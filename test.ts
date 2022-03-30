@@ -1,89 +1,41 @@
-import { COMPANY_FACTIONS } from './consts';
-import { NS } from './NetscriptDefinitions';
-import { ServerInfo } from './types';
-import { getRemainingFactionAugmentations } from './utils';
-
-interface TempInfos extends ServerInfo {
-    hackExp?: number;
-    hackExpPerSec?: number;
-}
+import {NS} from './NetscriptDefinitions';
+import {doBatchFromRequestMultiRunner} from "./batch";
+import {IBatchRequest} from "./types";
 
 export async function main(ns: NS) {
     ns.tail();
+
+    ns.disableLog('ALL');
     ns.clearLog();
 
-    /*
-        let servers: TempInfos[] = getAllServerInfo(ns);
-    
-        let player = ns.getPlayer();
-    
-        servers.forEach(s => {
-    
-            let nsServer = ns.getServer(s.hostname);
-    
-            s.hackExp = ns.formulas.hacking.hackExp(nsServer, player);
-            s.hackExpPerSec = s.hackExp / s.hackTime;
-    
-        });
-    
-        servers.sort((a, b) => {
-            return (a.hackExpPerSec ?? 0) - (b.hackExpPerSec ?? 0);
-        });
-    
-        servers.forEach(i => {
-            ns.print(`${i.hostname},hack exp:${Math.round(i.hackExp ?? 0)} time:${Math.round(i.hackTime)},  ${i.hackExpPerSec?.toPrecision(3)} hackExp/sec`);
-        });
-    */
-    //ns.getAugmentationsFromFaction('MegaCorp');
 
-    let factionsToCheck = [
-        ...Object.values(COMPANY_FACTIONS).map(c => c.name)
-    ];
+    let request: IBatchRequest = {
+        batchId: 1234567,
+        hackThreadCount: 222,
+        weakenThreadsNeededFromHack: 233,
+        growThreadsNeeded: 244,
+        weakenThreadsNeededFromGrow: 255,
+        weakenTime: 0,
+        totalRamNeeded: 0,
+        hackTime: 0,
+        growTime: 0,
+        target: 'BananaTarget',
+        delayUntilHack: 122,
+        delayUntilWeakenHack: 133,
+        delayUntilGrow: 144,
+        delayUntilWeakenGrow: 155
+    }
 
-    let remainingCompAugs: { name: string, factions: string[] }[] = [];
-    let remainingAugsComp: { faction: string, augs: string[] }[] = [];
+    doBatchFromRequestMultiRunner(ns, request);
 
-    factionsToCheck.forEach(f => {
-        let augs = getRemainingFactionAugmentations(ns, f);
 
-        augs.forEach(a => {
+    //ns.print(timestamp());
 
-            let compAugs = remainingCompAugs.find(item => item.name === a);
-
-            if (!compAugs) {
-                compAugs = { name: a, factions: [] };
-                remainingCompAugs.push(compAugs);
-            }
-            compAugs.factions.push(f);
-
-            let augComps = remainingAugsComp.find(item => item.faction === f);
-            if (!augComps) {
-                augComps = { faction: f, augs: [] };
-                remainingAugsComp.push(augComps);
-            }
-            augComps.augs.push(a);
-
-        });
-
-    });
-
-    //show augmentations and which companies sell it
-    /*
-    remainingCompAugs.forEach(a => {
-        ns.print(a);
-        let stats = ns.getAugmentationStats(a.name);
-        ns.print('---', stats);
-
-    });
-*/
-    //show companies, and which augs they sell
-    remainingAugsComp.forEach(c => {
-        ns.print(c.faction);
-        ns.print('---', c.augs);
-
-    });
 
 }
+
+
+
 
 
 

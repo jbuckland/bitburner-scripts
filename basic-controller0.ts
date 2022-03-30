@@ -1,31 +1,30 @@
 import {doBatch, makeBatchRequest} from './batch';
-import {DebugLevel, HOME, INDENT_STRING, SCRIPTS} from './consts';
+import {DebugLevel, HOME, SCRIPTS} from './consts';
 import {NS, ProcessInfo} from './NetscriptDefinitions';
-import {ITargetWorkInfo, TaskCategory, TaskType, ThreadInfo} from './types';
+import {ITargetWorkInfo, TaskType, ThreadInfo} from './types';
 import {
     debugLog,
-    formatBigNumber,
     formatBigRam,
     getAllRunnerNames,
-    getAllRunners,
+    getAllServerInfo,
     getFirstAvailableRunnerForScript,
     getPlayerControllerScript,
-    getPlayerTools,
+    getPriorityServers,
     getRandomId,
     getServerFreeRam,
-    getSettings,
     getThreadsAvailableForScript,
-    round,
     runHack,
-    timestamp
+    timestamp,
+    writeTargetStats
 } from './utils';
-import {getThreadsNeededForTask, getWorkInfo, isReadyForBatch, updateThreadInfo} from './utils-controller';
+import {getThreadsNeededForTask} from './utils-controller';
 
 const SLEEP_TIME = 2000;
-const FRACTION_TO_USE_FOR_SHARE = 0.5;
+const FRACTION_TO_USE_FOR_SHARE = 0.75;
 const FRACTION_TO_USE_FOR_EXTRA_EXP = .5;
 
 const OK_PERCENT = 0.3; //stats are allowed to be within 20% and be ok
+
 
 
 export async function main(ns: NS) {
@@ -35,55 +34,32 @@ export async function main(ns: NS) {
 
     runInitialScripts();
 
+
     while (true) {
         ns.print('');
 
         startBestPlayerController();
 
-        let moneyForHomeServerNeeded = 0;
-        let moneyForAugmentationNeeded = 0;
-        let moneyForDWToolNeeded = 0;
+        let targetWorkInfos = getWorkInfo();
 
+        writeTargetStats(ns, targetWorkInfos);
 
-        let targetWorkInfos = getWorkInfo(ns);
-
-        let readyForBatchCount = 0;
-        let batchSuccesses = 0
         if (targetWorkInfos.length > 0) {
-            let workReadyForBatch = targetWorkInfos.filter(w => isReadyForBatch(w));
 
-            if (workReadyForBatch.length > 0) {
+            let readyForBatchCount = 0;
 
-                batchSuccesses = await doBatches(workReadyForBatch);
-                //batchSuccesses = await doMaxBatches(workReadyForBatch);
-            } else {
+            readyForBatchCount = await doBatches(targetWorkInfos);
+            if (readyForBatchCount === 0) {
                 let minHackTarget = targetWorkInfos.find(w => !isReadyForBatch(w));
                 if (minHackTarget) {
                     doMinimalHacking(minHackTarget);
                 }
+
             }
 
-            //only prep targets when we have
-            let numberToPrep = Math.floor(readyForBatchCount / 2.0)
-            numberToPrep = 50;
-
-            readyForBatchCount = workReadyForBatch.length;
-            if (readyForBatchCount === 0) {
-                numberToPrep = 99999
-            }
-
-            prepTargets(targetWorkInfos, Math.max(4, numberToPrep));
+            prepTargets(targetWorkInfos, readyForBatchCount);
 
         }
-        if (batchSuccesses > 0) {
-
-            let tools = getPlayerTools(ns);
-            let hasMainTools = tools.sql && tools.brute && tools.ftp && tools.http;
-            if (hasMainTools) {
-                await doExtra();
-            }
-        }
-
         killUnneededThreads(targetWorkInfos);
 
 
@@ -123,11 +99,23 @@ export async function main(ns: NS) {
                                     ns.scriptKill(SCRIPTS.grow, runnerName);
                                 }
                             }
+
                         }
+
+
+
                     }
+
                 }
+
             }
+
+
+
         }
+
+
+
     }
 
 
@@ -146,72 +134,28 @@ export async function main(ns: NS) {
     }
 
 
-    function prepTargets(targetWork: ITargetWorkInfo[], countToPrep: number) {
+    function prepTargets(targetWork: ITargetWorkInfo[], readyForBatchCount: number) {
         let weakenThreadsStarted = 0;
         let growThreadsStarted = 0;
 
-        let count = Math.min(targetWork.length, countToPrep);
-
-        for (let i = 0; i < count; i++) {
+        for (let i = 0; i < targetWork.length; i++) {
             const work = targetWork[i];
 
             weakenThreadsStarted += useAvailableRunnersForWork(work.target.hostname, SCRIPTS.weaken, work.threadInfos[TaskType.weaken], 1);
 
             growThreadsStarted += useAvailableRunnersForWork(work.target.hostname, SCRIPTS.grow, work.threadInfos[TaskType.grow], 1);
+
+            if (weakenThreadsStarted + growThreadsStarted > 0) {
+                if (readyForBatchCount > 2) {
+                    break;
+                }
+
+            }
+
         }
 
         ns.print(`${timestamp()} Prep threads started: W:${weakenThreadsStarted}, G:${growThreadsStarted}`);
 
-    }
-
-    async function doMaxBatches(targetWork: ITargetWorkInfo[]): Promise<number> {
-
-
-        let totalSuccessfulBatchCount = 0;
-        let totalBatchRamUsed = 0;
-
-        let successfulBatchesThisRun = 0;
-
-        let batchPassCount = 0;
-
-        let batchRunThisPass = false;
-
-        ns.print(`${timestamp()} Running batches!`);
-
-        do {
-            batchPassCount++;
-            batchRunThisPass = false;
-            successfulBatchesThisRun = 0;
-
-
-            for (let i = 0; i < targetWork.length; i++) {
-                const work = targetWork[i];
-
-                if (isReadyForBatch(work)) {
-
-                    let batchRequest = makeBatchRequest(ns, work.target.hostname);
-                    let success = doBatch(ns, work.target.hostname);
-                    if (success) {
-                        totalSuccessfulBatchCount++;
-                        successfulBatchesThisRun++;
-                        totalBatchRamUsed += batchRequest.totalRamNeeded;
-                        batchRunThisPass = true;
-                    }
-                }
-
-            }
-            if (successfulBatchesThisRun > 0) {
-                ns.print(`${timestamp()}${INDENT_STRING} Pass Batch #${batchPassCount}: Started: ${successfulBatchesThisRun}`);
-            }
-
-            await ns.sleep(50);
-
-
-        } while (batchRunThisPass)
-
-        ns.print(`${timestamp()} Total Batches: Started: ${totalSuccessfulBatchCount}, ${formatBigRam(totalBatchRamUsed)}, Passes: ${batchPassCount}`);
-
-        return totalSuccessfulBatchCount;
     }
 
     async function doBatches(targetWork: ITargetWorkInfo[]): Promise<number> {
@@ -241,136 +185,13 @@ export async function main(ns: NS) {
         return readyForBatchCount;
     }
 
-    async function doExtra() {
-        let shareThreads = 0;
-        let expGainThreads = 0;
+    function isReadyForBatch(workItem: ITargetWorkInfo): boolean {
 
-        let settings = getSettings(ns);
-
-        if (settings.share) {
-            shareThreads = await doExtraShare();
-        }
-
-        if (settings.expGain) {
-            expGainThreads = await doExtraGainExp();
-        }
-
-
-        let shareRam = shareThreads * ns.getScriptRam(SCRIPTS.share);
-        ns.print(`${timestamp()} Share threads: ${formatBigNumber(shareThreads)}, ${formatBigRam(shareRam)}`);
-
-        ns.print(`${timestamp()} Exp threads: ${formatBigNumber(expGainThreads)}`);
-
+        return workItem.threadInfos[TaskType.weaken].inProgress === 0 &&
+            workItem.threadInfos[TaskType.weaken].total === 0 &&
+            workItem.threadInfos[TaskType.grow].inProgress === 0 &&
+            workItem.threadInfos[TaskType.grow].total === 0;
     }
-
-    async function doExtraShare(): Promise<number> {
-        let shareThreads = 0;
-
-        let player = ns.getPlayer();
-        if (player.isWorking && player.currentWorkFactionName) {
-
-            let runners = getAllRunners(ns);
-            for (let i = 0; i < runners.length; i++) {
-                const runner = runners[i];
-                let availableThreads = getThreadsAvailableForScript(ns, runner.hostname, SCRIPTS.share);
-
-                let threadsToRun = Math.floor(availableThreads * FRACTION_TO_USE_FOR_SHARE);
-                if (threadsToRun > 0) {
-                    debugLog(ns, DebugLevel.info, `starting ${threadsToRun} share threads!`)
-                    ns.exec(SCRIPTS.share, runner.hostname, threadsToRun, getRandomId());
-                }
-                shareThreads += threadsToRun;
-            }
-
-        }
-        return shareThreads;
-    }
-
-    async function doExtraGainExp(): Promise<number> {
-        let extraThreads = 0;
-
-        let player = ns.getPlayer();
-        let target = 'joesguns';
-        let runners = getAllRunners(ns);
-        for (let i = 0; i < runners.length; i++) {
-            const runner = runners[i];
-            let availableThreads = getThreadsAvailableForScript(ns, runner.hostname, SCRIPTS.grow);
-
-            let threadsToRun = Math.floor(availableThreads * FRACTION_TO_USE_FOR_EXTRA_EXP);
-            if (threadsToRun > 0) {
-                ns.exec(SCRIPTS.grow, runner.hostname, threadsToRun, target, getRandomId());
-            }
-            extraThreads += threadsToRun;
-        }
-
-
-        return extraThreads;
-
-        /*
-                let expThreads = 0;
-                let currHacking = ns.getPlayer().hacking;
-                let maxHackNeeded = getMaxHackingNeededForBitNode(ns);
-
-                if (currHacking < maxHackNeeded) {
-                    debug(ns, `Still need more exp! ${currHacking}/${maxHackNeeded}`);
-                    //let target = 'joesguns';
-
-                    if (ns.hasRootAccess(target)) {
-                        let weakenThreads = getThreadsNeededToWeakenHost(ns, target);
-                        weakenThreads = Math.min(weakenThreads, getThreadsAvailableForScript(ns, HOME, SCRIPTS.weaken));
-                        if (weakenThreads > 0) {
-                            runWeaken(ns, HOME, target, weakenThreads);
-                        }
-
-                        let keepGoing = true;
-                        let count = 0;
-                        while (keepGoing) {
-                            let runner = getFirstAvailableRunnerForScript(ns, SCRIPTS.grow);
-                            if (runner) {
-
-                                let availableThreads = getThreadsAvailableForScript(ns, runner, SCRIPTS.grow);
-                                let threadsToRun = round(availableThreads * FRACTION_TO_USE_FOR_EXTRA_EXP);
-                                //debugLog(ns, DebugLevel.info, `EXTRA Gaining exp! (t=${threadsToRun}, runner=${runner})`);
-                                ns.exec(SCRIPTS.grow, runner, threadsToRun, target, getRandomId());
-                                expThreads += threadsToRun;
-
-                            } else {
-                                keepGoing = false;
-                            }
-                            count++;
-                            if (count > 10) {
-                                keepGoing = false;
-                            }
-
-                            await ns.sleep(5);
-
-                        }
-                    }
-                }
-                return expThreads;*/
-    }
-
-    function doWorkCheck(firstTarget: ITargetWorkInfo) {
-        //let's double check that this target is actually 'done'
-        if (firstTarget && firstTarget.readyForBatch) {
-            let growThreadsTotalNeeded = Math.ceil(getThreadsNeededForTask(ns, firstTarget.target, TaskType.grow));
-            let weakenThreadsTotalNeeded = Math.ceil(getThreadsNeededForTask(ns, firstTarget.target, TaskType.weaken));
-
-            let securityOverPercent = (firstTarget.target.currSecurity / firstTarget.target.minSecurity);
-            let moneyUnderPercent = firstTarget.target.currMoney / firstTarget.target.maxMoney;
-
-            let securityOk = securityOverPercent < (1 + OK_PERCENT);
-            let moneyOk = moneyUnderPercent > (1 - OK_PERCENT);
-
-            firstTarget.readyForBatch = securityOk && moneyOk;
-
-            let growString = `G: ${firstTarget.threadInfos[TaskType.grow].inProgress}/${growThreadsTotalNeeded} ${(round(moneyUnderPercent * 100))}%`;
-            let weakenString = `W: ${firstTarget.threadInfos[TaskType.weaken].inProgress}/${weakenThreadsTotalNeeded} ${(round(securityOverPercent * 100))}%`;
-
-            ns.print(`${timestamp()} Checking [${firstTarget.target.hostname}], ${growString}, ${weakenString}`);
-        }
-    }
-
 
     function useAvailableRunnersForWork(target: string, scriptName: string, threadsNeeded: ThreadInfo, workFraction: number = 1): number {
 
@@ -404,6 +225,7 @@ export async function main(ns: NS) {
                         threadsNeeded.moreNeeded -= threadsToRun;
 
 
+
                     } else {
                         continueWork = false;
                     }
@@ -419,8 +241,47 @@ export async function main(ns: NS) {
         return threadsStarted;
     }
 
+    function updateThreadInfo(workItem: ITargetWorkInfo, task: TaskType, process: ProcessInfo) {
+        let threadCount = process.threads;
+        let threadInfo = workItem.threadInfos[task];
+        threadInfo.inProgress += threadCount;
+        threadInfo.moreNeeded = threadInfo.total - threadInfo.inProgress;
+    }
 
-    function analyzeRunningThreads(workInfo: ITargetWorkInfo[]) {
+    function getWorkInfo(): ITargetWorkInfo[] {
+
+        let workInfo: ITargetWorkInfo[] = [];
+
+        //we start with the data from last pass
+        let targetServers = getPriorityServers(ns, getAllServerInfo(ns));
+
+        //targetServers = targetServers.filter(s => {
+        //    return s.hostname !== 'sigma-cosmetics' && s.hostname !== 'harakiri-sushi';
+        //});
+
+
+        for (let i = 0; i < targetServers.length; i++) {
+            const server = targetServers[i];
+
+            let work: ITargetWorkInfo = {target: server, readyForBatch: false, threadInfos: {}};
+
+            work.threadInfos[TaskType.hack] = {task: TaskType.hack, inProgress: 0, moreNeeded: 0, total: 0};
+
+            let growThreadsTotalNeeded = Math.ceil(getThreadsNeededForTask(ns, server, TaskType.grow));
+            work.threadInfos[TaskType.grow] = {task: TaskType.grow, inProgress: 0, moreNeeded: growThreadsTotalNeeded, total: growThreadsTotalNeeded};
+
+            let weakenThreadsTotalNeeded = Math.ceil(getThreadsNeededForTask(ns, server, TaskType.weaken));
+            work.threadInfos[TaskType.weaken] = {task: TaskType.weaken, inProgress: 0, moreNeeded: weakenThreadsTotalNeeded, total: weakenThreadsTotalNeeded};
+
+            work.threadInfos[TaskType.batchGrow] = {task: TaskType.batchGrow, inProgress: 0, moreNeeded: 0, total: 0};
+            work.threadInfos[TaskType.batchWeaken] = {task: TaskType.batchWeaken, inProgress: 0, moreNeeded: 0, total: 0};
+            work.threadInfos[TaskType.batchHack] = {task: TaskType.batchHack, inProgress: 0, moreNeeded: 0, total: 0};
+
+            workInfo.push(work);
+
+        }
+        //at this point, we should have a PrepWork item for every target server
+
         //find existing threads that are currently running on each Runner
         let runnerNames = getAllRunnerNames(ns);
         for (let i = 0; i < runnerNames.length; i++) {
@@ -432,33 +293,19 @@ export async function main(ns: NS) {
                 let scriptName = process.filename;
 
                 let taskType: TaskType | undefined;
-                let taskCategory: TaskCategory | undefined;
 
-                //prep work (and exp)
                 if (scriptName === SCRIPTS.grow) {
                     taskType = TaskType.grow;
-                    taskCategory = TaskCategory.prep;
-                } else if (scriptName === SCRIPTS.weaken) {
-                    taskType = TaskType.weaken;
-                    taskCategory = TaskCategory.prep;
+                } else if (scriptName === SCRIPTS.batchGrow) {
+                    taskType = TaskType.batchGrow;
                 } else if (scriptName === SCRIPTS.hack) {
                     taskType = TaskType.hack;
-                    taskCategory = TaskCategory.prep;
-                }
-                ///batch work
-                else if (scriptName === SCRIPTS.batchGrow) {
-                    taskType = TaskType.batchGrow;
-                    taskCategory = TaskCategory.batch;
-                } else if (scriptName === SCRIPTS.batchWeaken) {
-                    taskType = TaskType.batchWeaken;
-                    taskCategory = TaskCategory.batch;
                 } else if (scriptName === SCRIPTS.batchHack) {
                     taskType = TaskType.batchHack;
-                    taskCategory = TaskCategory.batch;
-                }
-                //////
-                else if (scriptName === SCRIPTS.share) {
-                    taskCategory = TaskCategory.share;
+                } else if (scriptName === SCRIPTS.weaken) {
+                    taskType = TaskType.weaken;
+                } else if (scriptName === SCRIPTS.batchWeaken) {
+                    taskType = TaskType.batchWeaken;
                 }
 
                 if (taskType) {
@@ -478,8 +325,23 @@ export async function main(ns: NS) {
             }
 
         }
-    }
 
+        for (let i = 0; i < workInfo.length; i++) {
+            const w = workInfo[i];
+            if (!w.readyForBatch) {
+                w.readyForBatch = isReadyForBatch(w);
+            }
+
+        }
+
+        workInfo.sort((a, b) => {
+            return (b.readyForBatch ? 1 : 0) - (a.readyForBatch ? 1 : 0) ||
+                b.target.targetValue - a.target.targetValue ||
+                a.target.currSecurity - b.target.currSecurity;
+        });
+
+        return workInfo;
+    }
 
     function getAverageTargetValue(targetWorkInfos: ITargetWorkInfo[]) {
         let sumTargetValue = 0;
@@ -511,6 +373,7 @@ export async function main(ns: NS) {
         //Order here is best to weakest
         let playerControllers: { name: string, ramReq: number, isRunning: boolean }[] = [
             {name: SCRIPTS.playerController, ramReq: 0, isRunning: false},
+            {name: SCRIPTS.playerController0, ramReq: 0, isRunning: false},
             {name: SCRIPTS.playerController1, ramReq: 0, isRunning: false},
             {name: SCRIPTS.playerController2, ramReq: 0, isRunning: false}
         ];
@@ -538,6 +401,7 @@ export async function main(ns: NS) {
             {
                 debugLog(ns, DebugLevel.error, `No player controller script returned!`);
             }
+
 
 
         } else if (runningControllers.length > 0) {

@@ -2,35 +2,36 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5a78a8f6-7165-4776-851e-9f8ad87cc565" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/debugWatcher.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/runnerStats.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/targetStats.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/codeStyles/Project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/codeStyles/Project.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/arrange-windows.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crime_consts.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/crime_service1.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hack-controller.ts" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/hack-controller0.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NetscriptDefinitions.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/NetscriptDefinitions.d.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/addScripts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/addScripts.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/arrangeWindows.ts" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/autoNuke.ts" beforeDir="false" afterPath="$PROJECT_DIR$/autoNuke.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/backdoor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backdoor.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/basic-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/basic-controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/basic-controller.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/basic-controller0.ts" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/batch.ts" beforeDir="false" afterPath="$PROJECT_DIR$/batch.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/buyNfg.ts" beforeDir="false" afterPath="$PROJECT_DIR$/buyNfg.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/consts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/consts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/controller.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/getRunnerStats.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/getScriptStats.ts" beforeDir="false" afterPath="$PROJECT_DIR$/scriptStats.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/getStats.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/crime.ts" beforeDir="false" afterPath="$PROJECT_DIR$/crime.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/grow.ts" beforeDir="false" afterPath="$PROJECT_DIR$/grow.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/hack.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hack.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/long-connect.ts" beforeDir="false" afterPath="$PROJECT_DIR$/long-connect.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pathTo.ts" beforeDir="false" afterPath="$PROJECT_DIR$/pathTo.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/player-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/player-controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/playerAction.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/reset.ts" beforeDir="false" afterPath="$PROJECT_DIR$/reset.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/player-controller0.ts" beforeDir="false" afterPath="$PROJECT_DIR$/player-controller0.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/player-controller1.ts" beforeDir="false" afterPath="$PROJECT_DIR$/player-controller1.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/settings.ts" beforeDir="false" afterPath="$PROJECT_DIR$/settings.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/share.ts" beforeDir="false" afterPath="$PROJECT_DIR$/share.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/shareAll.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shareAll.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stockWatcher.ts" beforeDir="false" afterPath="$PROJECT_DIR$/stockWatcher.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/stopShareAll.ts" beforeDir="false" afterPath="$PROJECT_DIR$/stopShareAll.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/targetStats.ts" beforeDir="false" afterPath="$PROJECT_DIR$/targetStats.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tsconfig.json" beforeDir="false" afterPath="$PROJECT_DIR$/tsconfig.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/utils-controller.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils-player.ts" beforeDir="false" afterPath="$PROJECT_DIR$/utils-player.ts" afterDir="false" />
@@ -80,11 +81,14 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.TypeScript" />
     <property name="ts.external.directory.path" value="C:\JohnsStuff\Projects\bitburner\contracts\node_modules\typescript\lib" />
     <property name="vue.rearranger.settings.migration" value="true" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\JohnsStuff\Projects\bitburner" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\JohnsStuff\Projects\bitburner" />
       <recent name="C:\JohnsStuff\Projects\bitburner\runner-files" />
@@ -104,7 +108,10 @@
       <workItem from="1648479443187" duration="945000" />
       <workItem from="1648480406975" duration="18080000" />
       <workItem from="1648566802358" duration="287000" />
-      <workItem from="1648567176791" duration="22030000" />
+      <workItem from="1648567176791" duration="65152000" />
+      <workItem from="1648769881112" duration="13060000" />
+      <workItem from="1648841474868" duration="91724000" />
+      <workItem from="1649192526932" duration="6000" />
     </task>
     <servers />
   </component>

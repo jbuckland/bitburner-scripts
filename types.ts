@@ -1,4 +1,5 @@
 import {DebugLevel, EventType} from './consts';
+import {GangOtherInfoObject} from './NetscriptDefinitions';
 
 export interface ServerInfo {
     currMoney: number;
@@ -19,7 +20,6 @@ export interface RunnerInfo {
     freeRam: number;
     hostname: string;
 }
-
 
 export enum TaskCategory {
     batch = 'batch',
@@ -95,10 +95,10 @@ export type RunMode = 'normal' | 'takeall' | 'share';
 
 export interface IGlobalSettings {
     debug?: boolean;
-    expGain?: boolean;
+    doExp?: boolean;
     hackPercent?: number;
     ramBuffer?: number;
-    share?: boolean;
+    doShare?: boolean;
 }
 
 export interface ITargetWorkInfo {
@@ -136,9 +136,8 @@ export interface IDebugMessage {
     time: number,
 }
 
-
 export interface IBatchRequest {
-    batchId: number,
+    batchId: string,
     delayUntilGrow: number,
     delayUntilHack: number,
     delayUntilWeakenGrow: number,
@@ -154,5 +153,41 @@ export interface IBatchRequest {
     weakenTime: number;
 }
 
+export interface IControllerConfig {
+    scriptName: string;
+    sequenceNumber: number;
+    ramBuffer: number;
+    ramReq: number;
+}
 
+export type OtherGangInfo = GangOtherInfoObject & { name: string, winChance: number }
 
+export interface INetscriptExtra {
+    heart: {
+        /**
+         * show player's current karma
+         */
+        break(): number;
+    };
+
+    exploit(): void;
+
+    bypass(doc: Document): void;
+
+    alterReality(): void;
+
+    rainbow(guess: string): void;
+}
+
+/**
+ * These are limits. If the total is >100, it's not a huge deal
+ */
+export interface IRamUsageSettings {
+    batchPct: number;
+    prepPct: number;
+    sharePct: number;
+    expPct: number;
+
+}
+
+export type FlagSchema = [string, string | number | boolean | string[]][]

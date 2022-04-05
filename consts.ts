@@ -1,9 +1,11 @@
-import {ICityFaction, ICompanyFaction, IDarkwebTool, IHackFaction, IServerFaction} from './types';
+import {ICityFaction, ICompanyFaction, IControllerConfig, IDarkwebTool, IFaction, IHackFaction, IServerFaction} from './types';
 
 export const WORLD_DAEMON: IServerFaction = {name: 'w0r1d_d43m0n', hostname: 'w0r1d_d43m0n'};
 export const DEFAULT_RAM_BUFFER = 90;
 export const DEFAULT_TARGET_HACK_PERCENT = .1;
 export const HOME = 'home';
+
+export const CYCLES_PER_SECOND = 5;
 
 export const MIN_MONEY = 400;
 
@@ -135,6 +137,10 @@ export const DARK_DATA = {
     }
 };
 
+export const GANG_FACTIONS = {
+    snakes: {name: 'Slum Snakes'} as IFaction
+};
+
 export const HACK_FACTIONS = {
     csec: {name: 'CyberSec', hostname: 'CSEC'} as IHackFaction,
     nite: {name: 'NiteSec', hostname: 'avmnite-02h'} as IHackFaction,
@@ -154,19 +160,67 @@ export const CITY_FACTIONS = {
 };
 
 export const COMPANY_FACTIONS = {
-    mega: {name: 'MegaCorp', hostname: 'megacorp', city: CITY_FACTIONS.sec12.homeCity, repNeededForInvite: 200000} as ICompanyFaction,
-    nwo: {name: 'NWO', hostname: 'nwo', city: CITY_FACTIONS.vol.homeCity, repNeededForInvite: 200000} as ICompanyFaction,
-    fultech: {
-        name: 'Fulcrum Secret Technologies', hostname: 'fulcrumassets', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 250000
+    mega: {
+        name: 'MegaCorp',
+        hostname: 'megacorp',
+        city: CITY_FACTIONS.sec12.homeCity,
+        repNeededForInvite: 200000
     } as ICompanyFaction,
-    blade: {name: 'Blade Industries', hostname: 'blade', city: CITY_FACTIONS.sec12.homeCity, repNeededForInvite: 200000} as ICompanyFaction,
-    clark: {name: 'Clarke Incorporated', hostname: 'clarkinc', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 200000} as ICompanyFaction,
+    nwo: {
+        name: 'NWO',
+        hostname: 'nwo',
+        city: CITY_FACTIONS.vol.homeCity,
+        repNeededForInvite: 200000
+    } as ICompanyFaction,
+    fultech: {
+        name: 'Fulcrum Secret Technologies',
+        hostname: 'fulcrumassets',
+        city: CITY_FACTIONS.aevum.homeCity,
+        repNeededForInvite: 250000
+    } as ICompanyFaction,
+    blade: {
+        name: 'Blade Industries',
+        hostname: 'blade',
+        city: CITY_FACTIONS.sec12.homeCity,
+        repNeededForInvite: 200000
+    } as ICompanyFaction,
+    clark: {
+        name: 'Clarke Incorporated',
+        hostname: 'clarkinc',
+        city: CITY_FACTIONS.aevum.homeCity,
+        repNeededForInvite: 200000
+    } as ICompanyFaction,
 
-    kuai: {name: 'KuaiGong International', hostname: '', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 200000} as ICompanyFaction,
-    fourSig: {name: 'Four Sigma', hostname: '', city: CITY_FACTIONS.sec12.homeCity, repNeededForInvite: 200000} as ICompanyFaction,
-    ecor: {name: 'ECorp', hostname: '', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 200000} as ICompanyFaction,
-    otech: {name: 'OmniTek Incorporated', hostname: '', city: CITY_FACTIONS.vol.homeCity, repNeededForInvite: 200000} as ICompanyFaction,
-    bach: {name: 'Bachman & Associates', hostname: '', city: CITY_FACTIONS.aevum.homeCity, repNeededForInvite: 200000} as ICompanyFaction
+    kuai: {
+        name: 'KuaiGong International',
+        hostname: '',
+        city: CITY_FACTIONS.aevum.homeCity,
+        repNeededForInvite: 200000
+    } as ICompanyFaction,
+    fourSig: {
+        name: 'Four Sigma',
+        hostname: '',
+        city: CITY_FACTIONS.sec12.homeCity,
+        repNeededForInvite: 200000
+    } as ICompanyFaction,
+    ecor: {
+        name: 'ECorp',
+        hostname: '',
+        city: CITY_FACTIONS.aevum.homeCity,
+        repNeededForInvite: 200000
+    } as ICompanyFaction,
+    otech: {
+        name: 'OmniTek Incorporated',
+        hostname: '',
+        city: CITY_FACTIONS.vol.homeCity,
+        repNeededForInvite: 200000
+    } as ICompanyFaction,
+    bach: {
+        name: 'Bachman & Associates',
+        hostname: '',
+        city: CITY_FACTIONS.aevum.homeCity,
+        repNeededForInvite: 200000
+    } as ICompanyFaction
 };
 
 export enum JOB_FIELDS {
@@ -283,9 +337,23 @@ export enum SCRIPTS {
     playerController1 = 'player-controller1.js',//79gb
     playerController2 = 'player-controller2.js', //223gb
     reset = 'reset.js', //162gb
-    share = 'share.js',
+    myShare = 'share.js',
     weaken = 'weaken.js',
+    basicCrime = 'basic-crime.js',
+    crimeController0 = 'crime_service0.js',
+    homeController = 'home-controller.js',
+    batchController = 'batch-controller.js',
+    expGain = 'expGain.js',
+    hackController = 'hack-controller.js',
+    arrangeWindows = 'arrange-windows.js',
 }
+
+export const playerControllers: IControllerConfig[] = [
+    {scriptName: SCRIPTS.playerController0, sequenceNumber: 0, ramBuffer: 16, ramReq: 0},
+    {scriptName: SCRIPTS.playerController1, sequenceNumber: 1, ramBuffer: 32, ramReq: 0},
+    {scriptName: SCRIPTS.playerController2, sequenceNumber: 2, ramBuffer: 32, ramReq: 0},
+    {scriptName: SCRIPTS.playerController, sequenceNumber: 3, ramBuffer: 190, ramReq: 0}
+];
 
 export const OVERVIEW_EXTRA_0_ID = 'overview-extra-hook-0';
 export const OVERVIEW_EXTRA_1_ID = 'overview-extra-hook-1';
@@ -308,7 +376,8 @@ export const NON_HACKING_AUGMENTS = [
     'Speech Processor Implant', //cha skill
     'Synfibril Muscle', //str, def skill
     'Synthetic Heart', //str, agi skill
-    'Wired Reflexes' //dex, agi skill
+    'Wired Reflexes', //dex, agi skill
+    'Neuroreceptor Management Implant' //removes non-focus penalty
 ];
 
 export const HACKING_AUGMENTS = [
@@ -345,3 +414,5 @@ export enum DebugLevel {
     error = 'ERROR',
     success = 'SUCCESS',
 }
+
+export const EXP_GAIN_FLAG = 'exp-gain';

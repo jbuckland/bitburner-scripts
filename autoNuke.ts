@@ -1,6 +1,6 @@
-import { DARK_DATA, HOME, TOAST_DURATION, TOAST_VARIANT } from './consts';
-import { NS } from './NetscriptDefinitions';
-import { getAllHosts } from './utils';
+import {DARK_DATA, HOME, TOAST_DURATION, TOAST_VARIANT} from './consts';
+import {NS} from './NetscriptDefinitions';
+import {getAllHosts} from './utils';
 
 export async function main(ns: NS) {
     ns.disableLog('ALL');
@@ -67,7 +67,6 @@ export async function main(ns: NS) {
 
             } else {
                 //ns.print(`${server.hostname} already nuked!`)
-
                 nukedCount++;
             }
 
@@ -81,49 +80,6 @@ export async function main(ns: NS) {
         ns.print('');
     }
 
-    //doBackdooring();
-
-    /*
-    async function doBackdooring() {
-        let backedCount = 0;
-        let newBackedCount = 0;
-
-        for (let i = 0; i < getAllHosts(ns).length; i++) {
-            let hostname = getAllHosts(ns)[i];
-            let server = ns.getServer(hostname);
-            if (server.hasAdminRights) {
-                if (server.hackDifficulty > 0) {
-                    if (server.requiredHackingSkill < player.hacking) {
-
-                        if (!server.backdoorInstalled) {
-                            longConnect(ns, server.hostname);
-
-                            ns.print(`Connected to ${server.hostname}, backdooring!`);
-                            //ns.print(`${server.hostname} difficulty:${server.hackDifficulty}, player hacking:${player.hacking}`, server);
-                            await ns.installBackdoor();
-                            backedCount++;
-                            newBackedCount++;
-
-                        } else {
-                            //ns.print(`${server.hostname} already backdoored!`);
-                            backedCount++;
-                        }
-                    } else {
-                        //ns.print(`${server.hostname} difficulty is ${server.requiredHackingSkill}, too hard to hack!`);
-                    }
-                } else {
-                    //ns.print(`${server.hostname} has no difficulty, skipping`);
-                }
-            } else {
-                //ns.print(`${server.hostname} has no admin rights, skipping`);
-            }
-        }
-
-        ns.print('');
-        ns.print(`BACKDOOR: ${newBackedCount} new and ${backedCount} total!`);
-    }
-    
-     */
 }
 
 

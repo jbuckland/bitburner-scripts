@@ -1,6 +1,12 @@
 import {NS} from './NetscriptDefinitions';
 import {setSettings, timestamp} from './utils';
-import {buyDarkwebTools, displayIncomeStats, displayNextDarkwebTool, displayServerStats, installBackdoors, tryPurchaseServer} from './utils-player';
+import {
+    buyDarkwebTools,
+    displayIncomeStats,
+    displayNextDarkwebTool,
+    displayServerStats,
+    installBackdoors
+} from './utils-player';
 
 const SLEEP_TIME = 1000;
 
@@ -8,25 +14,23 @@ export async function main(ns: NS) {
     ns.disableLog('ALL');
     ns.tail();
 
-
     setSettings(ns, {hackPercent: 0.001});
 
     while (true) {
         ns.clearLog();
         ns.print(`${timestamp()}`);
 
-        //requires 78.4GB
+        //requires 30.6 gb
 
-
-        buyDarkwebTools(ns); //+65.9
-        await installBackdoors(ns); //+3.8
+        buyDarkwebTools(ns);
+        await installBackdoors(ns);
 
         let costMultiplierBeforeBuying = 2.25;
-        tryPurchaseServer(ns, costMultiplierBeforeBuying);
+        //tryPurchaseServer(ns, costMultiplierBeforeBuying);
 
+        displayIncomeStats(ns);
         displayServerStats(ns, costMultiplierBeforeBuying);
-        displayNextDarkwebTool(ns); //+0.6
-        displayIncomeStats(ns); //+0.2
+        displayNextDarkwebTool(ns);
 
         await ns.sleep(SLEEP_TIME);
 

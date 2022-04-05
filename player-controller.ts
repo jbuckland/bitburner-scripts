@@ -1,5 +1,5 @@
 import {NS} from './NetscriptDefinitions';
-import {debugLog, setSettings, timestamp} from './utils';
+import {debugLog, timestamp} from './utils';
 import {
     buyDarkwebTools,
     claimedEarnedFactionRep,
@@ -8,7 +8,6 @@ import {
     displayIncomeStats,
     displayNextAugmentInfo,
     displayNextDarkwebTool,
-    displayServerStats,
     displayWorldDaemonProgress,
     doDonationReset,
     findNextAugmentationToWorkToward,
@@ -16,27 +15,36 @@ import {
     joinFactions,
     leaveTheCave,
     purchaseAvailableAugmentations,
-    tryPurchaseServer,
     upgradeHomeComputer,
     workOnReputation
 } from './utils-player';
-import {COMPANY_FACTIONS, DebugLevel, HACK_FACTIONS} from "./consts";
+import {COMPANY_FACTIONS, DebugLevel, HACK_FACTIONS} from './consts';
+import {ServerManager} from './server-controller';
+import {IFaction} from './types';
 
 const SLEEP_TIME = 1000;
 
 const COST_MULTIPLIER_BEFORE_BUYING = 1.5; // how much to multiply the cost of a server before actually buying it
+
+//these factions have very high Rep requirements, so we're going to go the donation route
+const bigFactionList: IFaction[] = [
+    HACK_FACTIONS.daedalus,
+    COMPANY_FACTIONS.nwo,
+    HACK_FACTIONS.bitrunners,
+    HACK_FACTIONS.blackHand
+];
 
 export async function main(ns: NS) {
 
     ns.disableLog('ALL');
     ns.tail();
 
-    setSettings(ns, {hackPercent: 0.1, ramBuffer: 190});
+    let serverMgr = new ServerManager(ns);
+    serverMgr.costMultiplierBeforeBuying = 1.5;
+
     while (true) {
 
-
         await doPlayerStuff();
-
 
         await ns.sleep(SLEEP_TIME);
     }
@@ -52,24 +60,25 @@ export async function main(ns: NS) {
         upgradeHomeComputer(ns);
         claimedEarnedFactionRep(ns, true); //should be before purchaseAvailableAugmentations()
         purchaseAvailableAugmentations(ns); //should be before findNextAugmentationToWorkToward()
-        //ns.stopAction();
+
         let targetAug = findNextAugmentationToWorkToward(ns);
         if (targetAug) {
             workOnReputation(ns, targetAug.fromFaction);
 
-            //these factions have very high Rep requirements, so we're going to go the donation route
-            let bigFactionList = [
-                HACK_FACTIONS.daedalus, COMPANY_FACTIONS.nwo, HACK_FACTIONS.bitrunners
-            ];
-            doDonationReset(ns, bigFactionList);
+            if (ns.gang.inGang()) {
+                let currGang = ns.gang.getGangInformation();
+                bigFactionList.push({name: currGang.faction});
+            }
 
+            doDonationReset(ns, bigFactionList);
 
         } else {
             debugLog(ns, DebugLevel.warn, `No target augmentation!`);
         }
 
         joinFactions(ns, [...Object.values(HACK_FACTIONS), ...Object.values(COMPANY_FACTIONS)]);
-        tryPurchaseServer(ns, COST_MULTIPLIER_BEFORE_BUYING);
+        await serverMgr.tryPurchaseServer();
+
         //destroy the bit node!
         await leaveTheCave(ns);
 
@@ -82,10 +91,10 @@ export async function main(ns: NS) {
         displayIncomeStats(ns);
         displayWorldDaemonProgress(ns);
         displayNextDarkwebTool(ns); //+0.6
-        displayHomeUpgradeInfo(ns);
         displayNextAugmentInfo(ns, targetAug);
         displayFactionProgress(ns);
-        displayServerStats(ns, COST_MULTIPLIER_BEFORE_BUYING);
+        displayHomeUpgradeInfo(ns);
+        serverMgr.displayServerStats();
 
     }
 

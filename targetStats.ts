@@ -2,7 +2,7 @@ import {NS} from './NetscriptDefinitions';
 import {ITargetWorkInfo, TaskType} from './types';
 import {formatBigNumber, formatBigTime, getTargetValue, myFormatCurrency, round, timestamp} from './utils';
 import {ITableData, Table} from './utils-table';
-import {getWorkInfo} from "./utils-controller";
+import {getAllTargetWorkInfo} from "./utils-controller";
 
 export async function main(ns: NS) {
     const SLEEP_TIME = 1000;
@@ -19,7 +19,7 @@ export async function main(ns: NS) {
         tableData = [];
         ns.clearLog();
 
-        let serverInfo = getWorkInfo(ns);
+        let serverInfo = getAllTargetWorkInfo(ns);
 
         let MAX_ROWS_TO_SHOW = 30;
         if (serverInfo.length > MAX_ROWS_TO_SHOW) {

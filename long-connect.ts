@@ -1,5 +1,14 @@
-import { NS } from './NetscriptDefinitions';
-import { findServerNodeRecursive, getPathToServerNode, getServerTree } from './utils';
+import {AutocompleteData, NS} from './NetscriptDefinitions';
+import {findServerNodeRecursive, getPathToServerNode, getServerTree} from './utils';
+
+export function autocomplete(data: AutocompleteData, args: any[]) {
+    //data.flags(flagSchema);
+    return [
+        ...data.servers
+        //...data.scripts,
+        //...data.txts,
+    ]; //return what you want to have in autocomplete
+}
 
 export async function main(ns: NS) {
 

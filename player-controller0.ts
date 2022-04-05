@@ -1,8 +1,12 @@
-import {HOSTS, INDENT_STRING} from './consts';
+import {INDENT_STRING} from './consts';
 import {NS} from './NetscriptDefinitions';
-import {IRunnerServer} from './types';
-import {formatBigRam, round, setSettings, timestamp} from './utils';
-import {displayIncomeStats, displayNextDarkwebTool, installBackdoors} from './utils-player';
+import {formatBigRam, setSettings, timestamp} from './utils';
+import {
+    displayIncomeStats,
+    displayNextDarkwebTool,
+    displayRunnerStatsNoHomeServer,
+    installBackdoors
+} from './utils-player';
 
 const SLEEP_TIME = 1000;
 
@@ -10,10 +14,7 @@ export async function main(ns: NS) {
     ns.disableLog('ALL');
     ns.tail();
 
-
     setSettings(ns, {hackPercent: 0.001});
-
-
 
     while (true) {
         ns.clearLog();
@@ -25,12 +26,9 @@ export async function main(ns: NS) {
         await installBackdoors(ns); //5.4gb, gain of 3.8gb
         //displayBackdoorStatus();
 
-
         displayNextDarkwebTool(ns);
-        displayRunnerStatsNoHomeServer(); //gain of .15
+        displayRunnerStatsNoHomeServer(ns); //gain of .15
         displayControllerRamUse();
-
-
 
         //displayServerStats(ns); //8.1gb, gain of 2.7
 
@@ -49,48 +47,6 @@ export async function main(ns: NS) {
 
     }
 
-
-
-    function displayRunnerStatsNoHomeServer() {
-        ns.print('Servers:');
-
-        let runners: IRunnerServer[] = [];
-
-        for (let i = 0; i < HOSTS.length; i++) {
-            let host = HOSTS[i];
-
-            if (ns.hasRootAccess(host) && ns.getServerMaxRam(host) > 0) {
-                let maxRam = ns.getServerMaxRam(host);
-                let usedRam = ns.getServerUsedRam(host);
-
-                let runner = {
-                    hostname: host,
-                    maxRam,
-                    usedRam: round(usedRam, 1),
-                    freeRam: round(maxRam - usedRam, 1)
-                };
-
-                runners.push(runner);
-            }
-
-        }
-
-        let totalUsedRam = 0;
-        let totalMaxRam = 0;
-        let totalFreeRam = 0;
-        for (let i = 0; i < runners.length; i++) {
-            let runner = runners[i];
-            totalUsedRam += runner.usedRam;
-            totalMaxRam += runner.maxRam;
-            totalFreeRam += runner.maxRam - runner.usedRam;
-        }
-
-        let percentUsed = round((totalUsedRam / totalMaxRam) * 100, 2);
-
-        ns.print(`${INDENT_STRING}Runners: ${runners.length}, Ram Usage: ${percentUsed}% of ${formatBigRam(totalMaxRam)}, `);
-    }
-
-
     function displayControllerRamUse() {
 
         //getPlayerControllerScript()
@@ -100,12 +56,10 @@ export async function main(ns: NS) {
         let nextScriptName = '';
         let nextScriptRam = 0;
 
-
         ns.print('Player Controller Ram Use:');
         ns.print(`${INDENT_STRING} Current: '${currentScriptName}', ${formatBigRam(currentScriptRam)}`);
         ns.print(`${INDENT_STRING} Next: '${nextScriptName}', ${formatBigRam(nextScriptRam)}`);
     }
-
 
 }
 

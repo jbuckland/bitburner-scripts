@@ -1,24 +1,33 @@
-import {NS} from './NetscriptDefinitions';
+import {AutocompleteData, NS} from './NetscriptDefinitions';
 import {getSettings, setSettings, timestamp} from './utils';
+import {FlagSchema} from './types';
 
 let SLEEP_TIME = 1000;
 
+export function autocomplete(data: AutocompleteData, args: any[]) {
+    data.flags(flagSchema);
+    return [
+        //...data.servers,
+        //...data.scripts,
+        //...data.txts,
+    ]; //return what you want to have in autocomplete
+}
 
+const flagSchema: FlagSchema = [
+    ['watch', false],
+    ['clearAll', false],
+
+    ['debug', ''],
+    ['hackPercent', -1],
+    ['ramBuffer', -1],
+    ['doShare', ''],
+    ['doExp', '']
+
+];
 
 export async function main(ns: NS) {
 
-    let flags = ns.flags([
-        ['watch', false],
-        ['clearAll', false],
-
-        ['debug', ''],
-        ['hackPercent', -1],
-        ['ramBuffer', -1],
-        ['share', ''],
-        ['expGain', '']
-
-
-    ]);
+    let flags = ns.flags(flagSchema);
     let watch = flags.watch;
 
     let settingName = ns.args[0] as string;
@@ -32,23 +41,20 @@ export async function main(ns: NS) {
 
     ns.tprint(`flags:`, flags);
 
-
     let debugValue = convertBool(flags.debug);
     if (debugValue != undefined) {
         setSettings(ns, {debug: debugValue});
     }
 
-    let shareValue = convertBool(flags.share);
+    let shareValue = convertBool(flags.doShare);
     if (shareValue != undefined) {
-        setSettings(ns, {share: shareValue});
+        setSettings(ns, {doShare: shareValue});
     }
 
-    let expGainValue = convertBool(flags.expGain);
+    let expGainValue = convertBool(flags.doExp);
     if (expGainValue != undefined) {
-        setSettings(ns, {expGain: expGainValue});
+        setSettings(ns, {doExp: expGainValue});
     }
-
-
 
     let value = parseFloat(flags.hackPercent);
     if (value > 0) {
@@ -59,7 +65,6 @@ export async function main(ns: NS) {
     if (value > 0) {
         setSettings(ns, {ramBuffer: value});
     }
-
 
     if (watch) {
         //if watch flag is set,
@@ -80,13 +85,9 @@ export async function main(ns: NS) {
         let currSettings = getSettings(ns);
         ns.tprint(`\nGlobal Settings:\n`, JSON.stringify(currSettings, null, 4));
 
-
     }
 
-
-
 }
-
 
 function convertBool(value: string): boolean | undefined {
 

@@ -3,6 +3,7 @@ import { NS } from './NetscriptDefinitions';
 import { IServerFaction } from './types';
 import { longConnect } from './utils';
 
+
 export async function main(ns: NS) {
     let target = ns.args[0] as string;
 

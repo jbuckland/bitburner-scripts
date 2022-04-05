@@ -10,13 +10,30 @@ import {
     HOSTS,
     MIN_MONEY,
     NULL_PORT_DATA,
+    playerControllers,
     PORTS,
     SCRIPTS,
     THE_RED_PILL
 } from './consts';
 import {NS} from './NetscriptDefinitions';
 import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from './types';
+import {IRamUsage} from './home-controller';
 
+export function timerStart(ns: NS, label: string) {
+    let settings = getSettings(ns);
+    if (settings.debug) {
+        console.time(label);
+    }
+
+}
+
+export function timerEnd(ns: NS, label: string) {
+    let settings = getSettings(ns);
+    if (settings.debug) {
+        console.timeEnd(label);
+    }
+
+}
 
 export function debug(ns: NS, msg: string, ...data: any[]) {
     let settings = getSettings(ns);
@@ -37,6 +54,22 @@ export function debugLog(ns: NS, debugLevel: DebugLevel, msg: string, ...data: a
         debugMsg.extraData = data;
     }
 
+    let blue = '#133854';
+    let infoStyle = `color: #fff; background-color: ${blue}; padding: 2px 4px; border-radius: 2px`;
+    let green = '#135702';
+    let successStyle = `color: #fff; background-color: ${green}; padding: 2px 4px; border-radius: 2px`;
+
+    let levelString = `${debugMsg.level.toUpperCase()}`;
+    let consoleMsg = `${timestamp(debugMsg.time)} ${levelString} [${debugMsg.source}] `;
+    if (debugLevel === DebugLevel.error) {
+        console.error(consoleMsg, debugMsg.msg, data);
+    } else if (debugLevel === DebugLevel.warn) {
+        console.warn(consoleMsg, debugMsg.msg, data);
+    } else if (debugLevel === DebugLevel.info) {
+        console.info(`%c${consoleMsg} ${debugMsg.msg}`, infoStyle, data);
+    } else {
+        console.log(`%c${consoleMsg} ${debugMsg.msg}`, successStyle, data);
+    }
 
     writeDebugMessage(ns, debugMsg);
 
@@ -136,31 +169,10 @@ export function getServerTree(ns: NS): IServerNode {
 
 }
 
-export function getNextPlayerControllerScript(ns: NS): string | undefined {
+export function getPlayerControllerScript2(ns: NS): string | undefined {
 
-    let nextScript: string | undefined;
-
-
-    let currScript = getPlayerControllerScript(ns);
-
-
-    return nextScript;
-}
-
-export function getPlayerControllerScript(ns: NS): string | undefined {
-
-
-    let playerControllers: { name: string, ramReq: number, isRunning: boolean }[] = [
-        {name: SCRIPTS.playerController, ramReq: 0, isRunning: false},
-        {name: SCRIPTS.playerController0, ramReq: 0, isRunning: false},
-        {name: SCRIPTS.playerController1, ramReq: 0, isRunning: false},
-        {name: SCRIPTS.playerController2, ramReq: 0, isRunning: false}
-    ];
-
-    for (let i = 0; i < playerControllers.length; i++) {
-        const controller = playerControllers[i];
-        controller.ramReq = ns.getScriptRam(controller.name);
-        controller.isRunning = ns.isRunning(controller.name, HOME);
+    for (const controller of playerControllers) {
+        controller.ramReq = ns.getScriptRam(controller.scriptName);
     }
 
     playerControllers.sort((a, b) => {
@@ -172,8 +184,7 @@ export function getPlayerControllerScript(ns: NS): string | undefined {
 
     let buffer = getSettings(ns).ramBuffer ?? 0;
 
-
-    let controllerScript = playerControllers.find(c => c.ramReq + buffer < homeRam)?.name;
+    let controllerScript = playerControllers.find(c => c.ramReq + buffer < homeRam)?.scriptName;
 
     if (!controllerScript) {
         debugLog(ns, DebugLevel.error, `Could not determine which player-controller script to use!`);
@@ -186,16 +197,15 @@ export function getPlayerControllerScript(ns: NS): string | undefined {
 export function getReservedHomeRam(ns: NS) {
     //which player controller 'could' we run?
 
-    let controller = getPlayerControllerScript(ns);
-
     let ramForController = 0;
 
-    if (controller) {
-        let isRunning = ns.isRunning(controller, HOME);
-        if (!isRunning) {
-            ramForController = ns.getScriptRam(controller);
-        }
-    }
+    //let controller = getPlayerControllerScript(ns);
+    //if (controller) {
+    //    let isRunning = ns.isRunning(controller, HOME);
+    //    if (!isRunning) {
+    //        ramForController = ns.getScriptRam(controller);
+    //    }
+    //}
 
     //reserve enough for that, plus some amount
     let buffer = getSettings(ns).ramBuffer ?? 0;
@@ -223,24 +233,20 @@ export function getFirstRunnerWithFreeRam(ns: NS, amountFree: number): string | 
 
 }
 
-/**
- * Returns the first host that can run the script with the thread count
- * @param ns
- * @param scriptName
- * @param threadCount will round up to next integer
- */
-export function getFirstAvailableRunnerForScriptThreads(ns: NS, scriptName: string, threadCount: number): string | undefined {
+export function filterFirstAvailableRunnerForScriptThreads(ns: NS, runners: RunnerInfo[], scriptName: string, threadCount: number): string | undefined {
 
     threadCount = Math.ceil(threadCount);
 
     let availableHost = undefined;
 
-    let runners: RunnerInfo[] = getAllRunners(ns);
-
     runners.sort((a, b) => {
         return b.freeRam - a.freeRam;
     });
 
+    /*
+    let simpleRunnerInfo = runners.map(r => {        return {name: r.hostname, freeRam: r.freeRam};    });
+    debugLog(ns, DebugLevel.info, `Runner List:`, simpleRunnerInfo);
+*/
     for (let i = 0; i < runners.length; i++) {
         let runner = runners[i];
 
@@ -273,7 +279,13 @@ export function getFirstAvailableRunnerForScriptThreads(ns: NS, scriptName: stri
  * @param scriptName
  */
 export function getFirstAvailableRunnerForScript(ns: NS, scriptName: string): string | undefined {
-    return getFirstAvailableRunnerForScriptThreads(ns, scriptName, 1);
+    let runners: RunnerInfo[] = getAllRunners(ns);
+    return filterFirstAvailableRunnerForScriptThreads(ns, runners, scriptName, 1);
+}
+
+export function getFirstAvailableRunnerForScriptNoPurchased(ns: NS, scriptName: string): string | undefined {
+    let runners: RunnerInfo[] = getAllRunnersNoPurchased(ns);
+    return filterFirstAvailableRunnerForScriptThreads(ns, runners, scriptName, 1);
 }
 
 export function timestamp(time: number = 0): string {
@@ -282,7 +294,6 @@ export function timestamp(time: number = 0): string {
     if (time > 0) {
         date.setTime(time);
     }
-
 
     let hourString = date.getHours().toString().padStart(2, '0');
     let minString = date.getMinutes().toString().padStart(2, '0');
@@ -306,7 +317,6 @@ export function getServerInfo(ns: NS, host: string) {
     let hackTime = ns.getHackTime(host);
     let growTime = ns.getGrowTime(host);
 
-
     let info: ServerInfo = {
         hostname: host,
         hasRoot,
@@ -327,37 +337,48 @@ export function getServerInfo(ns: NS, host: string) {
     return info;
 }
 
+export function getAllRunnerNamesNoPurchased(ns: NS): string[] {
+    return getRunnerNames(ns, HOSTS);
+}
+
 export function getAllRunnerNames(ns: NS): string[] {
+    let hosts = getAllHosts(ns);
+    return getRunnerNames(ns, hosts);
+}
+
+export function getRunnerNames(ns: NS, hostnames: string[]) {
     let runnerNames: string[] = [];
 
-    let hosts = getAllHosts(ns);
-
-    for (let i = 0; i < hosts.length; i++) {
-        let host = hosts[i];
-
+    for (let host of hostnames) {
         if (ns.hasRootAccess(host) && ns.getServerMaxRam(host) > 0) {
             runnerNames.push(host);
         }
-
     }
     return runnerNames;
 }
 
+export function getAllRunnersNoPurchased(ns: NS): RunnerInfo[] {
+    let hosts = getAllRunnerNamesNoPurchased(ns);
+    return filterRunners(ns, hosts);
+}
+
 export function getAllRunners(ns: NS): RunnerInfo[] {
+    let hostnames = getAllRunnerNames(ns);
+    return filterRunners(ns, hostnames);
+}
+
+export function filterRunners(ns: NS, hostNames: string[]) {
     let runners: RunnerInfo[] = [];
-
-    let hosts = getAllRunnerNames(ns);
-
-    for (let i = 0; i < hosts.length; i++) {
-        let hostname = hosts[i];
+    for (let i = 0; i < hostNames.length; i++) {
+        let hostname = hostNames[i];
 
         let runner = {
             hostname: hostname,
             freeRam: getServerFreeRam(ns, hostname)
-        }
+        };
         if (runner.hostname === HOME) {
-            let adjustedFreeRam = Math.max(0, (runner.freeRam - getReservedHomeRam(ns)))
-            runner.freeRam = adjustedFreeRam
+            let adjustedFreeRam = Math.max(0, (runner.freeRam - getReservedHomeRam(ns)));
+            runner.freeRam = adjustedFreeRam;
         }
 
         runners.push(runner);
@@ -366,19 +387,26 @@ export function getAllRunners(ns: NS): RunnerInfo[] {
     return runners;
 }
 
-export function getAllServerInfo(ns: NS): ServerInfo[] {
+export function makeServerInfo(ns: NS, hostNames: string[]): ServerInfo[] {
     let serverInfo = [];
 
-    for (let i = 0; i < getAllHosts(ns).length; i++) {
-        let host = getAllHosts(ns)[i];
-        serverInfo.push(getServerInfo(ns, host));
+    for (let hostName of hostNames) {
+        serverInfo.push(getServerInfo(ns, hostName));
     }
-
     return serverInfo;
 }
 
-export function getRandomId(): number {
-    return Math.floor(Math.random() * 100000);
+export function getAllServerInfo(ns: NS): ServerInfo[] {
+    return makeServerInfo(ns, getAllHosts(ns));
+}
+
+export function getAllTargetInfo(ns: NS): ServerInfo[] {
+    return makeServerInfo(ns, HOSTS);
+}
+
+export function getRandomId(): string {
+
+    return Math.floor(Math.random() * 10000000).toString(36);
 }
 
 export function getServerFreeRam(ns: NS, hostname: string) {
@@ -452,7 +480,7 @@ export function hasRemainingAugmentionsToBuy(ns: NS) {
     return hasMoreAugs;
 }
 
-export function getRemainingFactionAugmentations(ns: NS, factionName: string) {
+export function getRemainingFactionAugmentations(ns: NS, factionName: string): string[] {
     let factionAugments = ns.getAugmentationsFromFaction(factionName);
     let myAugments = ns.getOwnedAugmentations(true);
 
@@ -496,6 +524,12 @@ export function round(num: number, places: number = 0): number {
     let placeMultiplier = Math.pow(10, places);
 
     return Math.round(num * placeMultiplier) / placeMultiplier;
+}
+
+export function formatPercent(value: number, roundPlaces = 0): string {
+
+    return `${round(value * 100, roundPlaces)}%`;
+
 }
 
 export function formatBigRam(value: number): string {
@@ -583,7 +617,7 @@ export function myFormatCurrency(value: number) {
     return `\$${formatBigNumber(value)}`;
 }
 
-export function getPriorityServers(ns: NS, serverList: ServerInfo[]): ServerInfo[] {
+export function makePriorityTargetList(ns: NS, serverList: ServerInfo[]): ServerInfo[] {
     let priorityList: ServerInfo[] = [...serverList];
 
     const player = ns.getPlayer();
@@ -613,7 +647,7 @@ export function runHack(ns: NS, runner: string, target: string, numThreads: numb
     return ns.exec(SCRIPTS.hack, runner, numThreads, target, getRandomId());
 }
 
-export function runBatchHack(ns: NS, runner: string, target: string, numThreads: number, batchId: number, delayMs: number) {
+export function runBatchHack(ns: NS, runner: string, target: string, numThreads: number, batchId: string, delayMs: number) {
     return ns.exec(SCRIPTS.batchHack, runner, numThreads, target, delayMs, batchId);
 }
 
@@ -622,7 +656,7 @@ export function runWeaken(ns: NS, runner: string, target: string, numThreads: nu
     return ns.exec(SCRIPTS.weaken, runner, numThreads, target, getRandomId());
 }
 
-export function runBatchWeaken(ns: NS, runner: string, target: string, numThreads: number, batchId: number, delayMs: number) {
+export function runBatchWeaken(ns: NS, runner: string, target: string, numThreads: number, batchId: string, delayMs: number) {
     return ns.exec(SCRIPTS.batchWeaken, runner, numThreads, target, delayMs, batchId);
 }
 
@@ -631,10 +665,9 @@ export function runGrow(ns: NS, runner: string, target: string, numThreads: numb
     return ns.exec(SCRIPTS.grow, runner, numThreads, target, getRandomId());
 }
 
-export function runBatchGrow(ns: NS, runner: string, target: string, numThreads: number, batchId: number, delayMs: number) {
+export function runBatchGrow(ns: NS, runner: string, target: string, numThreads: number, batchId: string, delayMs: number) {
     return ns.exec(SCRIPTS.batchGrow, runner, numThreads, target, delayMs, batchId);
 }
-
 
 export function hasAllPlayerTools(ns: NS) {
 
@@ -675,7 +708,6 @@ export function hasRedPillInstalled(ns: NS): boolean {
     return ns.getOwnedAugmentations().includes(THE_RED_PILL);
 }
 
-
 export function getAllHosts(ns: NS): string[] {
 
     let hosts = HOSTS;
@@ -685,6 +717,17 @@ export function getAllHosts(ns: NS): string[] {
 
 }
 
+export function calcTargetValue(ns: NS, hostname: string, currMoney: number, growTime: number) {
+    let value = -1;
+
+    //value = target.growthParam / (target.growTime / 1000);
+
+    let moneyPerGrowThread = (currMoney * 0.1) / (ns.growthAnalyze(hostname, 1.1));
+    let moneyPerGrowSecond = moneyPerGrowThread / growTime;
+    value = moneyPerGrowSecond;
+
+    return value;
+}
 
 export function getTargetValue(ns: NS, target: ServerInfo): number {
     let value = -1;
@@ -697,7 +740,6 @@ export function getTargetValue(ns: NS, target: ServerInfo): number {
 
     return value;
 
-
 }
 
 export function getSettings(ns: NS): IGlobalSettings {
@@ -706,8 +748,8 @@ export function getSettings(ns: NS): IGlobalSettings {
         debug: false,
         hackPercent: DEFAULT_TARGET_HACK_PERCENT,
         ramBuffer: DEFAULT_RAM_BUFFER,
-        expGain: false,
-        share: true
+        doExp: false,
+        doShare: true
     };
 
     let settingsPort = ns.getPortHandle(PORTS.settings);
@@ -737,7 +779,6 @@ export function setSettings(ns: NS, newSettings: IGlobalSettings): IGlobalSettin
     return updatedSettings;
 }
 
-
 export function readDebugMessage(ns: NS): IDebugMessage | undefined {
     let msg: IDebugMessage | undefined = undefined;
 
@@ -754,7 +795,6 @@ export function readDebugMessage(ns: NS): IDebugMessage | undefined {
 
     return msg;
 }
-
 
 export function writeDebugMessage(ns: NS, msg: IDebugMessage): any {
     let debugPort = ns.getPortHandle(PORTS.debug);
@@ -797,7 +837,6 @@ export function runReset(ns: NS, force: boolean): number {
     return procId;
 }
 
-
 export function runDonate(ns: NS, faction: string, amount: number) {
     let procId = -1;
 
@@ -808,5 +847,84 @@ export function runDonate(ns: NS, faction: string, amount: number) {
         procId = ns.exec(scriptName, runner, 1, faction, amount);
     }
     return procId;
+
+}
+
+export function getAllRamUsage(ns: NS): IRamUsage {
+    let batchScripts: string[] = [
+        SCRIPTS.batchWeaken,
+        SCRIPTS.batchGrow,
+        SCRIPTS.batchHack
+    ];
+
+    let prepScripts: string[] = [
+        SCRIPTS.grow,
+        SCRIPTS.hack,
+        SCRIPTS.weaken
+
+    ];
+    let shareScripts: string[] = [SCRIPTS.myShare];
+    let expScripts: string[] = [SCRIPTS.expGain];
+
+    let usage: IRamUsage = {
+        batchRam: 0,
+        expRam: 0,
+        prepRam: 0,
+        shareRam: 0,
+        totalMax: 0,
+        totalUsed: 0,
+        otherRam: 0,
+        otherNames: []
+    };
+
+    let runners = getAllRunnerNames(ns);
+
+    for (const runner of runners) {
+        let currRunnerMaxRam = ns.getServerMaxRam(runner);
+        let currRunnerUsedRam = 0;
+
+        let procs = ns.ps(runner);
+
+        procs.forEach(p => {
+            let ramUse = ns.getScriptRam(p.filename, runner) * p.threads;
+            currRunnerUsedRam += ramUse;
+
+            if (batchScripts.includes(p.filename)) {
+                usage.batchRam += ramUse;
+            } else if (expScripts.includes(p.filename)) {
+                usage.expRam += ramUse;
+            } else if (prepScripts.includes(p.filename)) {
+                usage.prepRam += ramUse;
+            } else if (shareScripts.includes(p.filename)) {
+                usage.shareRam += ramUse;
+            } else {
+                usage.otherRam += ramUse;
+                usage.otherNames.push(p.filename);
+            }
+
+        });
+
+        usage.totalMax += currRunnerMaxRam;
+        usage.totalUsed += currRunnerUsedRam;
+
+    }
+
+    return usage;
+}
+
+export function resizeScriptWindow(ns: NS, scriptName: string, args: any[], width: number, height: number) {
+
+    let windowTitle = `${scriptName} ${ns.args.join(' ')}`;
+
+    ns.print(`Resizing "${windowTitle}" to (${width},${height})`);
+
+    let tailWindowTitleEl: Element | null = document.querySelector(`h6[title="${windowTitle}"]`);
+
+    if (tailWindowTitleEl) {
+        let tailWindowTitleNode = tailWindowTitleEl.parentNode!;
+        let tailWindowContentsNode = tailWindowTitleNode.parentNode!.parentNode!.firstChild!.nextSibling!.firstChild! as HTMLElement;
+        tailWindowContentsNode.style.width = `${width}px`;
+        tailWindowContentsNode.style.height = `${height}px`;
+    }
 
 }

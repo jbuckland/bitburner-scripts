@@ -20,12 +20,12 @@ export async function main(ns: NS) {
 
             if (server.hasRoot) {
 
-                let numThreads = getThreadsAvailableForScript(ns, server.hostname, SCRIPTS.share);
+                let numThreads = getThreadsAvailableForScript(ns, server.hostname, SCRIPTS.myShare);
                 let threadsToRun = round(numThreads * SHARE_FRACTION);
 
                 if (threadsToRun > 0) {
                     totalThreads += threadsToRun;
-                    ns.exec(SCRIPTS.share, server.hostname, threadsToRun, getRandomId());
+                    ns.exec(SCRIPTS.myShare, server.hostname, threadsToRun, getRandomId());
                 }
 
             }

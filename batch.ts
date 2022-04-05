@@ -37,13 +37,12 @@ export async function main(ns: NS) {
     let DRY_RUN = flags.dryrun;
 
     do {
-        doBatch(ns, target);
+        await doBatch(ns, target);
         await ns.sleep(20);
         ns.print('');
     } while (LOOP);
 
 }
-
 
 export function makeBatchRequest(ns: NS, target: string): IBatchRequest {
     let TIME_GAP = 50;
@@ -75,7 +74,6 @@ export function makeBatchRequest(ns: NS, target: string): IBatchRequest {
 
     let totalRamNeeded = hackRamNeeded + weakenRamNeededFromHack + growRamNeeded + weakenRamNeededFromGrow;
 
-
     let hackTime = Math.ceil(ns.getHackTime(target));
     let weakenTime = Math.ceil(ns.getWeakenTime(target));
     let growTime = Math.ceil(ns.getGrowTime(target));
@@ -106,13 +104,12 @@ export function makeBatchRequest(ns: NS, target: string): IBatchRequest {
     return request;
 }
 
-export function doBatch(ns: NS, target: string, DRY_RUN: boolean = false): boolean {
+export async function doBatch(ns: NS, target: string, DRY_RUN: boolean = false): Promise<boolean> {
     let request = makeBatchRequest(ns, target);
     //return doBatchFromRequest(ns, request);
-    return doBatchFromRequestMultiRunner(ns, request);
+    return await doBatchFromRequestMultiRunner(ns, request);
 
 }
-
 
 interface IRunnerJob {
     runner: string;
@@ -120,7 +117,6 @@ interface IRunnerJob {
     threads: number,
     args: any[]
 }
-
 
 /**
  * Finds a list of runners than can run the script for the number of threads.
@@ -144,12 +140,9 @@ export function getRunnerJobsForScript(ns: NS, runnersList: RunnerInfo[], script
             let scriptRam = ns.getScriptRam(script, runner.hostname);
             let availableThreads = Math.floor(runner.freeRam / scriptRam);
 
-
             availableThreads = Math.max(availableThreads - 1, 0);//this is to compensate for what I assume is rounding error
 
-
             let threadsToRun = Math.min(numThreadsNeeded, availableThreads);
-
 
             if (threadsToRun > 0) {
                 let job: IRunnerJob = {
@@ -159,18 +152,18 @@ export function getRunnerJobsForScript(ns: NS, runnersList: RunnerInfo[], script
                     args: args
                 };
 
-                jobs.push(job)
+                jobs.push(job);
             }
 
             numThreadsNeeded -= threadsToRun;
-            runner.freeRam -= (threadsToRun * scriptRam)
+            runner.freeRam -= (threadsToRun * scriptRam);
 
             //if we used up all the available threads on this runner, remove it from the list
             if (availableThreads === threadsToRun) {
-                runnersList.shift()
+                runnersList.shift();
             }
         } else {
-            debugLog(ns, DebugLevel.error, `getRunnerJobsForScript(): Null runner from list!`)
+            debugLog(ns, DebugLevel.error, `getRunnerJobsForScript(): Null runner from list!`);
         }
     }
 
@@ -179,12 +172,10 @@ export function getRunnerJobsForScript(ns: NS, runnersList: RunnerInfo[], script
         jobs = undefined;
     }
 
-
     return jobs;
 }
 
-
-export function doBatchFromRequestMultiRunner(ns: NS, request: IBatchRequest, DRY_RUN: boolean = false): boolean {
+export async function doBatchFromRequestMultiRunner(ns: NS, request: IBatchRequest, DRY_RUN: boolean = false): Promise<boolean> {
     let success = true;
 
     //we know how many threads we need for each step,
@@ -192,7 +183,6 @@ export function doBatchFromRequestMultiRunner(ns: NS, request: IBatchRequest, DR
 
     let runners = getAllRunners(ns);
     let jobs: IRunnerJob[] = [];
-
 
     let batchPartParams = [
         {script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack},
@@ -203,10 +193,9 @@ export function doBatchFromRequestMultiRunner(ns: NS, request: IBatchRequest, DR
         },
         {script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow},
         {script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow}
-    ]
+    ];
 
-
-    batchPartParams.forEach(param => {
+    for (const param of batchPartParams) {
         if (success) {
             let taskJobs = getRunnerJobsForScript(ns, runners, param.script, param.threads, request.target, param.delay, request.batchId);
             if (taskJobs) {
@@ -218,10 +207,9 @@ export function doBatchFromRequestMultiRunner(ns: NS, request: IBatchRequest, DR
             }
         }
 
-    })
+    }
 
-
-    jobs.forEach(j => {
+    for (const j of jobs) {
         //debugLog(ns, DebugLevel.info, `Batch Job: '${j.scriptName}', t=${j.threads}, Runner:[${j.runner}] args:${j.args}`,)
 
         //do the job
@@ -233,7 +221,6 @@ export function doBatchFromRequestMultiRunner(ns: NS, request: IBatchRequest, DR
             procId = ns.exec(j.scriptName, j.runner, j.threads, ...j.args);
         }
 
-
         if (procId === 0) {
             success = false;
             debugLog(ns, DebugLevel.error, `Tried to run '${j.scriptName}' on [${j.runner}] t=${j.threads}, but failed!`);
@@ -241,15 +228,12 @@ export function doBatchFromRequestMultiRunner(ns: NS, request: IBatchRequest, DR
             let scriptRam = ns.getScriptRam(j.scriptName, j.runner);
             let availableThreads = Math.floor(getServerFreeRam(ns, j.runner) / scriptRam);
             debugLog(ns, DebugLevel.error, `[${j.runner}] had ${round(getServerFreeRam(ns, j.runner), 1)} free ram. Should have been able to run ${availableThreads} threads`);
-
-
         }
-    })
 
-
+    }
+    await ns.sleep(1);
     return success;
 }
-
 
 export function doBatchFromRequest(ns: NS, request: IBatchRequest, DRY_RUN: boolean = false): boolean {
 

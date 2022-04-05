@@ -15,7 +15,7 @@ export async function main(ns: NS) {
         SCRIPTS.hack,
         SCRIPTS.reset,
         SCRIPTS.weaken,
-
+        SCRIPTS.expGain,
 
         //these are utility files
         'share.js',
@@ -25,7 +25,6 @@ export async function main(ns: NS) {
     ];
 
     let flags = ns.flags([['force', false]]);
-
 
     for (let i = 0; i < getAllHosts(ns).length; i++) {
         let host = getAllHosts(ns)[i];

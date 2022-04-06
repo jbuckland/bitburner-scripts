@@ -1,6 +1,6 @@
-import {ICityFaction, ICompanyFaction, IControllerConfig, IDarkwebTool, IFaction, IHackFaction, IServerFaction} from './types';
+import { ICityFaction, ICompanyFaction, IControllerConfig, IDarkwebTool, IFaction, IHackFaction, IServerFaction } from './types';
 
-export const WORLD_DAEMON: IServerFaction = {name: 'w0r1d_d43m0n', hostname: 'w0r1d_d43m0n'};
+export const WORLD_DAEMON: IServerFaction = { name: 'w0r1d_d43m0n', hostname: 'w0r1d_d43m0n' };
 export const DEFAULT_RAM_BUFFER = 90;
 export const DEFAULT_TARGET_HACK_PERCENT = .1;
 export const HOME = 'home';
@@ -124,38 +124,43 @@ export enum TOAST_VARIANT {
 export const DARK_DATA = {
     torCost: 200000,
     tools: {
-        brute: {name: 'BruteSSH.exe', cost: 500000, createSkill: 50} as IDarkwebTool,
-        ftp: {name: 'FTPCrack.exe', cost: 1500000, createSkill: 100} as IDarkwebTool,
-        smtp: {name: 'relaySMTP.exe', cost: 5000000, createSkill: 250} as IDarkwebTool,
-        http: {name: 'HTTPWorm.exe', cost: 30000000, createSkill: 500} as IDarkwebTool,
-        scan1: {name: 'DeepscanV1.exe', cost: 500000, createSkill: 75} as IDarkwebTool,
-        scan2: {name: 'DeepscanV2.exe', cost: 25000000, createSkill: 400} as IDarkwebTool,
-        sql: {name: 'SQLInject.exe', cost: 250000000, createSkill: 750} as IDarkwebTool,
-        alink: {name: 'AutoLink.exe', cost: 1000000, createSkill: 25} as IDarkwebTool,
-        prof: {name: 'ServerProfiler.exe', cost: 500000, createSkill: 50} as IDarkwebTool
+        brute: { name: 'BruteSSH.exe', cost: 500000, createSkill: 50 } as IDarkwebTool,
+        ftp: { name: 'FTPCrack.exe', cost: 1500000, createSkill: 100 } as IDarkwebTool,
+        smtp: { name: 'relaySMTP.exe', cost: 5000000, createSkill: 250 } as IDarkwebTool,
+        http: { name: 'HTTPWorm.exe', cost: 30000000, createSkill: 500 } as IDarkwebTool,
+        scan1: { name: 'DeepscanV1.exe', cost: 500000, createSkill: 75 } as IDarkwebTool,
+        scan2: { name: 'DeepscanV2.exe', cost: 25000000, createSkill: 400 } as IDarkwebTool,
+        sql: { name: 'SQLInject.exe', cost: 250000000, createSkill: 750 } as IDarkwebTool,
+        alink: { name: 'AutoLink.exe', cost: 1000000, createSkill: 25 } as IDarkwebTool,
+        prof: { name: 'ServerProfiler.exe', cost: 500000, createSkill: 50 } as IDarkwebTool
 
     }
 };
 
 export const GANG_FACTIONS = {
-    snakes: {name: 'Slum Snakes'} as IFaction
+    snakes: { name: 'Slum Snakes' } as IFaction
 };
 
 export const HACK_FACTIONS = {
-    csec: {name: 'CyberSec', hostname: 'CSEC'} as IHackFaction,
-    nite: {name: 'NiteSec', hostname: 'avmnite-02h'} as IHackFaction,
-    blackHand: {name: 'The Black Hand', hostname: 'I.I.I.I'} as IHackFaction,
-    bitrunners: {name: 'BitRunners', hostname: 'run4theh111z'} as IHackFaction,
-    daedalus: {name: 'Daedalus', hostname: ''} as IHackFaction
+    csec: { name: 'CyberSec', hostname: 'CSEC' } as IHackFaction,
+    nite: { name: 'NiteSec', hostname: 'avmnite-02h' } as IHackFaction,
+    blackHand: { name: 'The Black Hand', hostname: 'I.I.I.I' } as IHackFaction,
+    bitrunners: { name: 'BitRunners', hostname: 'run4theh111z' } as IHackFaction,
+    daedalus: { name: 'Daedalus', hostname: '' } as IHackFaction
 };
 
+export enum CITIES {
+    aevum = 'Aevum',
+
+}
+
 export const CITY_FACTIONS = {
-    aevum: {name: 'Aevum', homeCity: 'Aevum'} as ICityFaction,
-    sec12: {name: 'Sector-12', homeCity: 'Sector-12'} as ICityFaction,
-    tian: {name: 'Tian Di Hui', homeCity: 'Chongqing'} as ICityFaction,
-    tokyo: {name: 'New Tokyo', homeCity: 'New Tokyo'} as ICityFaction,
-    vol: {name: 'Volhaven', homeCity: 'Volhaven'} as ICityFaction,
-    ishi: {name: 'Ishima', homeCity: 'Ishima'} as ICityFaction
+    aevum: { name: 'Aevum', homeCity: 'Aevum' } as ICityFaction,
+    sec12: { name: 'Sector-12', homeCity: 'Sector-12' } as ICityFaction,
+    tian: { name: 'Tian Di Hui', homeCity: 'Chongqing' } as ICityFaction,
+    tokyo: { name: 'New Tokyo', homeCity: 'New Tokyo' } as ICityFaction,
+    vol: { name: 'Volhaven', homeCity: 'Volhaven' } as ICityFaction,
+    ishi: { name: 'Ishima', homeCity: 'Ishima' } as ICityFaction
 
 };
 
@@ -230,6 +235,12 @@ export enum JOB_FIELDS {
 export enum WORK_TYPE {
     Faction = 'Working for Faction',
     Company = 'Working for Company'
+
+}
+
+export enum Materials {
+    food = 'Food',
+    water = 'Water',
 
 }
 
@@ -349,10 +360,10 @@ export enum SCRIPTS {
 }
 
 export const playerControllers: IControllerConfig[] = [
-    {scriptName: SCRIPTS.playerController0, sequenceNumber: 0, ramBuffer: 16, ramReq: 0},
-    {scriptName: SCRIPTS.playerController1, sequenceNumber: 1, ramBuffer: 32, ramReq: 0},
-    {scriptName: SCRIPTS.playerController2, sequenceNumber: 2, ramBuffer: 32, ramReq: 0},
-    {scriptName: SCRIPTS.playerController, sequenceNumber: 3, ramBuffer: 190, ramReq: 0}
+    { scriptName: SCRIPTS.playerController0, sequenceNumber: 0, ramBuffer: 16, ramReq: 0 },
+    { scriptName: SCRIPTS.playerController1, sequenceNumber: 1, ramBuffer: 32, ramReq: 0 },
+    { scriptName: SCRIPTS.playerController2, sequenceNumber: 2, ramBuffer: 32, ramReq: 0 },
+    { scriptName: SCRIPTS.playerController, sequenceNumber: 3, ramBuffer: 190, ramReq: 0 }
 ];
 
 export const OVERVIEW_EXTRA_0_ID = 'overview-extra-hook-0';
@@ -373,6 +384,7 @@ export const NON_HACKING_AUGMENTS = [
     'Nanofiber Weave',
     'NEMEAN Subdermal Weave', //def skill
     'NutriGen Implant',
+    'Speech Enhancement', //??
     'Speech Processor Implant', //cha skill
     'Synfibril Muscle', //str, def skill
     'Synthetic Heart', //str, agi skill

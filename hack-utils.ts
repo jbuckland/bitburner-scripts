@@ -1,18 +1,11 @@
-import {ITargetWorkInfo, TaskType, ThreadInfo} from './types';
+import { doBatchFromRequest, makeBatchRequest } from './batch';
+import { DebugLevel, SCRIPTS } from './consts';
+import { NS } from './NetscriptDefinitions';
+import { ITargetWorkInfo, TaskType, ThreadInfo } from './types';
 import {
-    debugLog,
-    getAllRamUsage,
-    getFirstAvailableRunnerForScript,
-    getRandomId,
-    getThreadsAvailableForScript,
-    runHack,
-    timerEnd,
-    timerStart
+    debugLog, getAllRamUsage, getFirstAvailableRunnerForScript, getRandomId, getThreadsAvailableForScript, runHack, timerEnd, timerStart, timestamp
 } from './utils';
-import {DebugLevel, SCRIPTS} from './consts';
-import {NS} from './NetscriptDefinitions';
-import {isReadyForBatch} from './utils-controller';
-import {doBatchFromRequest, makeBatchRequest} from './batch';
+import { isReadyForBatch } from './utils-controller';
 
 export async function doBatches(ns: NS, targetWork: ITargetWorkInfo[]): Promise<number> {
     let readyForBatchCount = 0;
@@ -44,7 +37,7 @@ export async function doBatches(ns: NS, targetWork: ITargetWorkInfo[]): Promise<
 export function singleHack(ns: NS, target: string) {
     let runner = getFirstAvailableRunnerForScript(ns, SCRIPTS.hack);
     if (runner) {
-        debugLog(ns, DebugLevel.info, `Hacking [${target}]!`);
+        ns.print(`${timestamp()}Hacking [${target}]!`);
         runHack(ns, runner, target, 1);
     } else {
         debugLog(ns, DebugLevel.warn, `Undefined runner!`);

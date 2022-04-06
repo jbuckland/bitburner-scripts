@@ -1,7 +1,7 @@
-import {NS} from './NetscriptDefinitions';
-import {round, setSettings, timestamp} from './utils';
+import { NS } from './NetscriptDefinitions';
+import { formatBigNumber, round, setSettings, timestamp } from './utils';
 import {
-    buyDarkwebTools,
+    buyDarkwebTools, displayHacknetInfo,
     displayHomeUpgradeInfo,
     displayIncomeStats,
     displayNextDarkwebTool,
@@ -18,7 +18,7 @@ export async function main(ns: NS) {
     ns.disableLog('ALL');
     ns.tail();
 
-    setSettings(ns, {hackPercent: 0.002});
+    setSettings(ns, { hackPercent: 0.002 });
 
     while (true) {
         ns.clearLog();
@@ -29,7 +29,6 @@ export async function main(ns: NS) {
         buyDarkwebTools(ns); //+65.9
         await installBackdoors(ns); //+3.8
         upgradeHomeComputer(ns); //+146.5
-
 
         tryPurchaseServer(ns, COST_MULTIPLIER_BEFORE_BUYING); //+9.1
 
@@ -44,6 +43,7 @@ export async function main(ns: NS) {
         displayServerStats(ns, COST_MULTIPLIER_BEFORE_BUYING);
         displayNextDarkwebTool(ns);
         displayHomeUpgradeInfo(ns);
+        displayHacknetInfo(ns);
 
         let shareBonus = (ns.getSharePower() - 1) * 100;
         ns.print(`Share Bonus: +${round(shareBonus, 2)}%`);
@@ -53,3 +53,4 @@ export async function main(ns: NS) {
 
     }
 }
+

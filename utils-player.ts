@@ -21,8 +21,8 @@ import {
     WORK_TYPE,
     WORLD_DAEMON
 } from './consts';
-import {NS, Player} from './NetscriptDefinitions';
-import {ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer} from './types';
+import { NS, Player } from './NetscriptDefinitions';
+import { ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer } from './types';
 import {
     debug,
     debugLog,
@@ -40,13 +40,13 @@ import {
     round,
     setSettings
 } from './utils';
-import {ITableData, Table} from './utils-table';
+import { ITableData, Table } from './utils-table';
 
 export async function leaveTheCave(ns: NS) {
     let player = ns.getPlayer();
     if (hasRedPillInstalled(ns)) {
 
-        setSettings(ns, {doShare: false, doExp: true});
+        setSettings(ns, { doShare: false, doExp: true });
 
         let server = ns.getServer(WORLD_DAEMON.hostname);
         if (server.hasAdminRights && server.requiredHackingSkill < player.hacking) {
@@ -114,18 +114,36 @@ export function buyDarkwebTools(ns: NS) {
 
     if (player.tor) {
         let playersTools = getPlayerTools(ns);
-        if (!playersTools.brute) playersTools.brute = purchaseProgram(ns, player, DARK_DATA.tools.brute);
-        if (!playersTools.ftp) playersTools.ftp = purchaseProgram(ns, player, DARK_DATA.tools.ftp);
-        if (!playersTools.smtp) playersTools.smtp = purchaseProgram(ns, player, DARK_DATA.tools.smtp);
-        if (!playersTools.http) playersTools.http = purchaseProgram(ns, player, DARK_DATA.tools.http);
-        if (!playersTools.sql) playersTools.sql = purchaseProgram(ns, player, DARK_DATA.tools.sql);
+        if (!playersTools.brute) {
+            playersTools.brute = purchaseProgram(ns, player, DARK_DATA.tools.brute);
+        }
+        if (!playersTools.ftp) {
+            playersTools.ftp = purchaseProgram(ns, player, DARK_DATA.tools.ftp);
+        }
+        if (!playersTools.smtp) {
+            playersTools.smtp = purchaseProgram(ns, player, DARK_DATA.tools.smtp);
+        }
+        if (!playersTools.http) {
+            playersTools.http = purchaseProgram(ns, player, DARK_DATA.tools.http);
+        }
+        if (!playersTools.sql) {
+            playersTools.sql = purchaseProgram(ns, player, DARK_DATA.tools.sql);
+        }
 
         //only buy these if we already have sql
         if (playersTools.sql) {
-            if (!playersTools.alink) playersTools.alink = purchaseProgram(ns, player, DARK_DATA.tools.alink);
-            if (!playersTools.scan1) playersTools.scan1 = purchaseProgram(ns, player, DARK_DATA.tools.scan1);
-            if (!playersTools.scan2) playersTools.scan2 = purchaseProgram(ns, player, DARK_DATA.tools.scan2);
-            if (!playersTools.prof) playersTools.prof = purchaseProgram(ns, player, DARK_DATA.tools.prof);
+            if (!playersTools.alink) {
+                playersTools.alink = purchaseProgram(ns, player, DARK_DATA.tools.alink);
+            }
+            if (!playersTools.scan1) {
+                playersTools.scan1 = purchaseProgram(ns, player, DARK_DATA.tools.scan1);
+            }
+            if (!playersTools.scan2) {
+                playersTools.scan2 = purchaseProgram(ns, player, DARK_DATA.tools.scan2);
+            }
+            if (!playersTools.prof) {
+                playersTools.prof = purchaseProgram(ns, player, DARK_DATA.tools.prof);
+            }
 
         }
 
@@ -710,7 +728,7 @@ export function tryPurchaseServer(ns: NS, costMultiplierBeforeBuying: number) {
         aServerNeedsUpgraded = smallestServer && smallestServer.maxRam < MAX_HOME_SERVER_RAM;
     }
 
-    debug(ns, 'tryPurchaseServer()', {nextRamSize, serverCost, playerHasEnoughMoney, homeServersFull, smallestServer});
+    debug(ns, 'tryPurchaseServer()', { nextRamSize, serverCost, playerHasEnoughMoney, homeServersFull, smallestServer });
     if (playerHasEnoughMoney) {
         if (homeServersFull && smallestServer && aServerNeedsUpgraded) {
             //delete
@@ -742,7 +760,7 @@ export function getHomeServers(ns: NS): HomeServer[] {
         const serverName = homeServersNames[i];
         const serverRam = ns.getServerMaxRam(serverName);
 
-        homeServers.push({hostname: serverName, maxRam: serverRam});
+        homeServers.push({ hostname: serverName, maxRam: serverRam });
     }
 
     return homeServers;
@@ -1113,7 +1131,7 @@ export function displayNextDarkwebTool(ns: NS) {
         let etaTime = new Date();
         let estTimeLeft = (remainingCost / incomePerSec) * 1000;
         etaTime.setTime(new Date().getTime() + estTimeLeft);
-        let etaString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
+        let etaString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
         ns.print(`Next Darkweb tool: '${nextTool.name}'`);
         ns.print(`${INDENT_STRING} Cost: \$${formatBigNumber(nextTool.cost)}, +\$${formatBigNumber(remainingCost)}`);
@@ -1183,7 +1201,7 @@ function makeRepCostTimeString(ns: NS, totalCost: number, remainingCost: number)
     let etaTime = new Date();
     let estTimeLeft = (remainingCost / incomePerSec) * 1000;
     etaTime.setTime(new Date().getTime() + estTimeLeft);
-    let etaDurationString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
+    let etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
     let repCostString = `${formatBigNumber(totalCost)}`;
     let remainingCostString = `+${formatBigNumber(remainingCost)}`;
@@ -1206,7 +1224,7 @@ function makeMoneyCostTimeString(ns: NS, itemCost: number): string {
         let etaTime = new Date();
         let estTimeLeft = (remainingCost / incomePerSec) * 1000;
         etaTime.setTime(new Date().getTime() + estTimeLeft);
-        etaDurationString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
+        etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
         timeLeftString = formatBigTime(estTimeLeft).padStart(5);
     }
 
@@ -1223,6 +1241,24 @@ export function displayHomeUpgradeInfo(ns: NS) {
     ns.print(`${INDENT_STRING}Ram: ${makeMoneyCostTimeString(ns, ns.getUpgradeHomeRamCost())}`);
     ns.print(`${INDENT_STRING}Cores: \$${homeCoreCost}`);
     ns.print('');
+
+}
+
+export function displayHacknetInfo(ns: NS) {
+    let numNodes = ns.hacknet.numNodes();
+
+    if (numNodes > 0) {
+        let totalHashGain = 0;
+        for (let i = 0; i < numNodes; i++) {
+            let nodeInfo = ns.hacknet.getNodeStats(i);
+            totalHashGain += nodeInfo.production;
+        }
+
+        ns.print(`Hacknet:`);
+        ns.print(`${INDENT_STRING}Hashes: ${round(ns.hacknet.numHashes(), 2)}`);
+        ns.print(`${INDENT_STRING}Hash Gain: ${round(totalHashGain, 3)}/s, \$${formatBigNumber(totalHashGain * 250000)}/s`);
+        ns.print('');
+    }
 
 }
 

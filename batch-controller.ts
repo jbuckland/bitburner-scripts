@@ -1,10 +1,10 @@
-import {NS} from './NetscriptDefinitions';
-import {getAllTargetWorkInfo, isReadyForBatch} from './utils-controller';
-import {getAllRamUsage, getSettings, round, setSettings, timestamp} from './utils';
-import {singleHack} from './hack-utils';
-import {ITargetWorkInfo} from './types';
-import {doBatchFromRequestMultiRunner, makeBatchRequest} from './batch';
-import {INDENT_STRING} from './consts';
+import { doBatchFromRequestMultiRunner, makeBatchRequest } from './batch';
+import { INDENT_STRING } from './consts';
+import { singleHack } from './hack-utils';
+import { NS } from './NetscriptDefinitions';
+import { ITargetWorkInfo } from './types';
+import { getAllRamUsage, getSettings, round, setSettings, timestamp } from './utils';
+import { getAllTargetWorkInfo, isReadyForBatch } from './utils-controller';
 
 export async function main(ns: NS) {
     let cont = new BatchController(ns);
@@ -47,7 +47,7 @@ export class BatchController {
                         newHackPercent = Math.max(round(newHackPercent, 3), this.HACK_PCT_MIN);
 
                         if (newHackPercent !== settings.hackPercent) {
-                            setSettings(this.ns, {hackPercent: newHackPercent});
+                            setSettings(this.ns, { hackPercent: newHackPercent });
                             this.ns.print(`${timestamp()} Lowering 'hackPercent' to ${newHackPercent}`);
                         }
                     } else if (batchSuccesses >= workReadyForBatch.length) {
@@ -57,13 +57,14 @@ export class BatchController {
                         newHackPercent = Math.max(round(newHackPercent, 3), this.HACK_PCT_MIN);
 
                         if (newHackPercent !== settings.hackPercent) {
-                            setSettings(this.ns, {hackPercent: newHackPercent});
+                            setSettings(this.ns, { hackPercent: newHackPercent });
                             this.ns.print(`${timestamp()} Raising 'hackPercent' to ${newHackPercent}`);
                         }
 
                     }
 
                 } else {
+                    this.ns.print(`${timestamp()}No targets are ready for batches!`);
                     let minHackTarget = targetWorkInfos.find(w => !isReadyForBatch(w));
                     if (minHackTarget) {
                         singleHack(this.ns, minHackTarget.target.hostname);

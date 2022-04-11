@@ -1,27 +1,37 @@
-import {AutocompleteData, NS} from './NetscriptDefinitions';
-import {getSettings, setSettings, timestamp} from './utils';
-import {FlagSchema} from './types';
+import { CrimeMode, HacknetMode } from './consts';
+import { AutocompleteData, NS } from './NetscriptDefinitions';
+import { FlagSchema } from './types';
+import { getSettings, setSettings, timestamp } from './utils';
 
 let SLEEP_TIME = 1000;
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
+    console.log(`autocomplete()`, args);
     data.flags(flagSchema);
+    let flagOptions: string[] = [];
+    if (args && args.length >= 0) {
+        if (args[0] === '--crimeMode') {
+            flagOptions = Object.values(CrimeMode);
+        } else if (args[0] === '--hacknetMode') {
+            flagOptions = Object.values(HacknetMode);
+        }
+    }
+
     return [
+        ...flagOptions
         //...data.servers,
         //...data.scripts,
-        //...data.txts,
+        //...data.txts
     ]; //return what you want to have in autocomplete
 }
 
 const flagSchema: FlagSchema = [
-    ['watch', false],
-    ['clearAll', false],
-
+    ['crimeMode', ''],
     ['debug', ''],
     ['hackPercent', -1],
-    ['ramBuffer', -1],
-    ['doShare', ''],
-    ['doExp', '']
+    ['hacknetMode', ''],
+    ['maxHashCostBen', -1],
+    ['ramBuffer', -1]
 
 ];
 
@@ -41,29 +51,34 @@ export async function main(ns: NS) {
 
     ns.tprint(`flags:`, flags);
 
+    let maxHashCostBen = parseFloat(flags.maxHashCostBen);
+    if (maxHashCostBen > 0) {
+        setSettings(ns, { maxHashCostBen: maxHashCostBen });
+    }
+
+    let hacknetMode = flags.hacknetMode as HacknetMode;
+    if (hacknetMode != undefined && hacknetMode.length > 0) {
+        setSettings(ns, { hacknetMode: hacknetMode });
+    }
+
+    let crimeMode = flags.crimeMode as CrimeMode;
+    if (crimeMode != undefined && crimeMode.length > 0) {
+        setSettings(ns, { crimeMode: crimeMode });
+    }
+
     let debugValue = convertBool(flags.debug);
     if (debugValue != undefined) {
-        setSettings(ns, {debug: debugValue});
-    }
-
-    let shareValue = convertBool(flags.doShare);
-    if (shareValue != undefined) {
-        setSettings(ns, {doShare: shareValue});
-    }
-
-    let expGainValue = convertBool(flags.doExp);
-    if (expGainValue != undefined) {
-        setSettings(ns, {doExp: expGainValue});
+        setSettings(ns, { debug: debugValue });
     }
 
     let value = parseFloat(flags.hackPercent);
     if (value > 0) {
-        setSettings(ns, {hackPercent: value});
+        setSettings(ns, { hackPercent: value });
     }
 
     value = parseFloat(flags.ramBuffer);
     if (value > 0) {
-        setSettings(ns, {ramBuffer: value});
+        setSettings(ns, { ramBuffer: value });
     }
 
     if (watch) {
@@ -83,7 +98,14 @@ export async function main(ns: NS) {
     } else {
         //default is to print settings to console
         let currSettings = getSettings(ns);
-        ns.tprint(`\nGlobal Settings:\n`, JSON.stringify(currSettings, null, 4));
+        let replacer = (key: string, value: any) => {
+            if (key === 'maxHashCostBen') {
+                return value.toExponential(); //formatBigNumber(value);
+            } else {
+                return value;
+            }
+        };
+        ns.tprint(`\nGlobal Settings:\n`, JSON.stringify(currSettings, replacer, 4));
 
     }
 

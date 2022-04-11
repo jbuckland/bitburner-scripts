@@ -1,30 +1,45 @@
-import {IControllerConfig} from './types';
-import {GangTaskStats} from './NetscriptDefinitions';
-import {SCRIPTS} from './consts';
+import { SCRIPTS } from './consts';
+import { GangTaskStats } from './NetscriptDefinitions';
+import { IControllerConfig } from './types';
 
 export enum GYMS {
     powerhouse = 'powerhouse gym'
 }
 
 export const crimes = {
-    shoplift: {name: 'shoplift', time: 3, money: 15000, moneyRate: 5000, moneyRatio: 1, karma: 0.05, karmaRate: 0.0167},
-    rob: {name: 'rob store', time: 60, money: 400000, moneyRate: 6666.666, moneyRatio: 1.333, karma: 0.5, karmaRate: 0.00833},
-    larceny: {name: 'larceny', time: 90, money: 800000, moneyRate: 8888.888, moneyRatio: 1.777, karma: 1.5, karmaRate: 0.0167},
-    mug: {name: 'mug', time: 4, money: 36000, moneyRate: 9000, moneyRatio: 1.8, karma: 0.25, karmaRate: 0.0625},
-    drugs: {name: 'deal drugs', time: 10, money: 120000, moneyRate: 12000, moneyRatio: 2.4, karma: 0.5, karmaRate: 0.05},
-    arms: {name: 'traffick illegal arms', time: 40, money: 600000, moneyRate: 15000, moneyRatio: 3, karma: 1, karmaRate: 0.025},
-    homicide: {name: 'homicide', time: 3, money: 45000, moneyRate: 15000, moneyRatio: 3, karma: 3, karmaRate: 1},//worse for stat gain than mug. Should have at least 60% success rate
-    bond: {name: 'bond forgery', time: 300, money: 4500000, moneyRate: 15000, moneyRatio: 3, karma: 0.1, karmaRate: .000333},
-    gta: {name: 'grand theft auto', time: 80, money: 1600000, moneyRate: 20000, moneyRatio: 4, karma: 5, karmaRate: 0.0625},
-    kidnap: {name: 'kidnap and ransom', time: 120, money: 3600000, moneyRate: 30000, moneyRatio: 6, karma: 6, karmaRate: 0.05},
-    assassin: {name: 'assassinate', time: 300, money: 12000000, moneyRate: 40000, moneyRatio: 8, karma: 10, karmaRate: 0.0333},
-    heist: {name: 'heist', time: 600, money: 120000000, moneyRate: 200000, moneyRatio: 40, karma: 15, karmaRate: 0.067}
+    shoplift: { name: 'shoplift', time: 3, money: 15000, moneyRate: 5000, moneyRatio: 1, karma: 0.05, karmaRate: 0.0167 },
+    rob: { name: 'rob store', time: 60, money: 400000, moneyRate: 6666.666, moneyRatio: 1.333, karma: 0.5, karmaRate: 0.00833 },
+    larceny: { name: 'larceny', time: 90, money: 800000, moneyRate: 8888.888, moneyRatio: 1.777, karma: 1.5, karmaRate: 0.0167 },
+    mug: { name: 'mug', time: 4, money: 36000, moneyRate: 9000, moneyRatio: 1.8, karma: 0.25, karmaRate: 0.0625 },
+    drugs: { name: 'deal drugs', time: 10, money: 120000, moneyRate: 12000, moneyRatio: 2.4, karma: 0.5, karmaRate: 0.05 },
+    arms: { name: 'traffick illegal arms', time: 40, money: 600000, moneyRate: 15000, moneyRatio: 3, karma: 1, karmaRate: 0.025 },
+    homicide: {
+        name: 'homicide',
+        time: 3,
+        money: 45000,
+        moneyRate: 15000,
+        moneyRatio: 3,
+        karma: 3,
+        karmaRate: 1,
+        hackWeight: 0,
+        strWeight: 2,
+        defWeight: 2,
+        dexWeight: 0.5,
+        agiWeight: 0.5,
+        chaWeight: 0
+    },//worse for stat gain than mug. Should have at least 60% success rate
+
+    bond: { name: 'bond forgery', time: 300, money: 4500000, moneyRate: 15000, moneyRatio: 3, karma: 0.1, karmaRate: .000333 },
+    gta: { name: 'grand theft auto', time: 80, money: 1600000, moneyRate: 20000, moneyRatio: 4, karma: 5, karmaRate: 0.0625 },
+    kidnap: { name: 'kidnap and ransom', time: 120, money: 3600000, moneyRate: 30000, moneyRatio: 6, karma: 6, karmaRate: 0.05 },
+    assassin: { name: 'assassinate', time: 300, money: 12000000, moneyRate: 40000, moneyRatio: 8, karma: 10, karmaRate: 0.0333 },
+    heist: { name: 'heist', time: 600, money: 120000000, moneyRate: 200000, moneyRatio: 40, karma: 15, karmaRate: 0.067 }
 
 };
 
 export const crimeControllers: IControllerConfig[] = [
-    {scriptName: SCRIPTS.crimeController0, sequenceNumber: 0, ramBuffer: 0, ramReq: 0},
-    {scriptName: 'crime_service1.js', sequenceNumber: 1, ramBuffer: 0, ramReq: 0}
+    { scriptName: SCRIPTS.crimeController0, sequenceNumber: 0, ramBuffer: 0, ramReq: 0 },
+    { scriptName: 'crime_service1.js', sequenceNumber: 1, ramBuffer: 0, ramReq: 0 }
 ];
 
 export enum PLAYER_STATS {
@@ -51,7 +66,7 @@ export enum GANG_TASK {
     strongarm = 'Strongarm Civilians',
     con = 'Run a Con',
     robbery = 'Armed Robbery',
-    traffickArms = 'Traffick Illegal Arms',
+    arms = 'Traffick Illegal Arms',
     blackmail = 'Threaten & Blackmail',
     trafficking = 'Human Trafficking',
     terrorism = 'Terrorism',
@@ -89,7 +104,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 0,
         'chaWeight': 0,
         'difficulty': 1,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     }, {
         'name': 'Mug People',
         'desc': 'Assign this gang member to mug random people on the streets<br><br>Earns money - Slightly increases respect - Very slightly increases wanted level',
@@ -105,7 +120,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 10,
         'chaWeight': 15,
         'difficulty': 1,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     },
     {
         'name': 'Vigilante Justice',
@@ -122,7 +137,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 20,
         'chaWeight': 0,
         'difficulty': 1,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 0.9}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 0.9 }
     },
     {
         'name': 'Deal Drugs',
@@ -139,7 +154,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 20,
         'chaWeight': 60,
         'difficulty': 3.5,
-        'territory': {'money': 1.2, 'respect': 1, 'wanted': 1.15}
+        'territory': { 'money': 1.2, 'respect': 1, 'wanted': 1.15 }
     },
     {
         'name': 'Strongarm Civilians',
@@ -156,7 +171,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 10,
         'chaWeight': 10,
         'difficulty': 5,
-        'territory': {'money': 1.6, 'respect': 1.1, 'wanted': 1.5}
+        'territory': { 'money': 1.6, 'respect': 1.1, 'wanted': 1.5 }
     },
     {
         'name': 'Territory Warfare',
@@ -173,7 +188,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 20,
         'chaWeight': 5,
         'difficulty': 5,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     },
 
     {
@@ -191,7 +206,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 25,
         'chaWeight': 40,
         'difficulty': 14,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     },
     {
         'name': 'Armed Robbery',
@@ -211,7 +226,7 @@ export const GangTasks: GangTaskStats[] = [
         'chaWeight': 20,
 
         'difficulty': 20,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     },
     {
         'name': 'Threaten & Blackmail',
@@ -225,7 +240,7 @@ export const GangTasks: GangTaskStats[] = [
         'strWeight': 25, 'defWeight': 0, 'dexWeight': 25, 'agiWeight': 0,
         'chaWeight': 25,
         'difficulty': 28,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     },
     {
         'name': 'Traffick Illegal Arms',
@@ -242,7 +257,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 0,
         'chaWeight': 25,
         'difficulty': 32,
-        'territory': {'money': 1.4, 'respect': 1.3, 'wanted': 1.25}
+        'territory': { 'money': 1.4, 'respect': 1.3, 'wanted': 1.25 }
     },
     {
         'name': 'Human Trafficking',
@@ -259,7 +274,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 0,
         'chaWeight': 30,
         'difficulty': 36,
-        'territory': {'money': 1.5, 'respect': 1.5, 'wanted': 1.6}
+        'territory': { 'money': 1.5, 'respect': 1.5, 'wanted': 1.6 }
     },
     {
         'name': 'Terrorism',
@@ -276,7 +291,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 0,
         'chaWeight': 20,
         'difficulty': 36,
-        'territory': {'money': 1, 'respect': 2, 'wanted': 2}
+        'territory': { 'money': 1, 'respect': 2, 'wanted': 2 }
     },
 
     {
@@ -294,7 +309,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 0,
         'chaWeight': 0,
         'difficulty': 45,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     },
     {
         'name': 'Train Combat',
@@ -311,7 +326,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 25,
         'chaWeight': 0,
         'difficulty': 100,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     },
     {
         'name': 'Train Charisma',
@@ -328,7 +343,7 @@ export const GangTasks: GangTaskStats[] = [
         'agiWeight': 0,
         'chaWeight': 100,
         'difficulty': 8,
-        'territory': {'money': 1, 'respect': 1, 'wanted': 1}
+        'territory': { 'money': 1, 'respect': 1, 'wanted': 1 }
     }
 ];
 

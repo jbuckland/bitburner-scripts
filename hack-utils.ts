@@ -78,7 +78,7 @@ export function prepAllTargets(ns: NS, targetWork: ITargetWorkInfo[], ramPercent
 
     }
 
-    ns.print(`Prep threads started: W:${weakenThreadsStarted}, G:${growThreadsStarted}`);
+    ns.print(`${timestamp()}Prep threads started: W:${weakenThreadsStarted}, G:${growThreadsStarted}`);
     //console.profileEnd('prepTargets()');
     timerEnd(ns, 'prepTargets()');
 }

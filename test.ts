@@ -1,32 +1,36 @@
-import {NS} from './NetscriptDefinitions';
-import {INetscriptExtra} from './types';
+import { crimes } from './crime_consts';
+import { NS } from './NetscriptDefinitions';
+import { INetscriptExtra } from './types';
 
 export async function main(ns: NS & INetscriptExtra) {
     ns.tail();
 
-    ns.disableLog('ALL');
+    //ns.disableLog('ALL');
     ns.clearLog();
     let player = ns.getPlayer();
 
-    /*
+    /*  let targets = getAllTargetInfo(ns);
 
-        let hackSkillRequired = ns.getServerRequiredHackingLevel(WORLD_DAEMON.hostname);
-        let remainingHackSkill = hackSkillRequired - player.hacking;
+      type foo = ServerInfo & { hackExp: number }
 
-        let expNeeded = ns.formulas.skills.calculateExp(hackSkillRequired, player.hacking_exp_mult);
-        let currExp = player.hacking_exp;
+      let updatedTargets: foo[] = targets.map(t => {
+              let server = ns.getServer(t.hostname);
+              return {
+                  ...t,
+                  hackExp: ns.formulas.hacking.hackExp(server, player)
+              };
+          }
+      );
+      updatedTargets = updatedTargets.filter(t => t.reqHackSkill <= player.hacking);
 
-        ns.print(`${INDENT_STRING}[${WORLD_DAEMON.hostname}] Hack Skill Req.: ${hackSkillRequired}, Current: ${player.hacking}, Remaining: ${remainingHackSkill}`);
-        ns.print(`${INDENT_STRING}EXP Needed: ${formatBigNumber(expNeeded)}, Current EXP: ${formatBigNumber(currExp)}`);
+      updatedTargets.sort((a, b) => b.growthParam - a.growthParam);
 
-        ns.print(JSON.stringify(player, null, 4));
-    */
+      updatedTargets.forEach(t => {
+          ns.print(`${t.hostname}, growthP: ${t.growthParam}, reqHackSkill: ${t.reqHackSkill}, hackExp: ${t.hackExp}`);
+      });
 
-    player.
-
-    let warehouse = ns.corporation.getWarehouse('Software', 'Sector-12');
-
-    ns.print(warehouse);
+  */
+    ns.print(JSON.stringify(ns.getCrimeStats(crimes.homicide.name), null, 4));
 
 }
 

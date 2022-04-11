@@ -1,13 +1,8 @@
-import {GANG_TASK, GYMS, PLAYER_STATS} from './crime_consts';
-import {GangMemberInfo, GangOtherInfoObject, GangTaskStats, NS} from './NetscriptDefinitions';
-import {OtherGangInfo} from './types';
+import { CYCLES_PER_SECOND } from './consts';
+import { GANG_TASK, GYMS, PLAYER_STATS } from './crime_consts';
+import { GangMemberInfo, GangOtherInfoObject, GangTaskStats, NS } from './NetscriptDefinitions';
+import { OtherGangInfo } from './types';
 
-export function trainStat(ns: NS, stat: PLAYER_STATS) {
-    if (ns.isBusy()) {
-        ns.gymWorkout(GYMS.powerhouse, PLAYER_STATS.dex);
-
-    }
-}
 
 export function getAllMembers(ns: NS): GangMemberInfo[] {
     let memberNames = ns.gang.getMemberNames();
@@ -36,6 +31,8 @@ export function getMemberAvgCombatSkill(member: GangMemberInfo) {
     return avgCombatSkill;
 }
 
+
+
 export function getOtherGangsInfo(ns: NS): OtherGangInfo[] {
 
     //them/us gives lose chance
@@ -50,10 +47,55 @@ export function getOtherGangsInfo(ns: NS): OtherGangInfo[] {
         return {
             ...gang,
             name: e[0],
-            winChance: 1 - (gang.power / us.power)
+            winChance: (us.power / (gang.power + us.power)) ?? 0
         };
     });
     otherGangsInfo = otherGangsInfo.filter(g => g.name !== us.faction);
 
     return otherGangsInfo;
+}
+
+// Cost of upgrade gets cheaper as gang increases in respect + power
+export function getGangDiscountMult(ns: NS): number {
+    let info = ns.gang.getGangInformation();
+    const power = info.power;
+    const respect = info.respect;
+
+    const respectLinearFac = 5e6;
+    const powerLinearFac = 1e6;
+
+    const discount = Math.pow(respect, 0.01) + respect / respectLinearFac + Math.pow(power, 0.01) + power / powerLinearFac - 1;
+    return (1 / Math.max(1, discount));
+}
+
+export function getGangIncome(ns: NS) {
+    if (ns.gang.inGang()) {
+        return ns.gang.getGangInformation().moneyGainRate * CYCLES_PER_SECOND;
+    } else {
+        return 0;
+    }
+
+}
+
+export function myGetScriptIncome(ns: NS) {
+    let scriptMoney = ns.getScriptIncome();
+    return scriptMoney[0];
+
+}
+
+export function getHacknetIncome(ns: NS) {
+    let numHacknetNodes = ns.hacknet.numNodes();
+    let totalHashGain = 0;
+    for (let i = 0; i < numHacknetNodes; i++) {
+        let nodeInfo = ns.hacknet.getNodeStats(i);
+        totalHashGain += nodeInfo.production;
+    }
+    let hacknetMoneyIncome = (totalHashGain / 4) * 1e6;
+    return hacknetMoneyIncome;
+
+}
+
+export function getTotalIncome(ns: NS): number {
+    return getGangIncome(ns) + myGetScriptIncome(ns) + getHacknetIncome(ns);
+
 }

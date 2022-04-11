@@ -1,29 +1,28 @@
-import {DebugLevel, playerControllers, SCRIPTS} from './consts';
-import {NS} from './NetscriptDefinitions';
-import {IRamUsageSettings, ITargetWorkInfo, TaskType} from './types';
+import { DebugLevel, playerControllers, SCRIPTS } from './consts';
+import { crimeControllers } from './crime_consts';
+import { prepAllTargets, singleHack, useAvailableRunnersForWork } from './hack-utils';
+import { NS } from './NetscriptDefinitions';
+import { IRamUsageSettings, ITargetWorkInfo, TaskType } from './types';
 import {
     debugLog,
     formatBigNumber,
     formatBigRam,
+    formatPercent,
     getAllRamUsage,
     getAllRunnerNames,
     getFirstAvailableRunnerForScript,
-    getPlayerTools,
     getRandomId,
     getThreadsAvailableForScript,
     setSettings,
-    timerEnd,
-    timerStart,
     timestamp
 } from './utils';
-import {getAllTargetWorkInfo, isReadyForBatch, startBestController} from './utils-controller';
-import {crimeControllers} from './crime_consts';
-import {prepAllTargets, singleHack} from './hack-utils';
+import { getAllTargetWorkInfo, isReadyForBatch, startBestController } from './utils-controller';
 
-const SLEEP_TIME = 1000;
+const SLEEP_TIME = 100;
 const FRACTION_TO_USE_FOR_SHARE = 0.99;
 const FRACTION_TO_USE_FOR_EXTRA_EXP = .99;
-const EXP_TARGET = 'neo-net';
+//const EXP_TARGET = 'neo-net';
+const EXP_TARGET = 'joesguns';
 //'silver-helix';
 /*
 'silver-helix';
@@ -31,7 +30,7 @@ const EXP_TARGET = 'neo-net';
 'crush-fitness';
 */
 
-const ramPercentSettings: IRamUsageSettings = {batchPct: 0, prepPct: 0, sharePct: 0, expPct: 0};
+const ramPercentSettings: IRamUsageSettings = { batchPct: 0, prepPct: 0, sharePct: 0, expPct: 0 };
 
 export async function main(ns: NS) {
 
@@ -40,36 +39,36 @@ export async function main(ns: NS) {
     runInitialScripts();
     await ns.sleep(1000);
 
-    setSettings(ns, {hackPercent: 0.5, ramBuffer: 64});
+    setSettings(ns, { hackPercent: 0.5, ramBuffer: 64 });
+    adjustRamPercents();
+    let prepPercent = ramPercentSettings.prepPct;
 
     while (true) {
-        timerStart(ns, 'hack-controller main');
         ns.print('');
 
-        timerStart(ns, 'hack-controller start');
         startBestController(ns, playerControllers);
         if (ns.gang.inGang()) {
             startBestController(ns, crimeControllers);
         }
 
         let targetWorkInfos = getAllTargetWorkInfo(ns);
-        setDefaultRamPercents();
         adjustRamPercents();
-        timerEnd(ns, 'hack-controller start');
-
         if (targetWorkInfos.length > 0) {
             let workReadyForBatch = targetWorkInfos.filter(w => isReadyForBatch(w));
 
-            let prepPercent = ramPercentSettings.prepPct;
-
             if (workReadyForBatch.length === 0) {
                 //if we have nothing ready for batch, let prep use all the ram
-                prepPercent = 1;
+                prepPercent *= 1.1;
+                prepPercent = Math.min(1.00, prepPercent);
+
+                ns.print(`${timestamp()}Prep Percent: ${formatPercent(prepPercent)}`);
 
                 let minHackTarget = targetWorkInfos.find(w => !isReadyForBatch(w));
                 if (minHackTarget) {
                     singleHack(ns, minHackTarget.target.hostname);
                 }
+            } else {
+                prepPercent = ramPercentSettings.prepPct;
             }
 
             prepAllTargets(ns, targetWorkInfos, prepPercent);
@@ -80,27 +79,20 @@ export async function main(ns: NS) {
 
         killUnneededThreads(targetWorkInfos);
 
-        timerEnd(ns, 'hack-controller main');
         await ns.sleep(SLEEP_TIME);
     }
 
     function setDefaultRamPercents() {
-        ramPercentSettings.batchPct = .70;
-        ramPercentSettings.prepPct = .15;
-        ramPercentSettings.sharePct = .40;
-        ramPercentSettings.expPct = .10;
+        //ramPercentSettings.batchPct = .20;
+        ramPercentSettings.prepPct = .30;
+        ramPercentSettings.sharePct = .30;
+        ramPercentSettings.expPct = .30;
 
     }
 
     function adjustRamPercents() {
         setDefaultRamPercents();
 
-        let tools = getPlayerTools(ns);
-        let hasMainTools = tools.sql && tools.brute && tools.ftp && tools.http;
-        if (!hasMainTools) {
-            ramPercentSettings.expPct = 0;
-            ramPercentSettings.sharePct = 0;
-        }
     }
 
     function killUnneededThreads(targetWorkInfos: ITargetWorkInfo[]) {
@@ -162,12 +154,18 @@ export async function main(ns: NS) {
             //only run exp work if the EXP Target doesn't need weakening
             if (expTarget.threadInfos[TaskType.weaken].moreNeeded === 0) {
                 let expGainThreads = await doExtraGainExp(ramPercentSettings.expPct);
-                let expRam = expGainThreads * ns.getScriptRam(SCRIPTS.grow);
+                let expRam = expGainThreads * ns.getScriptRam(SCRIPTS.expGain);
                 ns.print(`${timestamp()} Exp threads: ${formatBigNumber(expGainThreads)}, ${formatBigRam(expRam)}`);
             } else {
                 debugLog(ns, DebugLevel.warn, `[${EXP_TARGET}] needed weakening!`);
+
+                let weakenThreadsStarted = useAvailableRunnersForWork(ns, expTarget.target.hostname, SCRIPTS.weaken, expTarget.threadInfos[TaskType.weaken], 1);
+                let growThreadsStarted = useAvailableRunnersForWork(ns, expTarget.target.hostname, SCRIPTS.grow, expTarget.threadInfos[TaskType.grow], 1);
+
             }
 
+        } else {
+            debugLog(ns, DebugLevel.warn, `Missing exp target! [${EXP_TARGET}]`);
         }
     }
 
@@ -190,7 +188,7 @@ export async function main(ns: NS) {
                 if (threadsToRun > 0) {
                     let procId = ns.exec(SCRIPTS.myShare, runnerName, threadsToRun, getRandomId());
                     if (procId > 0) {
-                        debugLog(ns, DebugLevel.success, `Starting ${threadsToRun} share threads!`);
+                        //debugLog(ns, DebugLevel.success, `Starting ${threadsToRun} share threads!`);
                         shareThreads += threadsToRun;
                         ramUsedToShare += threadsToRun * singleShareRam;
                     } else {
@@ -202,26 +200,6 @@ export async function main(ns: NS) {
                 }
 
             }
-
-            /* while (ramUsedToShare < maxRamToUse) {
-                 //debugLog(ns, DebugLevel.info, `Current share: ${formatPercent(sharePercent)}, limit: ${formatPercent(ramPercentLimit)}. SHARE!`);
-                 let runner = getFirstAvailableRunnerForScript(ns, SCRIPTS.share);
-                 if (runner) {
-                     let availableThreads = getThreadsAvailableForScript(ns, runner, SCRIPTS.share);
-                     let threadsToRun = Math.floor(availableThreads);
-                     if (threadsToRun > 0) {
-                         let procId = ns.exec(SCRIPTS.share, runner, threadsToRun, getRandomId());
-                         if (procId > 0) {
-                             debugLog(ns, DebugLevel.success, `Starting ${threadsToRun} share threads!`);
-                             shareThreads += threadsToRun;
-                             ramUsedToShare += threadsToRun * singleShareRam;
-                         } else {
-                             debugLog(ns, DebugLevel.error, `Unable to start ${threadsToRun} share threads on ${runner}!`);
-                         }
-                     }
-                 }
-
-             }*/
 
         }
         return shareThreads;
@@ -250,7 +228,7 @@ export async function main(ns: NS) {
                     if (procId > 0) {
                         extraThreads += threadsToRun;
                         expRamUsage += threadsToRun * singleExpRam;
-                        debugLog(ns, DebugLevel.success, `Running ${threadsToRun} EXP Gain threads`);
+                        //debugLog(ns, DebugLevel.success, `Running ${threadsToRun} EXP Gain threads`);
                     } else {
                         debugLog(ns, DebugLevel.error, `Unable to run EXP script on ${EXP_TARGET}`);
                     }
@@ -275,7 +253,9 @@ export async function main(ns: NS) {
         ns.run(SCRIPTS.targetStats);
         ns.run(SCRIPTS.homeController);
         ns.run(SCRIPTS.batchController);
+        ns.run(SCRIPTS.hacknet);
         ns.run(SCRIPTS.arrangeWindows);
+
     }
 
 }

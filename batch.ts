@@ -1,6 +1,6 @@
-import {DebugLevel, SCRIPTS} from './consts';
-import {NS} from './NetscriptDefinitions';
-import {IBatchRequest, RunnerInfo} from './types';
+import { DebugLevel, SCRIPTS } from './consts';
+import { NS } from './NetscriptDefinitions';
+import { IBatchRequest, RunnerInfo } from './types';
 import {
     debugLog,
     getAllRunners,
@@ -45,7 +45,7 @@ export async function main(ns: NS) {
 }
 
 export function makeBatchRequest(ns: NS, target: string): IBatchRequest {
-    let TIME_GAP = 50;
+    let TIME_GAP = 30;
 
     let targetServer = ns.getServer(target);
     let targetHackPercent = getSettings(ns).hackPercent ?? 0;
@@ -53,6 +53,7 @@ export function makeBatchRequest(ns: NS, target: string): IBatchRequest {
 
     //make sure we have enough ram to run ALL the things before we start
     //let hackThreadCount = hackThreads;
+
     let hackThreadCount = Math.ceil(ns.hackAnalyzeThreads(target, hackAmount));
     let hackSecurityIncrease = ns.hackAnalyzeSecurity(hackThreadCount);
     let hackPartStolen = ns.hackAnalyze(target) * hackThreadCount;
@@ -62,10 +63,17 @@ export function makeBatchRequest(ns: NS, target: string): IBatchRequest {
     let weakenThreadsNeededFromHack = Math.ceil(hackSecurityIncrease / weakenSingleSecurityDecrease);
     let weakenRamNeededFromHack = ns.getScriptRam(SCRIPTS.batchWeaken) * weakenThreadsNeededFromHack;
 
-    //let growToPercent = 1 + hackPartStolen; // 1 would be no growth
-    let growToPercent = 1.0 / (1.0 - targetHackPercent);
+    //if targetHackPercent is .45, and the server has $2500
+    //hackAmount = $2500 * .45 = $1125. Would have $1375 remaining
+    //need to grow back to $2500
+    // 1375 * growToPercent = $2500 ==> growToPercent = 2500 / 1375 ==> growToPercent = max/(max-hackAmount)
+
+    //let growToPercent = 1.0 / (targetHackPercent - 1.0);
+    let growToPercent = targetServer.moneyMax / (targetServer.moneyMax - hackAmount);
+    //ns.print({ targetHackPercent, growToPercent });
 
     let growThreadsNeeded = Math.ceil(ns.growthAnalyze(target, growToPercent));
+
     let growSecurityIncrease = ns.growthAnalyzeSecurity(growThreadsNeeded);
     let growRamNeeded = ns.getScriptRam(SCRIPTS.batchGrow) * growThreadsNeeded;
 
@@ -149,7 +157,7 @@ export function getRunnerJobsForScript(ns: NS, runnersList: RunnerInfo[], script
                     runner: runner.hostname,
                     scriptName: script,
                     threads: threadsToRun,
-                    args: args
+                    args: [...args]
                 };
 
                 jobs.push(job);
@@ -182,22 +190,23 @@ export async function doBatchFromRequestMultiRunner(ns: NS, request: IBatchReque
     //split the threads across as many runners as needed
 
     let runners = getAllRunners(ns);
+
     let jobs: IRunnerJob[] = [];
 
     let batchPartParams = [
-        {script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack},
+        { script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack },
         {
             script: SCRIPTS.batchWeaken,
             threads: request.weakenThreadsNeededFromHack,
             delay: request.delayUntilWeakenHack
         },
-        {script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow},
-        {script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow}
+        { script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow },
+        { script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow }
     ];
-
+    let batchId = request.batchId;
     for (const param of batchPartParams) {
         if (success) {
-            let taskJobs = getRunnerJobsForScript(ns, runners, param.script, param.threads, request.target, param.delay, request.batchId);
+            let taskJobs = getRunnerJobsForScript(ns, runners, param.script, param.threads, request.target, param.delay, batchId);
             if (taskJobs) {
                 jobs.push(...taskJobs);
             } else {

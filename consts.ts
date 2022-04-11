@@ -330,33 +330,35 @@ export const TRAVEL_COST = 200000;
 
 export enum SCRIPTS {
     addScripts = 'addScripts.js',
+    arrangeWindows = 'arrange-windows.js',
     autoNuke = 'autoNuke.js',
     backdoor = 'backdoor.js', //68.30gb
+    basicCrime = 'basic-crime.js',
+    batchController = 'batch-controller.js',
     batchGrow = 'batch-grow.js',
     batchHack = 'batch-hack.js',
     batchWeaken = 'batch-weaken.js',
     controller = 'basic-controller.js', //20gm
+    crimeController0 = 'crime_service0.js',
+    crimeController1 = 'crime_service1.js',
     debugWatcher = 'debugWatcher.js',
     donate = 'donate.js', //82gb
+    expGain = 'expGain.js',
     getRunnerStats = 'runnerStats.js',
     getScriptStats = 'scriptStats.js',
-    targetStats = 'targetStats.js',
     grow = 'grow.js',
     hack = 'hack.js',
+    hackController = 'hack-controller.js',
+    hacknet = 'hacknet.js',
+    homeController = 'home-controller.js',
+    myShare = 'share.js',
     playerController = 'player-controller.js', //1090gb
     playerController0 = 'player-controller0.js',//9gb
     playerController1 = 'player-controller1.js',//79gb
     playerController2 = 'player-controller2.js', //223gb
     reset = 'reset.js', //162gb
-    myShare = 'share.js',
+    targetStats = 'targetStats.js',
     weaken = 'weaken.js',
-    basicCrime = 'basic-crime.js',
-    crimeController0 = 'crime_service0.js',
-    homeController = 'home-controller.js',
-    batchController = 'batch-controller.js',
-    expGain = 'expGain.js',
-    hackController = 'hack-controller.js',
-    arrangeWindows = 'arrange-windows.js',
 }
 
 export const playerControllers: IControllerConfig[] = [
@@ -375,21 +377,33 @@ export const THE_RED_PILL = 'The Red Pill';
 export const NON_HACKING_AUGMENTS = [
     'Augmented Targeting I', //dex skill
     'Augmented Targeting II', //dex skill
+    'Bionic Legs', //+60 agi
+    'BrachiBlades', //str, dex, crime money and success
+    'CashRoot Starter Kit', //start with $1m and brutessh.exe
     'Combat Rib I',
     'Combat Rib II',
+    'Combat Rib III',
+    'CordiARC Fusion Reactor', //combat skill, exp
     'DermaForce Particle Barrier',
     'Enhanced Social Interaction Implant', //cha skill, exp
+    'Graphene Bionic Legs Upgrade', //agi
+    'Graphene Bionic Spine Upgrade', // combat skill
+    'Graphene Bone Lacings', //+str +dex
     'Hydroflame Left Arm', //str skill
     'INFRARET Enhancement',
     'Nanofiber Weave',
     'NEMEAN Subdermal Weave', //def skill
+    'Neuroreceptor Management Implant', //removes non-focus penalty
+    'nickofolas Congruity Implant', //Removed entropy virus ???
+    'Nuoptimal Nootropic Injector Implant', //+20% company rep
     'NutriGen Implant',
-    'Speech Enhancement', //??
+    'PCMatrix', //+7.77 everything
+    'Speech Enhancement', //+10% cha, +10% comp rep
     'Speech Processor Implant', //cha skill
     'Synfibril Muscle', //str, def skill
     'Synthetic Heart', //str, agi skill
-    'Wired Reflexes', //dex, agi skill
-    'Neuroreceptor Management Implant' //removes non-focus penalty
+    'Wired Reflexes' //dex, agi skill
+
 ];
 
 export const HACKING_AUGMENTS = [
@@ -416,7 +430,7 @@ export const COMPANY_QUIT_PENALTY = {
     withBackdoor: 0.25
 };
 
-export const INDENT_STRING = ' * ';
+export const INDENT_STRING = ' *';
 
 export const MAX_HOME_SERVER_RAM = Math.pow(2, 20);
 
@@ -428,3 +442,15 @@ export enum DebugLevel {
 }
 
 export const EXP_GAIN_FLAG = 'exp-gain';
+
+export const MAX_GANG_MEMBERS = 12;
+
+export enum CrimeMode {
+    money = 'money',
+    territory = 'territory'
+}
+
+export enum HacknetMode {
+    money = 'money',
+    hacking = 'hacking'
+}

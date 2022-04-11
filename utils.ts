@@ -1,11 +1,13 @@
 import {
     CITY_FACTIONS,
     COMPANY_FACTIONS,
+    CrimeMode,
     DARK_DATA,
     DebugLevel,
     DEFAULT_RAM_BUFFER,
     DEFAULT_TARGET_HACK_PERCENT,
     HACK_FACTIONS,
+    HacknetMode,
     HOME,
     HOSTS,
     MIN_MONEY,
@@ -15,9 +17,9 @@ import {
     SCRIPTS,
     THE_RED_PILL
 } from './consts';
-import {NS} from './NetscriptDefinitions';
-import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from './types';
-import {IRamUsage} from './home-controller';
+import { IRamUsage } from './home-controller';
+import { NS } from './NetscriptDefinitions';
+import { IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo } from './types';
 
 export function timerStart(ns: NS, label: string) {
     let settings = getSettings(ns);
@@ -136,7 +138,7 @@ export function findServerNodeRecursive(currentNode: IServerNode, targetHostname
  * gets the server node tree starting with HOME
  */
 export function getServerTree(ns: NS): IServerNode {
-    let rootNode: IServerNode = {hostname: HOME, children: []};
+    let rootNode: IServerNode = { hostname: HOME, children: [] };
     rootNode.children = getChildrenRecursive(rootNode);
 
     return rootNode;
@@ -288,6 +290,10 @@ export function getFirstAvailableRunnerForScriptNoPurchased(ns: NS, scriptName: 
     return filterFirstAvailableRunnerForScriptThreads(ns, runners, scriptName, 1);
 }
 
+export function indent(count: number = 1): string {
+    return ' '.repeat(count) + '* ';
+}
+
 export function timestamp(time: number = 0): string {
 
     let date = new Date();
@@ -365,6 +371,12 @@ export function getAllRunnersNoPurchased(ns: NS): RunnerInfo[] {
 export function getAllRunners(ns: NS): RunnerInfo[] {
     let hostnames = getAllRunnerNames(ns);
     return filterRunners(ns, hostnames);
+}
+
+export function getHacknetRunners(ns: NS): RunnerInfo[] {
+    ns.hacknet.numNodes();
+
+    return [];
 }
 
 export function filterRunners(ns: NS, hostNames: string[]) {
@@ -580,6 +592,11 @@ export function formatBigTime(value: number): string {
     return `${scaledValue}${letter}`;
 }
 
+export function formatCurrency(value: number, roundPlace: number = 0): string {
+
+    return `\$${formatBigNumber(value, roundPlace)}`;
+}
+
 export function formatBigNumber(value: number, roundPlaces: number = 1): string {
 
     let scaledValue = value;
@@ -713,7 +730,16 @@ export function getAllHosts(ns: NS): string[] {
     let hosts = HOSTS;
     let purchasedServers: string[] = ns.getPurchasedServers();
 
-    return [...purchasedServers, ...hosts];
+    let hacknetSevers = [];
+    if (getSettings(ns).hacknetMode === HacknetMode.hacking) {
+        let numNodes = ns.hacknet.numNodes();
+        for (let i = 0; i < numNodes; i++) {
+            hacknetSevers.push(ns.hacknet.getNodeStats(i).name);
+        }
+
+    }
+
+    return [...hacknetSevers, ...purchasedServers, ...hosts];
 
 }
 
@@ -748,8 +774,9 @@ export function getSettings(ns: NS): IGlobalSettings {
         debug: false,
         hackPercent: DEFAULT_TARGET_HACK_PERCENT,
         ramBuffer: DEFAULT_RAM_BUFFER,
-        doExp: false,
-        doShare: true
+        crimeMode: CrimeMode.money,
+        hacknetMode: HacknetMode.money,
+        maxHashCostBen: 500e6
     };
 
     let settingsPort = ns.getPortHandle(PORTS.settings);
@@ -772,12 +799,17 @@ export function setSettings(ns: NS, newSettings: IGlobalSettings): IGlobalSettin
 
     let updatedSettings = Object.assign(currSettings, newSettings);
 
+    //store in port
     let settingsPort = ns.getPortHandle(PORTS.settings);
     settingsPort.clear();
     settingsPort.write(JSON.stringify(updatedSettings));
 
+    //store in file
+
     return updatedSettings;
 }
+
+
 
 export function readDebugMessage(ns: NS): IDebugMessage | undefined {
     let msg: IDebugMessage | undefined = undefined;
@@ -926,5 +958,13 @@ export function resizeScriptWindow(ns: NS, scriptName: string, args: any[], widt
         tailWindowContentsNode.style.width = `${width}px`;
         tailWindowContentsNode.style.height = `${height}px`;
     }
+
+}
+
+export function writeData() {
+
+}
+
+export function readData() {
 
 }

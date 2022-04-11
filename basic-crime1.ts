@@ -1,76 +1,160 @@
-import {NS, Player} from './NetscriptDefinitions';
-import {crimes, GYMS} from './crime_consts';
-import {round} from './utils';
+import { INDENT_STRING } from './consts';
+import { crimes } from './crime_consts';
+import { NS, Player } from './NetscriptDefinitions';
+import { formatPercent, round } from './utils';
+import { makeEtaTimeString, trainStat } from './utils-player';
 
 export async function main(ns: NS) {
-    let svc = new CrimeService1(ns);
+    let svc = new CrimeService0(ns);
     await svc.doRun();
 }
 
-export class CrimeService1 {
-    private _player!: Player;
-    private SHOPLIFT_DEX: number = 10;
-    private SHOPLIFT_AGI: number = 10;
-    private CRIME_THRESHOLD: number = .5;
+type KarmaAvgData = { totalKarma: number, time: number, avgGain: number; }
 
-    public constructor(private _ns: NS) {
+//this is to help get you to 64gb home ram
+export class CrimeService0 {
+    private _player!: Player;
+    private MIN_CRIME_SUCCESS: number = .6;
+    private karmaAverageWindow = 10 * 1000;
+    private karmaAvgData: KarmaAvgData = { totalKarma: 0, time: 0, avgGain: 0 };
+    private MIN_STARTING_STAT: number = 10;
+    private readonly KARMA_TO_START_GANG: number = -54000;
+
+    public constructor(private ns: NS) {
         this.updatePlayer();
+        //ns.disableLog('ALL');
     }
 
     public async doRun() {
-        this._ns.tail();
-        //this._ns.disableLog('ALL');
-        this._ns.disableLog('sleep');
+        this.ns.tail();
+        this.ns.disableLog('sleep');
 
-        while (!this.readyForShoplift()) {
-            this._ns.print('Training!');
-            this.trainForShoplift();
-        }
+        await this.doTraining();
 
         while (true) {
             this.updatePlayer();
+            this.updateAvgKarmaGain();
+            this.ns.print('');
 
-            this._ns.print(`Karma: ${round(this._ns.heart.break())}`);
+            this.displayKarmaInfo();
 
             let crimeTime = 0;
-            let crimeNames = [
-                crimes.gta.name,
-                crimes.homicide.name,
-                crimes.mug.name,
-                crimes.shoplift.name
+
+            let crimesToTry = [
+                //crimes.heist,
+                //crimes.assassin,
+                //crimes.kidnap,
+                //crimes.gta,
+                crimes.homicide,
+                crimes.mug,
+                crimes.shoplift
             ];
 
-            let crimeName = crimeNames.find(c => this._ns.getCrimeChance(c) >= this.CRIME_THRESHOLD);
-            if (!crimeName) {
-                crimeName = crimes.shoplift.name;
+            type CrimeInfo = { name: string, chance: number };
+            let crimeInfo: CrimeInfo[] = crimesToTry.map(c => {
+                return {
+                    name: c.name,
+                    chance: this.ns.getCrimeChance(c.name)
+                };
+            });
+
+            let nextCrime: CrimeInfo | undefined;
+            let targetCrime: CrimeInfo | undefined;
+
+            for (let crime of crimeInfo) {
+                if (crime.chance >= this.MIN_CRIME_SUCCESS) {
+                    targetCrime = crime;
+                    break;
+                } else {
+                    nextCrime = crime;
+                }
+            }
+            if (!targetCrime) {
+                targetCrime = crimeInfo[crimeInfo.length - 1];
             }
 
-            if (!this._ns.isBusy()) {
-                this._ns.print('Doing crime!!');
-                crimeTime = this._ns.commitCrime(crimeName);
+            if (!this.ns.isBusy()) {
+                this.ns.print(`Doing "${targetCrime.name}", ${formatPercent(targetCrime.chance)}`);
+
+                if (nextCrime) {
+                    this.ns.print(`${INDENT_STRING}Next: "${nextCrime.name}", ${formatPercent(nextCrime.chance)}`);
+                }
+
+                crimeTime = this.ns.commitCrime(targetCrime.name);
             }
 
-            await this._ns.sleep(crimeTime);
+            await this.ns.sleep(crimeTime);
+        }
+
+    }
+
+    private displayKarmaInfo() {
+
+        let total = this.karmaAvgData.totalKarma;
+        let remaining = this.KARMA_TO_START_GANG - total;
+
+        this.ns.print(`Karma: ${round(this.karmaAvgData.avgGain, 2)}/s`);
+
+        let etaString = makeEtaTimeString(this.ns, total, remaining, this.karmaAvgData.avgGain);
+        this.ns.print(etaString);
+
+    }
+
+    private async doTraining() {
+        this.updatePlayer();
+        
+        await trainStat(this.ns, 'strength', 'str');
+        while (this._player.strength < this.MIN_STARTING_STAT) {
+            await this.ns.sleep(1000);
+            this.updatePlayer();
+        }
+        this.ns.stopAction();
+
+        await trainStat(this.ns, 'defense', 'def');
+        while (this._player.defense < this.MIN_STARTING_STAT) {
+            await this.ns.sleep(1000);
+            this.updatePlayer();
+        }
+        this.ns.stopAction();
+
+        await trainStat(this.ns, 'dexterity', 'dex');
+        while (this._player.dexterity < this.MIN_STARTING_STAT) {
+            await this.ns.sleep(1000);
+            this.updatePlayer();
+        }
+        this.ns.stopAction();
+
+        await trainStat(this.ns, 'agility', 'agi');
+        while (this._player.agility < this.MIN_STARTING_STAT) {
+            await this.ns.sleep(1000);
+            this.updatePlayer();
+        }
+        this.ns.stopAction();
+
+        this.ns.stopAction();
+    }
+
+    private updateAvgKarmaGain() {
+
+        let currKarmaData: KarmaAvgData = {
+            totalKarma: this.ns.heart.break(),
+            time: new Date().getTime(),
+            avgGain: 0
+        };
+
+        let elapsedTime = currKarmaData.time - this.karmaAvgData.time;
+        if (elapsedTime >= this.karmaAverageWindow) {
+
+            let karmaIncrease = currKarmaData.totalKarma - this.karmaAvgData.totalKarma;
+            currKarmaData.avgGain = (karmaIncrease / (elapsedTime / 1000));
+
+            this.karmaAvgData = currKarmaData;
+
         }
 
     }
 
     private updatePlayer() {
-        this._player = this._ns.getPlayer();
+        this._player = this.ns.getPlayer();
     }
-
-    private readyForShoplift() {
-        return this._player.dexterity > this.SHOPLIFT_DEX && this._player.agility > this.SHOPLIFT_AGI;
-    }
-
-    private trainForShoplift() {
-
-        if (this._player.dexterity < this.SHOPLIFT_DEX) {
-            this._ns.gymWorkout(GYMS.powerhouse, 'dex', true);
-        } else if (this._player.agility < this.SHOPLIFT_AGI) {
-            this._ns.gymWorkout(GYMS.powerhouse, 'agi', true);
-        }
-
-    }
-
 }

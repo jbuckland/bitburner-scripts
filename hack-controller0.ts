@@ -1,57 +1,76 @@
-import {SCRIPTS} from './consts';
-import {NS} from './NetscriptDefinitions';
-import {getAllTargetInfo, timestamp} from './utils';
-import {getTargetWorkInfoForTargets, isReadyForBatch} from './utils-controller';
-import {
-    displayIncomeStats,
-    displayNextDarkwebTool,
-    displayRunnerStatsNoHomeServer,
-    installBackdoors
-} from './utils-player';
-import {doBatches, prepAllTargets, singleHack} from './hack-utils';
-
-const SLEEP_TIME = 1000;
+import { SCRIPTS } from './consts';
+import { doBatches, prepAllTargets, singleHack } from './hack-utils';
+import { NS } from './NetscriptDefinitions';
+import { getAllTargetInfo, timestamp } from './utils';
+import { getTargetWorkInfoForTargets, isReadyForBatch } from './utils-controller';
+import { displayIncomeStats, displayNextDarkwebTool, displayRunnerStatsNoHomeServer, installBackdoors } from './utils-player';
 
 //this script is just to get us to the 64gb home server upgrade
 export async function main(ns: NS) {
 
-    ns.disableLog('ALL');
-    ns.tail();
-    runInitialScripts();
+    let controller = new HackController0(ns);
+    await controller.doRun();
 
-    while (true) {
-        ns.clearLog();
-        ns.print(timestamp());
+}
 
-        let targetWorkInfos = getTargetWorkInfoForTargets(ns, getAllTargetInfo(ns));
+class HackController0 {
+    private SLEEP_TIME = 1000;
 
-        let workReadyForBatch = targetWorkInfos.filter(w => isReadyForBatch(w));
+    constructor(private ns: NS) {
+        //ns.disableLog('ALL');
+        ns.disableLog('sleep');
+        ns.disableLog('getServerMaxRam');
+        ns.disableLog('getServerUsedRam');
+        ns.disableLog('getServerRequiredHackingLevel');
+        ns.disableLog('exec');
+        ns.disableLog('getServerGrowth');
+        ns.disableLog('getServerMoneyAvailable');
+        ns.disableLog('getServerMaxMoney');
+        ns.disableLog('getServerMinSecurityLevel');
+        ns.disableLog('getServerSecurityLevel');
+        ns.tail();
 
-        let batchSuccesses = 0;
-        if (workReadyForBatch.length > 0) {
-
-            batchSuccesses = await doBatches(ns, workReadyForBatch); //+4 gb
-
-        } else {
-            singleHack(ns, targetWorkInfos[0].target.hostname);
-        }
-        let PREP_PERCENT = 0.6;
-        prepAllTargets(ns, targetWorkInfos, PREP_PERCENT);
-        await installBackdoors(ns);
-        //joinFactions(ns, [...Object.values(HACK_FACTIONS), ...Object.values(COMPANY_FACTIONS), ...Object.values(GANG_FACTIONS)]);
-
-        //buyDarkwebTools(ns); +4gb
-        displayIncomeStats(ns);
-        displayNextDarkwebTool(ns);
-        displayRunnerStatsNoHomeServer(ns);
-
-        await ns.sleep(SLEEP_TIME);
+        this.runInitialScripts();
     }
 
-    function runInitialScripts() {
-        ns.run(SCRIPTS.autoNuke);
-        ns.run(SCRIPTS.addScripts);
-        //ns.run('basic-crime.js');
+    public async doRun() {
+        let crimeTime = 100;
+        while (true) {
+            this.ns.clearLog();
+            this.ns.print(timestamp());
+            //this.SLEEP_TIME = this.ns.commitCrime('mug');
+
+            let targetWorkInfos = getTargetWorkInfoForTargets(this.ns, getAllTargetInfo(this.ns));
+
+            let workReadyForBatch = targetWorkInfos.filter(w => isReadyForBatch(w));
+
+            let batchSuccesses = 0;
+            if (workReadyForBatch.length > 0) {
+
+                batchSuccesses = await doBatches(this.ns, workReadyForBatch); //+4 gb
+
+            } else {
+                singleHack(this.ns, targetWorkInfos[0].target.hostname);
+            }
+            let PREP_PERCENT = 0.8;
+            prepAllTargets(this.ns, targetWorkInfos, PREP_PERCENT);
+            await installBackdoors(this.ns);
+            //joinFactions(ns, [...Object.values(HACK_FACTIONS), ...Object.values(COMPANY_FACTIONS), ...Object.values(GANG_FACTIONS)]);
+
+            //buyDarkwebTools(ns); +4gb
+            displayIncomeStats(this.ns);
+            displayNextDarkwebTool(this.ns);
+            displayRunnerStatsNoHomeServer(this.ns);
+
+            await this.ns.sleep(this.SLEEP_TIME);
+        }
+
+    }
+
+    private runInitialScripts() {
+        this.ns.run(SCRIPTS.autoNuke);
+        this.ns.run(SCRIPTS.addScripts);
+        //this.ns.run('basic-crime.js');
     }
 
 }

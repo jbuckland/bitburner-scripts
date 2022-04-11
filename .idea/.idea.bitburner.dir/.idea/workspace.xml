@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="d2f19215-2d8c-4a92-9055-c65841c7eeff" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/codeStyles/Project.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/indexLayout.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/scopes/Main.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner.dir/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/bitburner.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/jbuck.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/basic-crime0.ts" beforeDir="false" afterPath="$PROJECT_DIR$/basic-crime0.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/basic-crime1.ts" beforeDir="false" afterPath="$PROJECT_DIR$/basic-crime1.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/batch.ts" beforeDir="false" afterPath="$PROJECT_DIR$/batch.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/consts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/consts.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/contracts/contract1.ts" beforeDir="false" afterPath="$PROJECT_DIR$/contracts/contract1.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hack-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hack-controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hack-utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hack-utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hacknet.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hacknet.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/player-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/player-controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/test.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/utils.ts" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+        <option value="TypeScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="GitSEFilterConfiguration">
+    <file-type-list>
+      <filtered-out-file-type name="LOCAL_BRANCH" />
+      <filtered-out-file-type name="REMOTE_BRANCH" />
+      <filtered-out-file-type name="TAG" />
+      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
+    </file-type-list>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="NamedScopeManager">
+    <order>
+      <scope name="main" />
+    </order>
+  </component>
+  <component name="ProjectId" id="27PQmtUnEtnyuzzA0DDjyEb60pI" />
+  <component name="ProjectViewState">
+    <option name="autoscrollFromSource" value="true" />
+    <option name="autoscrollToSource" value="true" />
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="GitStage.ChangesTree.GroupingKeys" value="directory&#10;module&#10;repository" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="node.js.detected.package.tslint" value="true" />
+    <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="nodejs_package_manager_path" value="npm" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.TypeScript" />
+    <property name="ts.external.directory.path" value="C:\Utils\JetBrains Rider 2021.3.3\plugins\JavaScriptLanguage\jsLanguageServicesImpl\external" />
+    <property name="vue.rearranger.settings.migration" value="true" />
+  </component>
+  <component name="RunManager" selected="Node.js.largestPrimeFactor.js">
+    <configuration name="largestPrimeFactor.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/contracts/largestPrimeFactor.js" working-dir="$PROJECT_DIR$/contracts">
+      <method v="2" />
+    </configuration>
+    <configuration name="spiralizeMatrix.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/contracts/spiralizeMatrix.js" working-dir="$PROJECT_DIR$/contracts">
+      <method v="2" />
+    </configuration>
+    <configuration name="stockTrader1.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/contracts/stockTrader1.js" working-dir="$PROJECT_DIR$/contracts">
+      <method v="2" />
+    </configuration>
+    <configuration name="subarrayWithMaxSum.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/contracts/subarrayWithMaxSum.js" working-dir="$PROJECT_DIR$/contracts">
+      <method v="2" />
+    </configuration>
+    <configuration name="totalWaysToSum.js" type="NodeJSConfigurationType" temporary="true" nameIsGenerated="true" path-to-js-file="$PROJECT_DIR$/contracts/totalWaysToSum.js" working-dir="$PROJECT_DIR$/contracts">
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Node.js.spiralizeMatrix.js" />
+        <item itemvalue="Node.js.largestPrimeFactor.js" />
+        <item itemvalue="Node.js.subarrayWithMaxSum.js" />
+        <item itemvalue="Node.js.totalWaysToSum.js" />
+        <item itemvalue="Node.js.stockTrader1.js" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="d2f19215-2d8c-4a92-9055-c65841c7eeff" name="Changes" comment="" />
+      <created>1649219409088</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1649219409088</updated>
+      <workItem from="1649219418441" duration="37628000" />
+      <workItem from="1649365532354" duration="20767000" />
+      <workItem from="1649458691527" duration="85814000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="UnityUnitTestConfiguration" currentTestLauncher="NUnit" />
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>

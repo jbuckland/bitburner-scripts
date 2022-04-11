@@ -1,7 +1,7 @@
-import {NS, Player} from './NetscriptDefinitions';
-import {crimes} from './crime_consts';
-import {formatPercent, round} from './utils';
-import {INDENT_STRING} from './consts';
+import { NS, Player } from './NetscriptDefinitions';
+import { crimes } from './crime_consts';
+import { formatPercent, round } from './utils';
+import { INDENT_STRING } from './consts';
 
 export async function main(ns: NS) {
     let svc = new CrimeService0(ns);
@@ -13,9 +13,9 @@ type KarmaAvgData = { totalKarma: number, time: number, avgGain: number; }
 //this is to help get you to 64gb home ram
 export class CrimeService0 {
     private _player!: Player;
-    private CRIME_THRESHOLD: number = .5;
+    private CRIME_THRESHOLD: number = .6;
     private karmaAverageWindow = 10 * 1000;
-    private karmaAvgData: KarmaAvgData = {totalKarma: 0, time: 0, avgGain: 0};
+    private karmaAvgData: KarmaAvgData = { totalKarma: 0, time: 0, avgGain: 0 };
 
     public constructor(private _ns: NS) {
         this.updatePlayer();
@@ -35,10 +35,10 @@ export class CrimeService0 {
             let crimeTime = 0;
 
             let crimesToTry = [
-                crimes.heist,
-                crimes.assassin,
-                crimes.kidnap,
-                crimes.gta,
+                //crimes.heist,
+                //crimes.assassin,
+                //crimes.kidnap,
+                //crimes.gta,
                 crimes.homicide,
                 crimes.mug,
                 crimes.shoplift

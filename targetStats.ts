@@ -1,8 +1,8 @@
-import {NS} from './NetscriptDefinitions';
-import {ITargetWorkInfo, TaskType} from './types';
-import {formatBigNumber, formatBigTime, getTargetValue, myFormatCurrency, round, timestamp} from './utils';
-import {ITableData, Table} from './utils-table';
-import {getAllTargetWorkInfo} from "./utils-controller";
+import { NS } from './NetscriptDefinitions';
+import { ITargetWorkInfo, TaskType } from './types';
+import { formatBigNumber, formatBigTime, getTargetValue, myFormatCurrency, round, timestamp } from './utils';
+import { getAllTargetWorkInfo } from './utils-controller';
+import { ITableData, Table } from './utils-table';
 
 export async function main(ns: NS) {
     const SLEEP_TIME = 1000;
@@ -13,7 +13,6 @@ export async function main(ns: NS) {
     let table = new Table(ns);
     table.SHOW_FOOTER = true;
     let tableData: ITableData[] = [];
-
 
     while (true) {
         tableData = [];
@@ -26,7 +25,6 @@ export async function main(ns: NS) {
             serverInfo = serverInfo.slice(0, MAX_ROWS_TO_SHOW);
         }
 
-
         for (let i = 0; i < serverInfo.length; i++) {
             const s = serverInfo[i];
 
@@ -38,7 +36,7 @@ export async function main(ns: NS) {
             let valueString = `Value: ${round(getTargetValue(ns, s.target), 2).toString().padEnd(4, '0')}`;
 
             let currSecString = round(s.target.currSecurity, 1).toString().padStart(4);
-            let minSecString = (s.target.minSecurity ?? 0).toString().padStart(2);
+            let minSecString = round(s.target.minSecurity ?? 0, 1).toString().padStart(2);
             let secString = `Sec: ${currSecString}/${minSecString}`;
             let moneyString = `${myFormatCurrency(s.target.currMoney).padStart(7)} / ${myFormatCurrency(s.target.maxMoney).padStart(7)}`;
 
@@ -90,10 +88,8 @@ export async function main(ns: NS) {
 
         ns.print(timestamp());
 
-
         await ns.sleep(SLEEP_TIME);
     }
-
 
     function isReadyForBatch(workItem: ITargetWorkInfo): boolean {
 

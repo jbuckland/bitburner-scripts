@@ -11,13 +11,14 @@ export async function main(ns: NS) {
     }
 
     let delay = (ns.args[1] ?? 0) as number;
+    let batchId = (ns.args[2] ?? '') as string;
 
     let data: ServerEvent = {
         timestamp: new Date().getTime(),
         eventType: EventType.batchHackStarted,
         hostname: ns.getHostname(),
         target: target,
-        extra: JSON.stringify({ delay })
+        extra: JSON.stringify({ delay, batchId })
     };
     await ns.writePort(PORTS.batchStatus, JSON.stringify(data));
 
@@ -28,7 +29,8 @@ export async function main(ns: NS) {
         timestamp: new Date().getTime(),
         eventType: EventType.batchHackComplete,
         hostname: ns.getHostname(),
-        target: target
+        target: target,
+        extra: JSON.stringify({ batchId })
     };
     await ns.writePort(PORTS.batchStatus, JSON.stringify(data));
 }

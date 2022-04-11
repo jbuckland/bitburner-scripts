@@ -1,5 +1,5 @@
-import {DebugLevel, EventType} from './consts';
-import {GangOtherInfoObject} from './NetscriptDefinitions';
+import { CrimeMode, DebugLevel, EventType, HacknetMode } from './consts';
+import { GangOtherInfoObject } from './NetscriptDefinitions';
 
 export interface ServerInfo {
     currMoney: number;
@@ -91,14 +91,14 @@ export interface IDarkwebTool {
     name: string;
 }
 
-export type RunMode = 'normal' | 'takeall' | 'share';
-
 export interface IGlobalSettings {
     debug?: boolean;
-    doExp?: boolean;
     hackPercent?: number;
     ramBuffer?: number;
-    doShare?: boolean;
+    crimeMode?: CrimeMode;
+    hacknetMode?: HacknetMode;
+    maxHashCostBen?: number;
+
 }
 
 export interface ITargetWorkInfo {
@@ -169,13 +169,9 @@ export interface INetscriptExtra {
          */
         break(): number;
     };
-
-    exploit(): void;
-
-    bypass(doc: Document): void;
-
     alterReality(): void;
-
+    bypass(doc: Document): void;
+    exploit(): void;
     rainbow(guess: string): void;
 }
 

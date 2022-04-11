@@ -1,42 +1,37 @@
-import {NS} from './NetscriptDefinitions';
-import {HOME, MAX_HOME_SERVER_RAM, SCRIPTS, TOAST_DURATION, TOAST_VARIANT} from './consts';
-import {debug, formatBigRam} from './utils';
-import {
-    displayHomeServerInfo,
-    displayRunnerStats,
-    getHomeServers,
-    getNextHomeServerSize,
-    HomeServer
-} from './utils-player';
+import { addScripts } from './addScripts';
+import { HOME, MAX_HOME_SERVER_RAM, TOAST_DURATION, TOAST_VARIANT } from './consts';
+import { NS } from './NetscriptDefinitions';
+import { debug, formatBigRam } from './utils';
+import { displayHomeServerInfo, displayRunnerStats, getHomeServers, getNextHomeServerSize, HomeServer } from './utils-player';
 
 export class ServerManager {
 
     public costMultiplierBeforeBuying: number = 1;
 
-    public constructor(private _ns: NS) {
+    public constructor(private ns: NS) {
     }
 
     public displayServerStats() {
-        this._ns.print('Server Stats:');
-        displayRunnerStats(this._ns);
-        displayHomeServerInfo(this._ns, this.costMultiplierBeforeBuying);
-        this._ns.print('');
+        this.ns.print('Server Stats:');
+        displayRunnerStats(this.ns);
+        displayHomeServerInfo(this.ns, this.costMultiplierBeforeBuying);
+        this.ns.print('');
     }
 
     public async tryPurchaseServer() {
 
-        let myServers = this._ns.getPurchasedServers();
+        let myServers = this.ns.getPurchasedServers();
 
         //finally
-        let nextRamSize = getNextHomeServerSize(this._ns);
-        let serverCost = this._ns.getPurchasedServerCost(nextRamSize);
-        let playerHasEnoughMoney = this._ns.getPlayer().money >= (serverCost * this.costMultiplierBeforeBuying);
+        let nextRamSize = getNextHomeServerSize(this.ns);
+        let serverCost = this.ns.getPurchasedServerCost(nextRamSize);
+        let playerHasEnoughMoney = this.ns.getPlayer().money >= (serverCost * this.costMultiplierBeforeBuying);
 
-        let serverLimit = this._ns.getPurchasedServerLimit();
+        let serverLimit = this.ns.getPurchasedServerLimit();
         let serverCount = myServers.length;
         let homeServersFull = serverCount >= serverLimit;
 
-        let homeServers = getHomeServers(this._ns);
+        let homeServers = getHomeServers(this.ns);
         let aServerNeedsUpgraded = false;
         let smallestServer: HomeServer | undefined;
         if (homeServers.length > 0) {
@@ -46,7 +41,7 @@ export class ServerManager {
             aServerNeedsUpgraded = smallestServer && smallestServer.maxRam < MAX_HOME_SERVER_RAM;
         }
 
-        debug(this._ns, 'tryPurchaseServer()', {
+        debug(this.ns, 'tryPurchaseServer()', {
             nextRamSize,
             serverCost,
             playerHasEnoughMoney,
@@ -57,17 +52,18 @@ export class ServerManager {
         if (playerHasEnoughMoney) {
             if (homeServersFull && smallestServer && aServerNeedsUpgraded) {
                 //delete
-                this._ns.toast(`Removed home server ${smallestServer.hostname} (${formatBigRam(smallestServer.maxRam)})`, TOAST_VARIANT.info, TOAST_DURATION);
-                this._ns.killall(smallestServer.hostname);
-                this._ns.deleteServer(smallestServer.hostname);
+                this.ns.toast(`Removed home server ${smallestServer.hostname} (${formatBigRam(smallestServer.maxRam)})`, TOAST_VARIANT.info, TOAST_DURATION);
+                this.ns.killall(smallestServer.hostname);
+                this.ns.deleteServer(smallestServer.hostname);
             }
 
             if (!homeServersFull || (smallestServer && aServerNeedsUpgraded)) {
                 //buy
-                let newHostName = this._ns.purchaseServer(HOME, nextRamSize);
-                this._ns.run(SCRIPTS.addScripts); //get the scripts on the new server
-                await this._ns.sleep(1000);
-                this._ns.toast(`Purchased home server ${newHostName} (${formatBigRam(nextRamSize)})`, TOAST_VARIANT.info, TOAST_DURATION);
+                let newHostName = this.ns.purchaseServer(HOME, nextRamSize);
+                await addScripts(this.ns, newHostName, true);
+
+                await this.ns.sleep(10);
+                this.ns.toast(`Purchased home server ${newHostName} (${formatBigRam(nextRamSize)})`, TOAST_VARIANT.info, TOAST_DURATION);
             }
         }
 

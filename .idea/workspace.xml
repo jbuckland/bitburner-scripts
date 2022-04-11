@@ -1,73 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="5a78a8f6-7165-4776-851e-9f8ad87cc565" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/arrange-windows.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crime_consts.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/crime_service1.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hack-controller.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hack-controller0.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NetscriptDefinitions.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/NetscriptDefinitions.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/addScripts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/addScripts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/arrangeWindows.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/autoNuke.ts" beforeDir="false" afterPath="$PROJECT_DIR$/autoNuke.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/backdoor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/backdoor.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/basic-controller.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/basic-controller0.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/batch.ts" beforeDir="false" afterPath="$PROJECT_DIR$/batch.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/buyNfg.ts" beforeDir="false" afterPath="$PROJECT_DIR$/buyNfg.ts" afterDir="false" />
+    <list default="true" id="7b49f7d5-9fe0-491d-b71b-d2514e015a4b" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/codeStyles/Project.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/indexLayout.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/scopes/Main.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner-files.dir/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.bitburner.dir/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/bitburner.iml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/codeStyles/codeStyleConfig.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/jbuck.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/batch-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/batch-controller.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/consts.ts" beforeDir="false" afterPath="$PROJECT_DIR$/consts.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/crime.ts" beforeDir="false" afterPath="$PROJECT_DIR$/crime.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/grow.ts" beforeDir="false" afterPath="$PROJECT_DIR$/grow.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hack.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hack.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/long-connect.ts" beforeDir="false" afterPath="$PROJECT_DIR$/long-connect.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/player-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/player-controller.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/player-controller0.ts" beforeDir="false" afterPath="$PROJECT_DIR$/player-controller0.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/player-controller1.ts" beforeDir="false" afterPath="$PROJECT_DIR$/player-controller1.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/settings.ts" beforeDir="false" afterPath="$PROJECT_DIR$/settings.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/share.ts" beforeDir="false" afterPath="$PROJECT_DIR$/share.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/shareAll.ts" beforeDir="false" afterPath="$PROJECT_DIR$/shareAll.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stopShareAll.ts" beforeDir="false" afterPath="$PROJECT_DIR$/stopShareAll.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/targetStats.ts" beforeDir="false" afterPath="$PROJECT_DIR$/targetStats.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hack-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hack-controller.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hack-utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hack-utils.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hacknet.ts" beforeDir="false" afterPath="$PROJECT_DIR$/hacknet.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/player-controller2.ts" beforeDir="false" afterPath="$PROJECT_DIR$/player-controller2.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test.ts" beforeDir="false" afterPath="$PROJECT_DIR$/test.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/types.ts" beforeDir="false" afterPath="$PROJECT_DIR$/types.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils-controller.ts" beforeDir="false" afterPath="$PROJECT_DIR$/utils-controller.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/utils-player.ts" beforeDir="false" afterPath="$PROJECT_DIR$/utils-player.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils.ts" beforeDir="false" afterPath="$PROJECT_DIR$/utils.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/weaken.ts" beforeDir="false" afterPath="$PROJECT_DIR$/weaken.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="TypeScript File" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GitSEFilterConfiguration">
-    <file-type-list>
-      <filtered-out-file-type name="LOCAL_BRANCH" />
-      <filtered-out-file-type name="REMOTE_BRANCH" />
-      <filtered-out-file-type name="TAG" />
-      <filtered-out-file-type name="COMMIT_BY_MESSAGE" />
-    </file-type-list>
-  </component>
-  <component name="MarkdownSettingsMigration">
-    <option name="stateVersion" value="1" />
-  </component>
-  <component name="ProblemsViewState">
-    <option name="selectedTabId" value="ProjectErrors" />
-  </component>
-  <component name="ProjectId" id="271ExoZA3opKt8PTsBsuGOwCeDW" />
+  <component name="ProjectId" id="27R4718p3uCPMcTjGj742eTxxQ2" />
   <component name="ProjectViewState">
     <option name="autoscrollFromSource" value="true" />
     <option name="autoscrollToSource" value="true" />
@@ -78,55 +45,21 @@
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="nodejs_package_manager_path" value="npm" />
-    <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.TypeScript" />
-    <property name="ts.external.directory.path" value="C:\JohnsStuff\Projects\bitburner\contracts\node_modules\typescript\lib" />
     <property name="vue.rearranger.settings.migration" value="true" />
-  </component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\JohnsStuff\Projects\bitburner" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\JohnsStuff\Projects\bitburner" />
-      <recent name="C:\JohnsStuff\Projects\bitburner\runner-files" />
-      <recent name="C:\JohnsStuff\Projects\bitburner\test-files" />
-      <recent name="C:\JohnsStuff\Projects\bitburner\tests" />
-      <recent name="C:\JohnsStuff\Projects\bitburner\utils" />
-    </key>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="5a78a8f6-7165-4776-851e-9f8ad87cc565" name="Changes" comment="" />
-      <created>1648479442396</created>
+      <changelist id="7b49f7d5-9fe0-491d-b71b-d2514e015a4b" name="Changes" comment="" />
+      <created>1649269396983</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1648479442396</updated>
-      <workItem from="1648479443187" duration="945000" />
-      <workItem from="1648480406975" duration="18080000" />
-      <workItem from="1648566802358" duration="287000" />
-      <workItem from="1648567176791" duration="65152000" />
-      <workItem from="1648769881112" duration="13060000" />
-      <workItem from="1648841474868" duration="91724000" />
-      <workItem from="1649192526932" duration="6000" />
+      <updated>1649269396983</updated>
+      <workItem from="1649269399083" duration="151000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
   </component>
 </project>

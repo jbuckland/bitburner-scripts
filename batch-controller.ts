@@ -3,7 +3,7 @@ import { INDENT_STRING } from './consts';
 import { singleHack } from './hack-utils';
 import { NS } from './NetscriptDefinitions';
 import { ITargetWorkInfo } from './types';
-import { getAllRamUsage, getSettings, round, setSettings, timestamp } from './utils';
+import { formatPercent, getAllRamUsage, getSettings, round, setSettings, timestamp } from './utils';
 import { getAllTargetWorkInfo, isReadyForBatch } from './utils-controller';
 
 export async function main(ns: NS) {
@@ -14,7 +14,7 @@ export async function main(ns: NS) {
 
 export class BatchController {
 
-    private readonly BATCH_PERCENT = 0.7;
+    private readonly BATCH_PERCENT = 0.5;
     private SLEEP_TIME: number = 2000;
 
     private readonly HACK_PCT_MIN = 0.005;
@@ -48,17 +48,17 @@ export class BatchController {
 
                         if (newHackPercent !== settings.hackPercent) {
                             setSettings(this.ns, { hackPercent: newHackPercent });
-                            this.ns.print(`${timestamp()} Lowering 'hackPercent' to ${newHackPercent}`);
+                            this.ns.print(`${timestamp()} Lowering 'hackPercent' to ${formatPercent(newHackPercent, 1)}`);
                         }
                     } else if (batchSuccesses >= workReadyForBatch.length) {
                         let settings = getSettings(this.ns);
 
                         let newHackPercent = (settings.hackPercent ?? 0) * (1 + this.HACK_PCT_SCALAR);
-                        newHackPercent = Math.max(round(newHackPercent, 3), this.HACK_PCT_MIN);
+                        newHackPercent = Math.min(round(newHackPercent, 3), this.HACK_PCT_MAX);
 
                         if (newHackPercent !== settings.hackPercent) {
                             setSettings(this.ns, { hackPercent: newHackPercent });
-                            this.ns.print(`${timestamp()} Raising 'hackPercent' to ${newHackPercent}`);
+                            this.ns.print(`${timestamp()} Raising 'hackPercent' to ${formatPercent(newHackPercent, 1)}`);
                         }
 
                     }
@@ -80,7 +80,7 @@ export class BatchController {
 
     private async doMaxBatches(targetWork: ITargetWorkInfo[], ramPercentLimit: number): Promise<number> {
         //this.ns.print(`${timestamp()} Running batches!`);
-        const MAX_PASSES = 25;
+        const MAX_PASSES = 5;
 
         let totalSuccessfulBatchCount = 0;
         let totalBatchRamUsed = 0;
@@ -107,6 +107,7 @@ export class BatchController {
                 if (isReadyForBatch(work)) {
 
                     let batchRequest = makeBatchRequest(this.ns, work.target.hostname);
+                    //debugLog(this.ns, DebugLevel.info, `Batch Request created!`, batchRequest);
                     let success = await doBatchFromRequestMultiRunner(this.ns, batchRequest);
                     if (success) {
                         totalSuccessfulBatchCount++;
@@ -124,7 +125,7 @@ export class BatchController {
                 this.ns.print(`${timestamp()}${INDENT_STRING}Batch Pass #${batchPassCount}: Started: ${successfulBatchesThisRun}`);
             }
 
-            //await this.ns.sleep(10);
+            await this.ns.sleep(500);
 
         }
 

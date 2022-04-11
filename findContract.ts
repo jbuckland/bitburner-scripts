@@ -8,6 +8,7 @@ interface IContract {
 
 export async function main(ns: NS) {
     ns.tail();
+    ns.clearLog();
 
     let contractList: IContract[] = [];
 
@@ -27,8 +28,12 @@ export async function main(ns: NS) {
     if (contractList.length > 0) {
         ns.print(`Found ${contractList.length} contracts!`);
         contractList.forEach(cont => {
-            ns.print(cont);
+            ns.print(`${cont.host}: ${cont.name}`);
         });
+
+        await navigator.clipboard.writeText(`lconnect ${contractList[0].host}`);
+        ns.print(`Connect command for first contract copied to clipboard!`);
+
     } else {
         ns.print('No contracts found!');
     }

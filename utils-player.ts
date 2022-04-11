@@ -8,7 +8,6 @@ import {
     HACK_FACTIONS,
     HOME,
     HOSTS,
-    INDENT_STRING,
     JOB_FIELDS,
     MAX_HOME_SERVER_RAM,
     NEURO_FLUX_GOVERNOR,
@@ -21,6 +20,8 @@ import {
     WORK_TYPE,
     WORLD_DAEMON
 } from './consts';
+import { GYMS } from './crime_consts';
+import { getGangIncome, getHacknetIncome, getTotalIncome, myGetScriptIncome } from './crime_utils';
 import { NS, Player } from './NetscriptDefinitions';
 import { ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer } from './types';
 import {
@@ -36,17 +37,14 @@ import {
     getRemainingFactionAugmentations,
     hasRedPillInstalled,
     hasRemainingAugmentionsToBuy,
+    indent,
     longConnect,
-    round,
-    setSettings
+    round
 } from './utils';
-import { ITableData, Table } from './utils-table';
 
 export async function leaveTheCave(ns: NS) {
     let player = ns.getPlayer();
     if (hasRedPillInstalled(ns)) {
-
-        setSettings(ns, { doShare: false, doExp: true });
 
         let server = ns.getServer(WORLD_DAEMON.hostname);
         if (server.hasAdminRights && server.requiredHackingSkill < player.hacking) {
@@ -184,7 +182,7 @@ export function upgradeHomeComputer(ns: NS) {
     }
 }
 
-export function doDonationReset(ns: NS, factionList: IFaction[]) {
+export async function doDonationReset(ns: NS, factionList: IFaction[]) {
     for (let i = 0; i < factionList.length; i++) {
         const targetFaction = factionList[i];
         let currFavor = ns.getFactionFavor(targetFaction.name);
@@ -196,24 +194,30 @@ export function doDonationReset(ns: NS, factionList: IFaction[]) {
         //reset at thirds
         if (currFavor < (favorToDonate * .33)) {
             if (totalFavorAfterReset >= (favorToDonate * .33)) {
-                debugLog(ns, DebugLevel.info, `Resetting! 33%`);
-                doInstallReset(ns);
+                if (await ns.prompt(`${targetFaction} now has ${totalFavorAfterReset} favor! Ready to Reset?`)) {
+                    debugLog(ns, DebugLevel.info, `Resetting! 33%`);
+                    doInstallReset(ns);
+                }
 
             } else {
                 //debugLog(ns, DebugLevel.info, `Don't reset, would not yet be at 33% favor with [${targetFaction.name}]!`);
             }
         } else if (currFavor < (favorToDonate * .66)) {
             if (totalFavorAfterReset >= (favorToDonate * .66)) {
-                debugLog(ns, DebugLevel.success, `Resetting! 66%`);
-                doInstallReset(ns);
+                if (await ns.prompt(`${targetFaction} now has ${totalFavorAfterReset} favor! Ready to Reset?`)) {
+                    debugLog(ns, DebugLevel.success, `Resetting! 66%`);
+                    doInstallReset(ns);
+                }
 
             } else {
                 //debugLog(ns, DebugLevel.info, `Don't reset, would not yet be at 66% favor with [${targetFaction.name}]!`);
             }
         } else if (currFavor < favorToDonate) {
             if (totalFavorAfterReset >= favorToDonate) {
-                debugLog(ns, DebugLevel.success, `Resetting! 100%`);
-                doInstallReset(ns);
+                if (await ns.prompt(`${targetFaction} now has ${totalFavorAfterReset} favor! Ready to Reset?`)) {
+                    debugLog(ns, DebugLevel.success, `Resetting! 100%`);
+                    doInstallReset(ns);
+                }
 
             } else {
                 //debugLog(ns, DebugLevel.info, `Don't reset, would not yet be at 100% favor with [${targetFaction.name}]!`);
@@ -313,7 +317,8 @@ export function workOnReputation(ns: NS, targetFaction: IFaction) {
 export function claimedEarnedFactionRep(ns: NS, restart: boolean = false) {
 
     let player = ns.getPlayer();
-    let factionRepAmount = 100 * getReputationGainRate(ns);
+    let REP_CASHOUT_TIME = 100; //in seconds
+    let factionRepAmount = REP_CASHOUT_TIME * getReputationGainRate(ns);
 
     debug(
         ns,
@@ -329,10 +334,13 @@ export function claimedEarnedFactionRep(ns: NS, restart: boolean = false) {
                 let currWorkFaction = player.currentWorkFactionName;
 
                 ns.stopAction();
-                debugLog(ns, DebugLevel.info, `Cashing in ${formatBigNumber(player.workRepGained)} gained reputation for ${player.currentWorkFactionName}`);
+                debugLog(ns, DebugLevel.info, `Cashing in ${formatBigNumber(player.workRepGained)} gained reputation for '${currWorkFaction}', doing '${currWorkType}'`);
 
                 if (restart) {
 
+                    if (ns.isBusy()) {
+                        debugLog(ns, DebugLevel.error, `Was still busy when trying to restart myWorkForFaction()`);
+                    }
                     let success = myWorkForFaction(ns, currWorkFaction, isFocused);
 
                     if (success) {
@@ -396,6 +404,14 @@ export interface ITargetAugmentation {
     fromFaction: IFaction,
     moneyCost: number
     totalRepCost: number;
+}
+
+export async function trainStat(ns: NS, playerStatName: keyof Player, gymStatName: string) {
+    let trainingWaitTime = 1000;
+    ns.print(`training ${playerStatName}!`);
+    ns.gymWorkout(GYMS.powerhouse, gymStatName, true);
+    await ns.sleep(trainingWaitTime);
+
 }
 
 export function findNextAugmentationToWorkToward(ns: NS): ITargetAugmentation | undefined {
@@ -606,12 +622,14 @@ export function myWorkForFaction(ns: NS, factionName: string, focus: boolean): b
 
         if (remainingFactionAugments.length > 0) {
             //ns.print(`${factionName} still has ${wantedCount} augments I need! (and ${unwantedCount} I don't want)`);
-
+            ns.enableLog('ALL');
             success = ns.workForFaction(factionName, workType, focus);
+            ns.disableLog('ALL');
             if (success) {
-                ns.toast(`Working for ${factionName} doing ${workType}`, TOAST_VARIANT.info, TOAST_DURATION);
+                ns.toast(`Working for '${factionName}' doing '${workType}'`, TOAST_VARIANT.info, TOAST_DURATION);
             } else {
-                debugLog(ns, DebugLevel.error, `Failed to work for ${factionName} doing ${workType}`);
+                debugLog(ns, DebugLevel.error, `Failed to work for '${factionName}' doing '${workType}'`);
+                //ns.exit()
             }
         }
 
@@ -898,7 +916,7 @@ export function displayHomeServerInfo(ns: NS, costMultiplierBeforeBuying: number
         nextCostString = `, \$${formatBigNumber(nextCost)}x${costMultiplierBeforeBuying} = \$${formatBigNumber(nextCost * costMultiplierBeforeBuying)} for next`;
     }
 
-    ns.print(`${INDENT_STRING}Home: ${purchasedServers.length} of ${limit}${nextCostString}`);
+    ns.print(`${indent()}Home: ${purchasedServers.length} of ${limit}${nextCostString}`);
 
 }
 
@@ -936,7 +954,7 @@ export function displayRunnerStats(ns: NS) {
 
     let percentUsed = round((totalUsedRam / totalMaxRam) * 100, 2);
 
-    ns.print(`${INDENT_STRING}Runners: ${runners.length}, Ram Usage: ${percentUsed}% of ${formatBigRam(totalMaxRam)}, `);
+    ns.print(`${indent()}Runners: ${runners.length}, Ram Usage: ${percentUsed}% of ${formatBigRam(totalMaxRam)}, `);
 
 }
 
@@ -991,14 +1009,13 @@ export function displayFactionProgress(ns: NS) {
         //////////////////////
         // Header
         //////////////////////
-        let repHeader = `Rep. Progress`;
         ns.print(`Faction Progress:`);
-        ns.print(`${INDENT_STRING}Current ${factionTypeString}: [${factionWorkingFor}]`);
+        ns.print(`${indent()}Current ${factionTypeString}: [${factionWorkingFor}]`);
 
         //////////////////////
         // Reputation
         //////////////////////
-        repHeader = `${INDENT_STRING}Reputation:`;
+        let repHeader = `${indent()}Reputation:`;
         let currentRepString = `Current: ${formatBigNumber(currRep)}`;
         let remainingRepString = `Remaining: ${formatBigNumber(remainingRep)}`;
 
@@ -1009,7 +1026,7 @@ export function displayFactionProgress(ns: NS) {
         ///////////////
         // Favor
         ///////////////
-        let favorHeader = `${INDENT_STRING}Favor:`;
+        let favorHeader = `${indent()}Favor:`;
 
         let currentFavorString = `Current: ${formatBigNumber(currFavor)}`;
 
@@ -1019,10 +1036,35 @@ export function displayFactionProgress(ns: NS) {
         }
 
         let gainedFavorString = `Gained: ${formatBigNumber(gainedFavor)}`;
-
         ns.print(`${favorHeader} ${currentFavorString}, ${remainingFavorString}${gainedFavorString}`);
 
-        let shareString = `${INDENT_STRING}Share Bonus: +${round((ns.getSharePower() - 1) * 100)}%`;
+        let bigFaction = bigFactionList.find(f => f.name === factionWorkingFor);
+        if (bigFaction) {
+            //show ETA to next big faction reset
+
+            let nextResetAmount = 0;
+            let favorToDonate = ns.getFavorToDonate();
+            if (currFavor + gainedFavor < favorToDonate * .333) {
+                nextResetAmount = favorToDonate * .333;
+            } else if (currFavor + gainedFavor < favorToDonate * .666) {
+                nextResetAmount = favorToDonate * .666;
+            } else {
+                nextResetAmount = favorToDonate;
+            }
+
+            let remainingFavorUntilReset = nextResetAmount - currFavor - gainedFavor;
+
+            let totalFactionRep = 0;
+            let repNeededForReset = 0;
+
+            let currentRep = 0;
+            //let totalFavor = 1 + (Math.log((currentRep + 25000) / 25500));
+
+            ns.print(`${indent(2)}+${round(remainingFavorUntilReset, 1)} favor until reset!`);
+
+        }
+
+        let shareString = `${indent()}Share Bonus: +${round((ns.getSharePower() - 1) * 100)}%`;
         ns.print(`${shareString}`);
         ns.print('');
     } else {
@@ -1030,6 +1072,14 @@ export function displayFactionProgress(ns: NS) {
     }
 
 }
+
+//these factions have very high Rep requirements, so we're going to go the donation route
+export const bigFactionList: IFaction[] = [
+    HACK_FACTIONS.daedalus,
+    COMPANY_FACTIONS.nwo,
+    HACK_FACTIONS.bitrunners,
+    HACK_FACTIONS.blackHand
+];
 
 export function displayNextAugmentInfo(ns: NS, targetAug: ITargetAugmentation | undefined) {
 
@@ -1050,15 +1100,15 @@ export function displayNextAugmentInfo(ns: NS, targetAug: ITargetAugmentation | 
         let repCostTimeString = makeRepCostTimeString(ns, targetAug.totalRepCost, additionalRepNeeded);
 
         ns.print(header);
-        ns.print(`${INDENT_STRING}'${targetAug.augName}' from [${targetAug.fromFaction.name}]`);
-        ns.print(`${INDENT_STRING}Money Needed: ${moneyCostTimeString}`);
-        ns.print(`${INDENT_STRING}Rep. Needed: ${repCostTimeString}`);
+        ns.print(`${indent()}'${targetAug.augName}' from [${targetAug.fromFaction.name}]`);
+        ns.print(`${indent()}Money Needed: ${moneyCostTimeString}`);
+        ns.print(`${indent()}Rep. Needed: ${repCostTimeString}`);
 
         if (currFavor >= favorToDonate) {
             let donationNeeded = getDonationNeededForReputation(ns, targetAug.additionalRepNeeded);
             //donateString = `, or \$${formatBigNumber(donationNeeded)} donation`;
             let donationTimeString = makeMoneyCostTimeString(ns, donationNeeded);
-            ns.print(` ${INDENT_STRING}Or donation: ${donationTimeString}`);
+            ns.print(` ${indent()}Or donation: ${donationTimeString}`);
         }
 
     } else {
@@ -1070,33 +1120,43 @@ export function displayNextAugmentInfo(ns: NS, targetAug: ITargetAugmentation | 
 
 export function displayIncomeStats(ns: NS) {
 
-    let money = ns.getScriptIncome();
     let exp = ns.getScriptExpGain();
-
-    let moneyIncome = `\$${formatBigNumber(money[0])}`;
     let expIncome = formatBigNumber(exp);
     let repIncome = formatBigNumber(getReputationGainRate(ns));
 
+    let scriptMoneyIncome = myGetScriptIncome(ns);
+    let hacknetMoneyIncome = getHacknetIncome(ns);
+    let gangMoneyIncome = getGangIncome(ns);
+
+    let totalMoneyIncome = scriptMoneyIncome + gangMoneyIncome + hacknetMoneyIncome;
+
+    /*
     let incomeTable = new Table(ns);
     let tableData: ITableData[] = [
-        {
-            '$/s': moneyIncome,
-            'xp/s': expIncome,
-            'rep/s': repIncome
-        }
+        { '$/s': moneyIncome, 'xp/s': expIncome, 'rep/s': repIncome }
 
     ];
     incomeTable.setData([
-        {
-            '$$/s': moneyIncome,
-            'Exp/s': expIncome,
-            'Rep/s': repIncome
-        }
+        { '$$/s': moneyIncome, 'Exp/s': expIncome, 'Rep/s': repIncome }
     ]);
+    incomeTable.print();
+    */
+    let padding = 8;
 
-    //incomeTable.print();
+    ns.print(`Income: \$${formatBigNumber(totalMoneyIncome, 2)}/s, ${expIncome} xp/s, ${repIncome} rep/s`);
 
-    ns.print(`Income: ${moneyIncome}/s, ${expIncome} xp/s, ${repIncome} rep/s`);
+    let hackMoneyString = `\$${formatBigNumber(scriptMoneyIncome, 2)}`;
+    ns.print(`${indent()}Hacking: ${hackMoneyString.padStart(padding)}/s`);
+
+    if (ns.gang.inGang()) {
+        let gangMoneyString = `\$${formatBigNumber(gangMoneyIncome, 2)}`;
+        ns.print(`${indent()}Gang:    ${gangMoneyString.padStart(padding)}/s`);
+    }
+
+    if (ns.hacknet.numNodes() > 0) {
+        let hnMoneyString = `\$${formatBigNumber(hacknetMoneyIncome, 2)}`;
+        ns.print(`${indent()}Hacknet: ${hnMoneyString.padStart(padding)}/s`);
+    }
     ns.print('');
 
 }
@@ -1134,8 +1194,8 @@ export function displayNextDarkwebTool(ns: NS) {
         let etaString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
         ns.print(`Next Darkweb tool: '${nextTool.name}'`);
-        ns.print(`${INDENT_STRING} Cost: \$${formatBigNumber(nextTool.cost)}, +\$${formatBigNumber(remainingCost)}`);
-        ns.print(`${INDENT_STRING} Time left: ${formatBigTime(estTimeLeft).padStart(6)}, ETA: ${etaString}`);
+        ns.print(`${indent()}Cost: \$${formatBigNumber(nextTool.cost)}, +\$${formatBigNumber(remainingCost)}`);
+        ns.print(`${indent()}Time left: ${formatBigTime(estTimeLeft).padStart(6)}, ETA: ${etaString}`);
 
         if (!player.tor && player.money >= DARK_DATA.torCost) {
             ns.print(`INFO You have enough to buy the TOR router!`);
@@ -1185,7 +1245,7 @@ export function displayRunnerStatsNoHomeServer(ns: NS) {
 
     let percentUsed = round((totalUsedRam / totalMaxRam) * 100, 2);
 
-    ns.print(`${INDENT_STRING}Runners: ${runners.length}, Ram Usage: ${percentUsed}% of ${formatBigRam(totalMaxRam)}, `);
+    ns.print(`${indent()}Runners: ${runners.length}, Ram Usage: ${percentUsed}% of ${formatBigRam(totalMaxRam)}, `);
 }
 
 export function getReputationGainRate(ns: NS) {
@@ -1193,29 +1253,29 @@ export function getReputationGainRate(ns: NS) {
 }
 
 function makeRepCostTimeString(ns: NS, totalCost: number, remainingCost: number): string {
-
-    let player = ns.getPlayer();
-
     let incomePerSec = getReputationGainRate(ns);
+    return makeEtaTimeString(ns, totalCost, remainingCost, incomePerSec);
+}
+
+export function makeEtaTimeString(ns: NS, totalCost: number, remainingCost: number, gain: number): string {
 
     let etaTime = new Date();
-    let estTimeLeft = (remainingCost / incomePerSec) * 1000;
+    let estTimeLeft = (remainingCost / gain) * 1000;
     etaTime.setTime(new Date().getTime() + estTimeLeft);
     let etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
-    let repCostString = `${formatBigNumber(totalCost)}`;
+    let costString = `${formatBigNumber(totalCost)}`;
     let remainingCostString = `+${formatBigNumber(remainingCost)}`;
     let timeLeftString = `Time left: ${formatBigTime(estTimeLeft).padStart(5)}`;
     let etaString = `ETA: ${etaDurationString}`;
 
-    return `${repCostString}, ${remainingCostString.padStart(7)}, ${timeLeftString}, ${etaString}`;
-
+    return `${costString}, ${remainingCostString.padStart(7)}, ${timeLeftString}, ${etaString}`;
 }
 
 function makeMoneyCostTimeString(ns: NS, itemCost: number): string {
     let player = ns.getPlayer();
 
-    let incomePerSec = ns.getScriptIncome()[0];
+    let incomePerSec = getTotalIncome(ns);
     let remainingCost = Math.max(itemCost - player.money, 0);
 
     let etaDurationString = 'Now!';
@@ -1238,8 +1298,8 @@ export function displayHomeUpgradeInfo(ns: NS) {
     let homeCoreCost = formatBigNumber(ns.getUpgradeHomeCoresCost());
 
     ns.print(`Next Home Upgrades:`);
-    ns.print(`${INDENT_STRING}Ram: ${makeMoneyCostTimeString(ns, ns.getUpgradeHomeRamCost())}`);
-    ns.print(`${INDENT_STRING}Cores: \$${homeCoreCost}`);
+    ns.print(`${indent()}Ram: ${makeMoneyCostTimeString(ns, ns.getUpgradeHomeRamCost())}`);
+    ns.print(`${indent()}Cores: \$${homeCoreCost}`);
     ns.print('');
 
 }
@@ -1248,15 +1308,17 @@ export function displayHacknetInfo(ns: NS) {
     let numNodes = ns.hacknet.numNodes();
 
     if (numNodes > 0) {
+
+        ns.print(`Hacknet:`);
+        ns.print(`${indent()}Nodes: ${numNodes}, Next cost: \$${formatBigNumber(ns.hacknet.getPurchaseNodeCost(), 1)}`);
+
         let totalHashGain = 0;
         for (let i = 0; i < numNodes; i++) {
             let nodeInfo = ns.hacknet.getNodeStats(i);
             totalHashGain += nodeInfo.production;
         }
-
-        ns.print(`Hacknet:`);
-        ns.print(`${INDENT_STRING}Hashes: ${round(ns.hacknet.numHashes(), 2)}`);
-        ns.print(`${INDENT_STRING}Hash Gain: ${round(totalHashGain, 3)}/s, \$${formatBigNumber(totalHashGain * 250000)}/s`);
+        ns.print(`${indent()}Hash Gain: ${round(totalHashGain, 3)}/s`);
+        ns.print(`${indent()}Hashes: ${round(ns.hacknet.numHashes(), 2)}`);
         ns.print('');
     }
 
@@ -1291,6 +1353,10 @@ export function buyNFGs(ns: NS) {
     ns.print(`'${NEURO_FLUX_GOVERNOR}' price: \$${formatBigNumber(nfgPrice)}, rep: ${formatBigNumber(nfgRepReq)}`);
 
     let joinedFactions = player.factions;
+    if (ns.gang.inGang()) {
+        let info = ns.gang.getGangInformation();
+        joinedFactions = joinedFactions.filter(f => f !== info.faction);
+    }
 
     if (joinedFactions.length > 0) {
         let factionReps = joinedFactions.map(f => {
@@ -1365,8 +1431,8 @@ export function displayWorldDaemonProgress(ns: NS) {
         let expNeeded = ns.formulas.skills.calculateExp(hackSkillRequired, player.hacking_exp_mult);
         let currExp = player.hacking_exp;
 
-        ns.print(`${INDENT_STRING}[${WORLD_DAEMON.hostname}] Hack Skill Req.: ${hackSkillRequired}, Current: ${player.hacking}, Remaining: ${remainingHackSkill}`);
-        ns.print(`${INDENT_STRING}EXP Needed: ${formatBigNumber(expNeeded)}, Current EXP: ${formatBigNumber(currExp)}`);
+        ns.print(`${indent()}[${WORLD_DAEMON.hostname}] Hack Skill Req.: ${hackSkillRequired}, Current: ${player.hacking}, Remaining: ${remainingHackSkill}`);
+        ns.print(`${indent()}EXP Needed: ${formatBigNumber(expNeeded)}, Current EXP: ${formatBigNumber(currExp)}`);
 
         ns.print('');
 

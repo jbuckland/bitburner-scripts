@@ -1,5 +1,5 @@
-import { timestamp } from '/utils/utils';
-import { NOTES, SoundPlayer } from '/utils/utils-sound';
+import { timestamp }from 'lib/utils';
+import { NOTES, SoundPlayer }from 'lib/utils-sound';
 import { NS } from 'NetscriptDefinitions';
 import { INetscriptExtra } from 'types';
 

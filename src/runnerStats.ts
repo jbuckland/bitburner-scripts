@@ -1,6 +1,6 @@
 import { NS } from 'NetscriptDefinitions';
 import { IRunnerServer } from 'types';
-import { formatBigRam, getAllHosts, round, timestamp } from 'utils/utils';
+import { formatBigRam, getAllHosts, round, timestamp } from 'lib/utils';
 
 interface IRunningScriptStats {
     name: string;

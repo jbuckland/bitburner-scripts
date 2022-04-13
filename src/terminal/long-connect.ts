@@ -1,5 +1,5 @@
 import {AutocompleteData, NS} from 'NetscriptDefinitions';
-import {findServerNodeRecursive, getPathToServerNode, getServerTree} from 'utils/utils';
+import {findServerNodeRecursive, getPathToServerNode, getServerTree} from 'lib/utils';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     //data.flags(flagSchema);

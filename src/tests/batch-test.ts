@@ -1,8 +1,8 @@
-﻿import { doBatchFromRequestMultiRunner, makeBatchRequest } from 'batch';
-import { NULL_PORT_DATA, PORTS } from 'utils/consts';
+﻿import { doBatchFromRequestMultiRunner, makeBatchRequest } from '/old-controllers/batch';
 import { NetscriptPort, NS } from 'NetscriptDefinitions';
 import { ServerEvent } from 'types';
-import { formatBigRam, setSettings, timestamp } from 'utils/utils';
+import { NULL_PORT_DATA, PORTS } from 'lib/consts';
+import { formatBigRam, setSettings, timestamp } from 'lib/utils';
 
 export async function main(ns: NS) {
 

@@ -1,5 +1,5 @@
 import { NS } from 'NetscriptDefinitions';
-import { myFormatCurrency } from 'utils/utils';
+import { myFormatCurrency } from 'lib/utils';
 
 export async function main(ns: NS) {
 

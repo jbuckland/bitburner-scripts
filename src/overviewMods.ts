@@ -1,6 +1,6 @@
-import { OVERVIEW_EXTRA_0_ID, OVERVIEW_EXTRA_1_ID, OVERVIEW_EXTRA_2_ID } from 'utils/consts';
+import { OVERVIEW_EXTRA_0_ID, OVERVIEW_EXTRA_1_ID, OVERVIEW_EXTRA_2_ID } from 'lib/consts';
 import { NS } from 'NetscriptDefinitions';
-import { formatBigNumber, myFormatCurrency } from 'utils/utils';
+import { formatBigNumber, myFormatCurrency } from 'lib/utils';
 
 export async function main(ns: NS) {
 

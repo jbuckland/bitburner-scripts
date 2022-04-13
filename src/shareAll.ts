@@ -1,6 +1,6 @@
-import { SCRIPTS } from 'utils/consts';
 import { NS } from 'NetscriptDefinitions';
-import { formatBigNumber, getAllServerInfo, getRandomId, getThreadsAvailableForScript, round, timestamp } from 'utils/utils';
+import { SCRIPTS } from 'lib/consts';
+import { formatBigNumber, getAllServerInfo, getRandomId, getThreadsAvailableForScript, round, timestamp } from 'lib/utils';
 
 export async function main(ns: NS) {
 

@@ -1,8 +1,8 @@
 import { NS } from 'NetscriptDefinitions';
 import { ITargetWorkInfo, TaskType } from 'types';
-import { formatBigNumber, formatBigTime, getTargetValue, myFormatCurrency, round, timestamp } from 'utils/utils';
-import { getAllTargetWorkInfo } from 'utils/utils-controller';
-import { ITableData, Table } from 'utils/utils-table';
+import { formatBigNumber, formatBigTime, getTargetValue, myFormatCurrency, round, timestamp } from 'lib/utils';
+import { getAllTargetWorkInfo } from 'lib/utils-controller';
+import { ITableData, Table } from 'lib/utils-table';
 
 export async function main(ns: NS) {
     const SLEEP_TIME = 1000;

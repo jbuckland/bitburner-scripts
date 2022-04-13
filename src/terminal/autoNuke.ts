@@ -1,6 +1,6 @@
-import {DARK_DATA, HOME, TOAST_DURATION, TOAST_VARIANT} from 'utils/consts';
+import {DARK_DATA, HOME, TOAST_DURATION, TOAST_VARIANT} from 'lib/consts';
 import {NS} from 'NetscriptDefinitions';
-import {getAllHosts} from 'utils/utils';
+import {getAllHosts} from 'lib/utils';
 
 export async function main(ns: NS) {
     ns.disableLog('ALL');

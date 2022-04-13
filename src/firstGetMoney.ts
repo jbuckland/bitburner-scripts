@@ -1,6 +1,6 @@
-import { HOME } from 'utils/consts';
+import { HOME } from 'lib/consts';
 import { NS } from 'NetscriptDefinitions';
-import { timestamp } from 'utils/utils';
+import { timestamp } from 'lib/utils';
 
 interface FirstTarget {
     name: string,

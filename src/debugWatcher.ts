@@ -1,7 +1,7 @@
-import {DebugLevel} from 'utils/consts';
+import {DebugLevel} from 'lib/consts';
 import {NS} from 'NetscriptDefinitions';
 import {IDebugMessage} from 'types';
-import {readDebugMessage, timestamp} from 'utils/utils';
+import {readDebugMessage, timestamp} from 'lib/utils';
 
 export async function main(ns: NS) {
     const SLEEP_TIME = 2000;

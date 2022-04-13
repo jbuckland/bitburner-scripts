@@ -1,7 +1,7 @@
-﻿import { crimes, GYMS } from 'utils/crime-consts';
+﻿import { crimes, GYMS } from 'lib/crime-consts';
+import { formatBigNumber, formatPercent, indent, round, timestamp } from 'lib/utils';
 import { NS, Player } from 'NetscriptDefinitions';
 import { INetscriptExtra } from 'types';
-import { formatBigNumber, formatPercent, indent, round, timestamp } from 'utils/utils';
 
 export async function main(ns: NS & INetscriptExtra) {
     ns.tail();

@@ -1,7 +1,7 @@
-import { NULL_PORT_DATA, PORTS } from 'utils/consts';
+import { NULL_PORT_DATA, PORTS } from 'lib/consts';
 import { NS } from 'NetscriptDefinitions';
 import { ServerEvent } from 'types';
-import { timestamp } from 'utils/utils';
+import { timestamp } from 'lib/utils';
 
 export async function main(ns: NS) {
 

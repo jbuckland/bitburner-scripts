@@ -1,6 +1,6 @@
 ﻿import { AutocompleteData, NS } from 'NetscriptDefinitions';
 import { FlagSchema } from 'types';
-import { round, timestamp } from 'utils/utils';
+import { round, timestamp } from 'lib/utils';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     console.log(`autocomplete()`, args);

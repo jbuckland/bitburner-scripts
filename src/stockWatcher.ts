@@ -1,6 +1,6 @@
-import { TOAST_DURATION } from 'utils/consts';
+import { TOAST_DURATION } from 'lib/consts';
 import { NS } from 'NetscriptDefinitions';
-import { round, timestamp } from 'utils/utils';
+import { round, timestamp } from 'lib/utils';
 
 export async function main(ns: NS) {
     ns.tail();

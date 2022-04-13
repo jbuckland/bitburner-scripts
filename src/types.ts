@@ -1,4 +1,4 @@
-import { CrimeMode, DebugLevel, EventType, HacknetMode } from 'utils/consts';
+import { CrimeMode, DebugLevel, EventType, HacknetMode } from 'lib/consts';
 import { GangOtherInfoObject } from 'NetscriptDefinitions';
 
 export interface ServerInfo {

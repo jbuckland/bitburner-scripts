@@ -1,7 +1,7 @@
-import { HOME, TOAST_DURATION, TOAST_VARIANT } from 'utils/consts';
+import { HOME, TOAST_DURATION, TOAST_VARIANT } from 'lib/consts';
 import { NS } from 'NetscriptDefinitions';
 import { IServerFaction } from 'types';
-import { longConnect } from 'utils/utils';
+import { longConnect } from 'lib/utils';
 
 
 export async function main(ns: NS) {

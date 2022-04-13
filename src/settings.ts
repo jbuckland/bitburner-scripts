@@ -1,7 +1,7 @@
-import { CrimeMode, HacknetMode } from 'utils/consts';
+import { CrimeMode, HacknetMode } from 'lib/consts';
 import { AutocompleteData, NS } from 'NetscriptDefinitions';
 import { FlagSchema } from 'types';
-import { getSettings, setSettings, timestamp } from 'utils/utils';
+import { getSettings, setSettings, timestamp } from 'lib/utils';
 
 let SLEEP_TIME = 1000;
 

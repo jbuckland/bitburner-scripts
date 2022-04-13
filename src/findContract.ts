@@ -1,4 +1,4 @@
-import { HOSTS } from 'utils/consts';
+import { HOSTS } from 'lib/consts';
 import { NS } from 'NetscriptDefinitions';
 
 interface IContract {

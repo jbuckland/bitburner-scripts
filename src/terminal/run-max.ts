@@ -1,5 +1,5 @@
 ﻿import { AutocompleteData, NS } from 'NetscriptDefinitions';
-import { getThreadsAvailableForScript } from 'utils/utils';
+import { getThreadsAvailableForScript } from 'lib/utils';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
 

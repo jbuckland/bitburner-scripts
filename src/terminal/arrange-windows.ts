@@ -1,18 +1,18 @@
-import { resizeScriptWindow } from '/utils/utils-ui';
+import { resizeScriptWindow }from 'lib/utils-ui';
 import { NS } from 'NetscriptDefinitions';
-import { SCRIPTS } from 'utils/consts';
+import { SCRIPTS, SCRIPTS_OLD_CONTROLLERS } from 'lib/consts';
 
 export async function main(ns: NS) {
     //ns.disableLog('ALL');
     ns.clearLog();
 
-    resizeScriptWindow(ns, SCRIPTS.homeController, [], 250, 350);
+    resizeScriptWindow(ns, SCRIPTS_OLD_CONTROLLERS.homeController, [], 250, 350);
     resizeScriptWindow(ns, SCRIPTS.targetStats, [], 1500, 200);
-    resizeScriptWindow(ns, SCRIPTS.hackController, [], 500, 200);
-    resizeScriptWindow(ns, SCRIPTS.batchController, [], 500, 200);
-    resizeScriptWindow(ns, SCRIPTS.playerController2, [], 600, 350);
-    resizeScriptWindow(ns, SCRIPTS.playerController, [], 700, 580);
-    resizeScriptWindow(ns, SCRIPTS.hacknet, [], 1000, 200);
-    resizeScriptWindow(ns, SCRIPTS.crimeController1, [], 650, 700);
+    resizeScriptWindow(ns, SCRIPTS_OLD_CONTROLLERS.hackController, [], 500, 200);
+    resizeScriptWindow(ns, SCRIPTS_OLD_CONTROLLERS.batchController, [], 500, 200);
+    resizeScriptWindow(ns, SCRIPTS_OLD_CONTROLLERS.playerController2, [], 600, 350);
+    resizeScriptWindow(ns, SCRIPTS_OLD_CONTROLLERS.playerController, [], 700, 580);
+    resizeScriptWindow(ns, SCRIPTS_OLD_CONTROLLERS.hacknet, [], 1000, 200);
+    resizeScriptWindow(ns, SCRIPTS_OLD_CONTROLLERS.crimeController1, [], 650, 700);
 
 }

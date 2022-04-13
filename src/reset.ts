@@ -1,6 +1,6 @@
 import {NS} from 'NetscriptDefinitions';
-import {round} from 'utils/utils';
-import {doInstallReset} from 'utils/utils-player';
+import {round} from 'lib/utils';
+import {doInstallReset} from 'lib/utils-player';
 
 export async function main(ns: NS) {
 

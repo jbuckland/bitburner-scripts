@@ -1,6 +1,6 @@
 import { NS } from 'NetscriptDefinitions';
-import { debug, formatBigNumber, formatBigRam, getAllHosts, timestamp } from 'utils/utils';
-import { ITableData, Table } from 'utils/utils-table';
+import { debug, formatBigNumber, formatBigRam, getAllHosts, timestamp } from 'lib/utils';
+import { ITableData, Table } from 'lib/utils-table';
 
 interface IRunningScriptStats {
     name: string;

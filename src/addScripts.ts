@@ -1,6 +1,6 @@
 import { NS } from '/NetscriptDefinitions';
-import { SCRIPTS } from 'utils/consts';
-import { getAllHosts } from 'utils/utils';
+import { SCRIPTS } from 'lib/consts';
+import { getAllHosts } from 'lib/utils';
 
 export async function main(ns: NS) {
 
@@ -23,10 +23,8 @@ const scriptList = [
     SCRIPTS.batchGrow,
     SCRIPTS.batchHack,
     SCRIPTS.batchWeaken,
-    SCRIPTS.donate,
     SCRIPTS.grow,
     SCRIPTS.hack,
-    SCRIPTS.reset,
     SCRIPTS.weaken,
     SCRIPTS.expGain,
 

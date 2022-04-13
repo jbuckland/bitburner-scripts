@@ -1,8 +1,8 @@
 ﻿import { AugmentationStats, NS } from '/NetscriptDefinitions';
 import { IFaction } from '/types';
-import { CITY_FACTIONS, COMPANY_FACTIONS, GANG_FACTIONS, HACK_FACTIONS, NON_HACKING_AUGMENTS, OTHER_FACTIONS } from '/utils/consts';
-import { formatBigNumber, formatCurrency, formatPercent, getUnownedFactionAugmentations } from '/utils/utils';
-import { Table } from '/utils/utils-table';
+import { CITY_FACTIONS, COMPANY_FACTIONS, GANG_FACTIONS, HACK_FACTIONS, NON_HACKING_AUGMENTS, OTHER_FACTIONS }from 'lib/consts';
+import { formatBigNumber, formatCurrency, formatPercent, getUnownedFactionAugmentations }from 'lib/utils';
+import { Table }from 'lib/utils-table';
 
 export async function main(ns: NS) {
     ns.tail();

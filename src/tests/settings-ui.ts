@@ -1,6 +1,6 @@
-﻿import { CrimeMode, DebugLevel, HacknetMode } from '/utils/consts';
-import { debugLog, getSettings, setSettings, timestamp } from '/utils/utils';
-import { addOptionsToSelect, ISelectOption, makeMainUIContainer } from '/utils/utils-ui';
+﻿import { CrimeMode, DebugLevel, HacknetMode }from 'lib/consts';
+import { debugLog, getSettings, setSettings, timestamp }from 'lib/utils';
+import { addOptionsToSelect, ISelectOption, makeMainUIContainer }from 'lib/utils-ui';
 import { NS } from 'NetscriptDefinitions';
 import { IGlobalSettings, INetscriptExtra } from 'types';
 

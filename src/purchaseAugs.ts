@@ -1,5 +1,5 @@
 import {NS} from 'NetscriptDefinitions';
-import {purchaseAvailableAugmentations} from 'utils/utils-player';
+import {purchaseAvailableAugmentations} from 'lib/utils-player';
 
 export async function main(ns: NS) {
 

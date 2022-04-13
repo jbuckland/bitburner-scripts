@@ -1,4 +1,4 @@
-import { main } from './overlapping-intervals';
+import { main } from 'overlapping-intervals';
 
 let results = main([]);
 

@@ -1,25 +1,10 @@
 import { IRamUsage } from '/old-controllers/home-controller';
+import {
+    CITY_FACTIONS, COMPANY_FACTIONS, CrimeMode, DARK_DATA, DebugLevel, DEFAULT_RAM_BUFFER, DEFAULT_TARGET_HACK_PERCENT, HACK_FACTIONS, HacknetMode, HOME, HOSTS,
+    MIN_MONEY, NULL_PORT_DATA, playerControllers, PORTS, SCRIPTS, THE_RED_PILL
+} from 'lib/consts';
 import { NS } from 'NetscriptDefinitions';
 import { IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo } from 'types';
-import {
-    CITY_FACTIONS,
-    COMPANY_FACTIONS,
-    CrimeMode,
-    DARK_DATA,
-    DebugLevel,
-    DEFAULT_RAM_BUFFER,
-    DEFAULT_TARGET_HACK_PERCENT,
-    HACK_FACTIONS,
-    HacknetMode,
-    HOME,
-    HOSTS,
-    MIN_MONEY,
-    NULL_PORT_DATA,
-    playerControllers,
-    PORTS,
-    SCRIPTS,
-    THE_RED_PILL
-} from 'lib/consts';
 
 export function timerStart(ns: NS, label: string) {
     let settings = getSettings(ns);
@@ -540,7 +525,7 @@ export function round(num: number, places: number = 0): number {
 
 export function formatPercent(value: number, roundPlaces = 0): string {
 
-    return `${round(value * 100, roundPlaces)}%`;
+    return `${round(value * 100, roundPlaces).toFixed(roundPlaces)}%`;
 
 }
 

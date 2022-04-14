@@ -4,7 +4,7 @@ import { NS } from '/NetscriptDefinitions';
 export async function main(ns: NS) {
 
     let controller = new TemplateController(ns);
-    controller.doRun();
+    await controller.doRun();
 
 }
 
@@ -13,11 +13,11 @@ class TemplateController {
 
     constructor(private ns: NS) {
         ns.tail();
-        ns.disableLog('ALL)');
+        ns.disableLog('ALL');
 
     }
 
-    public doRun() {
+    public async doRun() {
 
         while (true) {
 
@@ -25,7 +25,7 @@ class TemplateController {
 
             this.displayInfo();
 
-            this.ns.sleep(this.SLEEP_TIME);
+            await this.ns.sleep(this.SLEEP_TIME);
         }
 
     }

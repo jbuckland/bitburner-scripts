@@ -1,16 +1,6 @@
 import { doBatchFromRequest, makeBatchRequest } from '/old-controllers/batch';
 import { DebugLevel, SCRIPTS } from 'lib/consts';
-import {
-    debugLog,
-    getAllRamUsage,
-    getFirstAvailableRunnerForScript,
-    getRandomId,
-    getThreadsAvailableForScript,
-    runHack,
-    timerEnd,
-    timerStart,
-    timestamp
-} from 'lib/utils';
+import { debugLog, getAllRamUsage, getFirstAvailableRunnerForScript, getRandomId, getThreadsAvailableForScript, runHack } from 'lib/utils';
 import { isReadyForBatch } from 'lib/utils-controller';
 import { NS } from 'NetscriptDefinitions';
 import { ITargetWorkInfo, TaskType, ThreadInfo } from 'types';
@@ -45,7 +35,6 @@ export async function doBatches(ns: NS, targetWork: ITargetWorkInfo[]): Promise<
 export function singleHack(ns: NS, target: string) {
     let runner = getFirstAvailableRunnerForScript(ns, SCRIPTS.hack);
     if (runner) {
-        ns.print(`${timestamp()}Hacking [${target}]!`);
         runHack(ns, runner, target, 1);
     } else {
         debugLog(ns, DebugLevel.warn, `Undefined runner!`);
@@ -54,13 +43,10 @@ export function singleHack(ns: NS, target: string) {
 
 }
 
-export function prepAllTargets(ns: NS, targetWork: ITargetWorkInfo[], ramPercentToUse: number) {
-    timerStart(ns, 'prepTargets()');
-    //console.profile('prepTargets()');
+export function prepAllTargets(ns: NS, targetWork: ITargetWorkInfo[], ramPercentToUse: number): { growThreadsStarted: number, weakenThreadsStarted: number, } {
     let weakenThreadsStarted = 0;
     let growThreadsStarted = 0;
 
-    //make a pass through all the work
     let ramUsage = getAllRamUsage(ns);
     let singleWeakenRam = ns.getScriptRam(SCRIPTS.weaken);
     let singleGrowRam = ns.getScriptRam(SCRIPTS.weaken);
@@ -85,10 +71,7 @@ export function prepAllTargets(ns: NS, targetWork: ITargetWorkInfo[], ramPercent
         }
 
     }
-
-    ns.print(`${timestamp()}Prep threads started: W:${weakenThreadsStarted}, G:${growThreadsStarted}`);
-    //console.profileEnd('prepTargets()');
-    timerEnd(ns, 'prepTargets()');
+    return { weakenThreadsStarted, growThreadsStarted };
 }
 
 export function useAvailableRunnersForWorkEfficient(ns: NS, target: string, scriptName: string, threadsNeeded: ThreadInfo, workFraction: number = 1): number {

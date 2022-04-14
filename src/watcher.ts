@@ -1,8 +1,9 @@
-import { HOME } from '/lib/consts';
-import { NS, ProcessInfo } from '/NetscriptDefinitions';
+import {HOME} from '/lib/consts';
+import {NS, ProcessInfo} from '/NetscriptDefinitions';
 
 export async function main(ns: NS): Promise<void> {
     const hashes: Record<string, number> = {};
+    ns.tprintf(`INFO: file watcher started!`);
 
     const files = ns.ls(HOME, '.js');
     for (const file of files) {

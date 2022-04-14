@@ -1,10 +1,10 @@
-import { IRamUsage } from '/old-controllers/home-controller';
+import {IRamUsage} from '/old-controllers/home-controller';
 import {
     CITY_FACTIONS, COMPANY_FACTIONS, CrimeMode, DARK_DATA, DebugLevel, DEFAULT_RAM_BUFFER, DEFAULT_TARGET_HACK_PERCENT, HACK_FACTIONS, HacknetMode, HOME, HOSTS,
     MIN_MONEY, NULL_PORT_DATA, playerControllers, PORTS, SCRIPTS, THE_RED_PILL
 } from 'lib/consts';
-import { NS } from 'NetscriptDefinitions';
-import { IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo } from 'types';
+import {NS} from 'NetscriptDefinitions';
+import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from 'types';
 
 export function timerStart(ns: NS, label: string) {
     let settings = getSettings(ns);
@@ -123,7 +123,7 @@ export function findServerNodeRecursive(currentNode: IServerNode, targetHostname
  * gets the server node tree starting with HOME
  */
 export function getServerTree(ns: NS): IServerNode {
-    let rootNode: IServerNode = { hostname: HOME, children: [] };
+    let rootNode: IServerNode = {hostname: HOME, children: []};
     rootNode.children = getChildrenRecursive(rootNode);
 
     return rootNode;
@@ -871,7 +871,7 @@ export function getAllRamUsage(ns: NS): IRamUsage {
         SCRIPTS.batchGrow,
         SCRIPTS.batchHack
     ];
-
+    let hackScripts: string[] = [SCRIPTS.hack];
     let prepScripts: string[] = [
         SCRIPTS.grow,
         SCRIPTS.hack,
@@ -883,6 +883,7 @@ export function getAllRamUsage(ns: NS): IRamUsage {
 
     let usage: IRamUsage = {
         batchRam: 0,
+        hackRam: 0,
         expRam: 0,
         prepRam: 0,
         shareRam: 0,
@@ -906,6 +907,8 @@ export function getAllRamUsage(ns: NS): IRamUsage {
 
             if (batchScripts.includes(p.filename)) {
                 usage.batchRam += ramUse;
+            } else if (hackScripts.includes(p.filename)) {
+                usage.hackRam += ramUse;
             } else if (expScripts.includes(p.filename)) {
                 usage.expRam += ramUse;
             } else if (prepScripts.includes(p.filename)) {

@@ -1,11 +1,11 @@
-import { IGlobalSettings, OtherGangInfo } from '/types';
-import { CrimeMode, DebugLevel, INDENT_STRING, MAX_GANG_MEMBERS, TOAST_DURATION, TOAST_VARIANT } from 'lib/consts';
-import { GANG_EQUIP_TYPES, GANG_TASK, MEMBER_NAME } from 'lib/crime-consts';
-import { debugLog, formatBigNumber, formatCurrency, formatPercent, getSettings, getUnownedFactionAugmentations, round, timestamp } from 'lib/utils';
-import { getAllMembers, getGangDiscountMult, getOtherGangsInfo, getWantedPenaltyMult } from 'lib/utils-crime';
-import { getAugmentFactionCostInfo } from 'lib/utils-player';
-import { ITableData, Table } from 'lib/utils-table';
-import { Gang, GangGenInfo, GangMemberAscension, GangMemberInfo, GangTaskStats, NS, Player } from 'NetscriptDefinitions';
+import {IGlobalSettings, OtherGangInfo} from '/types';
+import {CrimeMode, DebugLevel, INDENT_STRING, MAX_GANG_MEMBERS, TOAST_DURATION, TOAST_VARIANT} from 'lib/consts';
+import {GANG_EQUIP_TYPES, GANG_TASK, MEMBER_NAME} from 'lib/crime-consts';
+import {debugLog, formatBigNumber, formatCurrency, formatPercent, getSettings, getUnownedFactionAugmentations, round, timestamp} from 'lib/utils';
+import {getAllMembers, getGangDiscountMult, getOtherGangsInfo, getWantedPenaltyMult} from 'lib/utils-crime';
+import {getAugmentFactionCostInfo} from 'lib/utils-player';
+import {ITableData, Table} from 'lib/utils-table';
+import {Gang, GangGenInfo, GangMemberAscension, GangMemberInfo, GangTaskStats, NS, Player} from 'NetscriptDefinitions';
 
 type MyMemberInfo = GangMemberInfo & {
     targetTask: GANG_TASK | undefined,
@@ -35,7 +35,7 @@ let minOnMainTask = 1;
 let TARGET_CLASH_WIN_CHANCE = 0.8;
 let CLASH_CHANCE_WINDOW_SIZE = .2;
 const MAX_PERCENT_TO_TRAIN = 0.4; // this will be scaled by gangDiscountMult
-const MAX_TARGET_GANG_RESPECT = 3e6;
+const MAX_TARGET_GANG_RESPECT = 10e6;
 
 //const TASK_MONEY: GANG_TASK = GANG_TASK.trafficking;
 
@@ -57,6 +57,7 @@ export class CrimeController {
     private otherGangs: OtherGangInfo[] = [];
     private otherGangsWithTerritory: OtherGangInfo[] = [];
     private adjustedNumberToTrain: number = 0;
+    private perMemberRespectTagetMult: number = 10000;
 
     public constructor(private ns: NS) {
         this._gang = ns.gang;
@@ -350,7 +351,7 @@ export class CrimeController {
 
     private displayAscensionInfo(members: MyMemberInfo[]) {
         let ascTable = new Table(this.ns);
-        ascTable.headerRow = { 'Task': { dataKey: 'Task', text: 'Task', width: GANG_TASK.vigilante.length, order: 1 } };
+        ascTable.headerRow = {'Task': {dataKey: 'Task', text: 'Task', width: GANG_TASK.vigilante.length, order: 1}};
 
         this.members.sort((a, b) => b.afterAscAvgMult - a.afterAscAvgMult);
 
@@ -363,7 +364,8 @@ export class CrimeController {
                 'AvgAsc Mult': 'x' + round(d.totalAvgAscMult, 2).toFixed(2),
                 'CombatAsc Mult': 'x' + round(d.combatAvgAscMult, 2).toFixed(2),
                 'HackAsc Mult': 'x' + round(d.hack_asc_mult, 2).toFixed(2),
-                'Avg Combat Stat': round(d.combatAvg).toString()
+                'Avg Combat Stat': round(d.combatAvg).toString(),
+                'Respect': formatBigNumber(d.earnedRespect)
             };
 
         });
@@ -450,7 +452,7 @@ export class CrimeController {
 
             let count = jobCount.find(c => c.jobName === member.task);
             if (!count) {
-                count = { jobName: member.task, count: 0 };
+                count = {jobName: member.task, count: 0};
                 jobCount.push(count);
             }
             count.count++;
@@ -618,7 +620,7 @@ export class CrimeController {
 
             } else if (this.settings.crimeMode == CrimeMode.territory) {
 
-                if (member.earnedRespect < (this.adjustedTargetGangRespect / this.members.length)) {
+                if (member.earnedRespect < (this.perMemberRespectTagetMult * member.totalAvgAscMult)) {
 
                     //they need earn respect first
                     let tasksToTry = [

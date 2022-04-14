@@ -1,5 +1,5 @@
-import { NS, Player } from 'NetscriptDefinitions';
-import { ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer } from 'types';
+import {NS, Player} from 'NetscriptDefinitions';
+import {ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer} from 'types';
 import {
     CITY_FACTIONS,
     COMPANY_FACTIONS,
@@ -25,7 +25,7 @@ import {
     WORK_TYPE,
     WORLD_DAEMON
 } from 'lib/consts';
-import { GYMS } from 'lib/crime-consts';
+import {GYMS} from 'lib/crime-consts';
 import {
     debug,
     debugLog,
@@ -42,9 +42,9 @@ import {
     indent,
     logBase,
     longConnect,
-    round
+    round, timestamp
 } from 'lib/utils';
-import { getGangIncome, getHacknetIncome, getTotalIncome, myGetScriptIncome } from 'lib/utils-crime';
+import {getGangIncome, getHacknetIncome, getTotalIncome, myGetScriptIncome} from 'lib/utils-crime';
 
 export async function leaveTheCave(ns: NS) {
     let player = ns.getPlayer();
@@ -637,6 +637,8 @@ export function purchaseAvailableAugmentations(ns: NS) {
             return !NON_HACKING_AUGMENTS.includes(a);
         });
 
+        //buy the most expensive one we can currently afford
+
         for (let j = 0; j < remainingAugs.length; j++) {
             let augName = remainingAugs[j];
 
@@ -679,7 +681,6 @@ export function purchaseAvailableAugmentations(ns: NS) {
         }
 
         //if we've purchased the last augmentation we need, and we're working for this faction, stop
-        remainingAugs = getUnownedFactionAugmentations(ns, faction);
         if (remainingAugs.length === 0 && player.isWorking && player.currentWorkFactionName === faction) {
 
             ns.toast(`Purchased the last augmentation from ${faction}!`, TOAST_VARIANT.info, TOAST_DURATION);
@@ -720,7 +721,7 @@ export function tryPurchaseServer(ns: NS, costMultiplierBeforeBuying: number) {
         aServerNeedsUpgraded = smallestServer && smallestServer.maxRam < MAX_HOME_SERVER_RAM;
     }
 
-    debug(ns, 'tryPurchaseServer()', { nextRamSize, serverCost, playerHasEnoughMoney, homeServersFull, smallestServer });
+    debug(ns, 'tryPurchaseServer()', {nextRamSize, serverCost, playerHasEnoughMoney, homeServersFull, smallestServer});
     if (playerHasEnoughMoney) {
         if (homeServersFull && smallestServer && aServerNeedsUpgraded) {
             //delete
@@ -752,7 +753,7 @@ export function getHomeServers(ns: NS): HomeServer[] {
         const serverName = homeServersNames[i];
         const serverRam = ns.getServerMaxRam(serverName);
 
-        homeServers.push({ hostname: serverName, maxRam: serverRam });
+        homeServers.push({hostname: serverName, maxRam: serverRam});
     }
 
     return homeServers;
@@ -1099,6 +1100,17 @@ export function displayNextAugmentInfo(ns: NS, targetAug: ITargetAugmentation | 
     ns.print('');
 }
 
+export function displayHeader(ns: NS, scriptRunTimeMs?: number) {
+    let msg = `${timestamp()} `;
+    if (scriptRunTimeMs) {
+        msg += `Run Time: ${scriptRunTimeMs}ms, `;
+    }
+    msg += `RAM Used: ${formatBigRam(ns.getScriptRam(ns.getScriptName()))}`;
+
+    ns.print(msg);
+    ns.print('');
+}
+
 export function displayIncomeStats(ns: NS) {
 
     let exp = ns.getScriptExpGain();
@@ -1172,7 +1184,7 @@ export function displayNextDarkwebTool(ns: NS) {
         let etaTime = new Date();
         let estTimeLeft = (remainingCost / incomePerSec) * 1000;
         etaTime.setTime(new Date().getTime() + estTimeLeft);
-        let etaString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+        let etaString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
 
         ns.print(`Next Darkweb tool: '${nextTool.name}'`);
         ns.print(`${indent()}Cost: \$${formatBigNumber(nextTool.cost)}, +\$${formatBigNumber(remainingCost)}`);
@@ -1243,7 +1255,7 @@ export function makeEtaTimeString(ns: NS, totalCost: number, remainingCost: numb
     let etaTime = new Date();
     let estTimeLeft = (remainingCost / gain) * 1000;
     etaTime.setTime(new Date().getTime() + estTimeLeft);
-    let etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+    let etaDurationString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
 
     let costString = `${formatBigNumber(totalCost)}`;
     let remainingCostString = `+${formatBigNumber(remainingCost)}`;
@@ -1265,7 +1277,7 @@ function makeMoneyCostTimeString(ns: NS, itemCost: number): string {
         let etaTime = new Date();
         let estTimeLeft = (remainingCost / incomePerSec) * 1000;
         etaTime.setTime(new Date().getTime() + estTimeLeft);
-        etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+        etaDurationString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
         timeLeftString = formatBigTime(estTimeLeft).padStart(5);
     }
 

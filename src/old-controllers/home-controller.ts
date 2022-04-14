@@ -1,6 +1,6 @@
-import { HOME, playerControllers } from 'lib/consts';
-import { NS } from 'NetscriptDefinitions';
-import { formatBigRam, formatPercent, getAllRamUsage, indent, round, timerEnd, timerStart, timestamp } from 'lib/utils';
+import {HOME, playerControllers} from 'lib/consts';
+import {NS} from 'NetscriptDefinitions';
+import {formatBigRam, formatPercent, getAllRamUsage, indent, round, timerEnd, timerStart, timestamp} from 'lib/utils';
 
 export async function main(ns: NS) {
     let controller = new HomeController(ns);
@@ -12,6 +12,7 @@ export interface IRamUsage {
     totalMax: number,
 
     batchRam: number,
+    hackRam: number,
     prepRam: number,
     expRam: number,
     shareRam: number,

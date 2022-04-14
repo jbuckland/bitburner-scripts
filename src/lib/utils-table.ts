@@ -53,7 +53,7 @@ export class Table {
     private readonly VERT_OUTER = '║';
     private _data: ITableData[] | undefined;
 
-    public constructor(private _ns: NS) {
+    public constructor(private ns: NS) {
 
     }
 
@@ -157,7 +157,7 @@ export class Table {
 
         });
 
-        this._ns?.print(rowString);
+        this.ns?.print(rowString);
     }
 
     private printHorizLine(horizType: HorizType, count: HorizCount) {
@@ -229,7 +229,7 @@ export class Table {
             }
         }
 
-        this._ns?.print(horizLine);
+        this.ns?.print(horizLine);
     }
 
     private printRow(row: ITableData) {
@@ -258,7 +258,7 @@ export class Table {
 
         }
 
-        this._ns?.print(rowString);
+        this.ns?.print(rowString);
 
         if (this.HORIZ_LINES) {
             this.printHorizLine('bottom', 'single');

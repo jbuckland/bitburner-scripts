@@ -1,25 +1,11 @@
-import {IRamUsage} from '/old-controllers/home-controller';
+import { getGangIncome } from '/lib/utils-crime';
+import { IRamUsage } from '/old-controllers/home-controller';
 import {
-    CITY_FACTIONS,
-    COMPANY_FACTIONS,
-    CrimeMode,
-    DARK_DATA,
-    DebugLevel,
-    DEFAULT_RAM_BUFFER,
-    DEFAULT_TARGET_HACK_PERCENT,
-    HACK_FACTIONS,
-    HacknetMode,
-    HOME,
-    HOSTS,
-    MIN_MONEY,
-    NULL_PORT_DATA,
-    playerControllers,
-    PORTS,
-    SCRIPTS,
-    THE_RED_PILL
+    CITY_FACTIONS, COMPANY_FACTIONS, CrimeMode, DARK_DATA, DebugLevel, DEFAULT_RAM_BUFFER, DEFAULT_TARGET_HACK_PERCENT, HACK_FACTIONS, HacknetMode, HOME, HOSTS,
+    MIN_MONEY, NULL_PORT_DATA, playerControllers, PORTS, SCRIPTS, THE_RED_PILL
 } from 'lib/consts';
-import {NS} from 'NetscriptDefinitions';
-import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from 'types';
+import { NS } from 'NetscriptDefinitions';
+import { IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo } from 'types';
 
 export function timerStart(ns: NS, label: string) {
     let settings = getSettings(ns);
@@ -138,7 +124,7 @@ export function findServerNodeRecursive(currentNode: IServerNode, targetHostname
  * gets the server node tree starting with HOME
  */
 export function getServerTree(ns: NS): IServerNode {
-    let rootNode: IServerNode = {hostname: HOME, children: []};
+    let rootNode: IServerNode = { hostname: HOME, children: [] };
     rootNode.children = getChildrenRecursive(rootNode);
 
     return rootNode;
@@ -772,7 +758,6 @@ export function getTargetValue(ns: NS, target: ServerInfo): number {
 export function getSettings(ns: NS): IGlobalSettings {
     //default settings
 
-
     let settings: IGlobalSettings = {
         debug: false,
         hackPercent: DEFAULT_TARGET_HACK_PERCENT,
@@ -950,4 +935,29 @@ export function getAllRamUsage(ns: NS): IRamUsage {
 
 export function logBase(base: number, value: number) {
     return Math.log(value) / Math.log(base);
+}
+
+export function getHacknetHashGain(ns: NS) {
+    let numHacknetNodes = ns.hacknet.numNodes();
+    let totalHashGain = 0;
+    for (let i = 0; i < numHacknetNodes; i++) {
+        let nodeInfo = ns.hacknet.getNodeStats(i);
+        totalHashGain += nodeInfo.production;
+    }
+    return totalHashGain;
+}
+
+export function getHacknetIncome(ns: NS) {
+    //you get $1m for 4 hashes
+    return (getHacknetHashGain(ns) / 4) * 1e6;
+}
+
+export function myGetScriptIncome(ns: NS) {
+    let scriptMoney = ns.getScriptIncome();
+    return scriptMoney[0];
+
+}
+
+export function getTotalIncome(ns: NS): number {
+    return getGangIncome(ns) + myGetScriptIncome(ns) + getHacknetIncome(ns);
 }

@@ -1,51 +1,17 @@
 import {
-    CITY_FACTIONS,
-    COMPANY_FACTIONS,
-    COMPANY_QUIT_PENALTY,
-    DARK_DATA,
-    DebugLevel,
-    FACTION_WORK_HACKING,
-    GANG_FACTIONS,
-    HACK_FACTIONS,
-    HOME,
-    HOSTS,
-    JOB_FIELDS,
-    MAX_HOME_SERVER_RAM,
-    NEURO_FLUX_GOVERNOR,
-    NON_HACKING_AUGMENTS,
-    OTHER_FACTIONS,
-    SCRIPTS,
-    SCRIPTS_OLD_CONTROLLERS,
-    THE_RED_PILL,
-    TOAST_DURATION,
-    TOAST_VARIANT,
-    TRAVEL_COST,
-    WORK_TYPE,
-    WORLD_DAEMON
+    CITY_FACTIONS, COMPANY_FACTIONS, COMPANY_QUIT_PENALTY, DARK_DATA, DebugLevel, FACTION_WORK_HACKING, GANG_FACTIONS, HACK_FACTIONS, HOME, HOSTS, JOB_FIELDS,
+    MAX_HOME_SERVER_RAM, NEURO_FLUX_GOVERNOR, NON_HACKING_AUGMENTS, OTHER_FACTIONS, SCRIPTS, SCRIPTS_OLD_CONTROLLERS, THE_RED_PILL, TOAST_DURATION,
+    TOAST_VARIANT, TRAVEL_COST, WORK_TYPE, WORLD_DAEMON
 } from 'lib/consts';
-import {GYMS} from 'lib/crime-consts';
+import { GYMS } from 'lib/crime-consts';
 import {
-    debug,
-    debugLog,
-    formatBigNumber,
-    formatBigRam,
-    formatBigTime,
-    getAllHosts,
-    getDonationNeededForReputation,
-    getFirstAvailableRunnerForScript,
-    getPlayerTools,
-    getUnownedFactionAugmentations,
-    hasRedPillInstalled,
-    hasRemainingAugmentionsToBuy,
-    indent,
-    logBase,
-    longConnect,
-    round,
-    timestamp
+    debug, debugLog, formatBigNumber, formatBigRam, formatBigTime, getAllHosts, getDonationNeededForReputation, getFirstAvailableRunnerForScript,
+    getHacknetIncome, getPlayerTools, getTotalIncome, getUnownedFactionAugmentations, hasRedPillInstalled, hasRemainingAugmentionsToBuy, indent, logBase,
+    longConnect, myGetScriptIncome, round, timestamp
 } from 'lib/utils';
-import {getGangIncome, getHacknetIncome, getTotalIncome, myGetScriptIncome} from 'lib/utils-crime';
-import {NS, Player} from 'NetscriptDefinitions';
-import {ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer} from 'types';
+import { getGangIncome } from 'lib/utils-crime';
+import { NS, Player } from 'NetscriptDefinitions';
+import { ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer } from 'types';
 
 export async function leaveTheCave(ns: NS) {
     let player = ns.getPlayer();
@@ -722,7 +688,7 @@ export function tryPurchaseServer(ns: NS, costMultiplierBeforeBuying: number) {
         aServerNeedsUpgraded = smallestServer && smallestServer.maxRam < MAX_HOME_SERVER_RAM;
     }
 
-    debug(ns, 'tryPurchaseServer()', {nextRamSize, serverCost, playerHasEnoughMoney, homeServersFull, smallestServer});
+    debug(ns, 'tryPurchaseServer()', { nextRamSize, serverCost, playerHasEnoughMoney, homeServersFull, smallestServer });
     if (playerHasEnoughMoney) {
         if (homeServersFull && smallestServer && aServerNeedsUpgraded) {
             //delete
@@ -754,7 +720,7 @@ export function getHomeServers(ns: NS): HomeServer[] {
         const serverName = homeServersNames[i];
         const serverRam = ns.getServerMaxRam(serverName);
 
-        homeServers.push({hostname: serverName, maxRam: serverRam});
+        homeServers.push({ hostname: serverName, maxRam: serverRam });
     }
 
     return homeServers;
@@ -889,7 +855,8 @@ export function displayHomeServerInfo(ns: NS, costMultiplierBeforeBuying: number
     if (allServersMaxed) {
         nextCostString = ', All maxed!!';
     } else {
-        nextCostString = `, \$${formatBigNumber(nextCost)}x${costMultiplierBeforeBuying} = \$${formatBigNumber(nextCost * costMultiplierBeforeBuying)} for next`;
+        nextCostString = `, \$${formatBigNumber(nextCost)}x${costMultiplierBeforeBuying} = \$${formatBigNumber(nextCost *
+            costMultiplierBeforeBuying)} for next`;
     }
 
     ns.print(`${indent()}Home: ${purchasedServers.length} of ${limit}${nextCostString}`);
@@ -1185,7 +1152,7 @@ export function displayNextDarkwebTool(ns: NS) {
         let etaTime = new Date();
         let estTimeLeft = (remainingCost / incomePerSec) * 1000;
         etaTime.setTime(new Date().getTime() + estTimeLeft);
-        let etaString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
+        let etaString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
         ns.print(`Next Darkweb tool: '${nextTool.name}'`);
         ns.print(`${indent()}Cost: \$${formatBigNumber(nextTool.cost)}, +\$${formatBigNumber(remainingCost)}`);
@@ -1256,7 +1223,7 @@ export function makeEtaTimeString(ns: NS, totalCost: number, remainingCost: numb
     let etaTime = new Date();
     let estTimeLeft = (remainingCost / gain) * 1000;
     etaTime.setTime(new Date().getTime() + estTimeLeft);
-    let etaDurationString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
+    let etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
     let costString = `${formatBigNumber(totalCost)}`;
     let remainingCostString = `+${formatBigNumber(remainingCost)}`;
@@ -1278,7 +1245,7 @@ function makeMoneyCostTimeString(ns: NS, itemCost: number): string {
         let etaTime = new Date();
         let estTimeLeft = (remainingCost / incomePerSec) * 1000;
         etaTime.setTime(new Date().getTime() + estTimeLeft);
-        etaDurationString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
+        etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
         timeLeftString = formatBigTime(estTimeLeft).padStart(5);
     }
 

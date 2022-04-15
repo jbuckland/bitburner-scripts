@@ -1,43 +1,20 @@
-import {addScripts} from '/addScripts';
-import {DARK_DATA, DebugLevel, HOME, MAX_HOME_SERVER_RAM, NON_HACKING_AUGMENTS, SCRIPTS, THE_RED_PILL, TOAST_DURATION, TOAST_VARIANT} from '/lib/consts';
-import {singleHack, useAvailableRunnersForWork} from '/lib/hack-utils';
+import { addScripts } from '/addScripts';
+import { DARK_DATA, DebugLevel, HOME, MAX_HOME_SERVER_RAM, NON_HACKING_AUGMENTS, SCRIPTS, THE_RED_PILL, TOAST_DURATION, TOAST_VARIANT } from '/lib/consts';
+import { singleHack, useAvailableRunnersForWork } from '/lib/hack-utils';
 import {
-    debugLog,
-    formatBigNumber,
-    formatBigRam,
-    formatBigTime,
-    formatCurrency,
-    formatPercent,
-    getAllRamUsage,
-    getAllRunners,
-    getDonationNeededForReputation,
-    getPlayerTools,
-    getServerFreeRam,
-    getSettings,
-    getUnownedFactionAugmentations,
-    indent,
-    round,
-    setSettings,
-    timestamp
+    debugLog, formatBigNumber, formatBigRam, formatBigTime, formatCurrency, formatPercent, getAllRamUsage, getAllRunners, getDonationNeededForReputation,
+    getHacknetIncome, getPlayerTools, getServerFreeRam, getSettings, getUnownedFactionAugmentations, indent, myGetScriptIncome, round, setSettings, timestamp
 } from '/lib/utils';
-import {getAllTargetWorkInfo, isReadyForBatch} from '/lib/utils-controller';
-import {getGangIncome, getHacknetIncome, myGetScriptIncome} from '/lib/utils-crime';
+import { getAllTargetWorkInfo, isReadyForBatch } from '/lib/utils-controller';
+import { getGangIncome } from '/lib/utils-crime';
 import {
-    displayHeader,
-    displayServerStats,
-    doInstallReset,
-    getHomeServers,
-    getNextHomeServerSize,
-    getReputationGainRate,
-    HomeServer,
-    installBackdoors,
-    purchaseProgram,
-    upgradeHomeComputer
+    displayHeader, displayServerStats, doInstallReset, getHomeServers, getNextHomeServerSize, getReputationGainRate, HomeServer, installBackdoors,
+    purchaseProgram, upgradeHomeComputer
 } from '/lib/utils-player';
-import {NS, Player} from '/NetscriptDefinitions';
-import {getRunnerJobsForScript, makeBatchRequest} from '/old-controllers/batch';
-import {IRamUsage} from '/old-controllers/home-controller';
-import {IBatchRequest, IDarkwebTool, IGlobalSettings, IRamUsageSettings, IRunnerJob, ITargetWorkInfo, TaskType} from '/types';
+import { NS, Player } from '/NetscriptDefinitions';
+import { getRunnerJobsForScript, makeBatchRequest } from '/old-controllers/batch';
+import { IRamUsage } from '/old-controllers/home-controller';
+import { IBatchRequest, IDarkwebTool, IGlobalSettings, IRamUsageSettings, IRunnerJob, ITargetWorkInfo, TaskType } from '/types';
 
 export async function main(ns: NS) {
 
@@ -71,10 +48,8 @@ interface IPlayerTools {
     sql: boolean;
 }
 
-
-
 class MegaController {
-    private readonly DEFAULT_RAM_USAGE_SETTINGS: IRamUsageSettings = {batchPct: .80, prepPct: .40, sharePct: .10, expPct: .10};
+    private readonly DEFAULT_RAM_USAGE_SETTINGS: IRamUsageSettings = { batchPct: .80, prepPct: .40, sharePct: .10, expPct: .10 };
     private readonly HACK_PCT_MAX: number = .90;
     private readonly HACK_PCT_MIN: number = 0.005;
     private readonly HACK_PCT_SCALAR: number = 0.1;
@@ -188,7 +163,6 @@ class MegaController {
 
     private buyDarkwebTools() {
 
-
         if (!this.player.tor && this.player.money > DARK_DATA.torCost) {
             this.player.tor = this.ns.purchaseTor();
             this.ns.toast(`TOR router purchased!`, TOAST_VARIANT.success, TOAST_DURATION);
@@ -277,7 +251,6 @@ class MegaController {
 
         this.displayHackingInfo();
 
-
         displayServerStats(this.ns, this.costMultiplierBeforeBuying);
         this.displayRamUsage();
 
@@ -305,14 +278,13 @@ class MegaController {
                 this.ns.print(`INFO You have enough to buy ${nextTool.name}!`);
             }
 
-
             let incomePerSec = this.totalMoneyGain;
             let remainingCost = nextTool.cost - this.player.money;
 
             let etaTime = new Date();
             let estTimeLeft = (remainingCost / incomePerSec) * 1000;
             etaTime.setTime(new Date().getTime() + estTimeLeft);
-            let etaString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
+            let etaString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
 
             this.ns.print(`Next Darkweb tool: '${nextTool.name}'`);
             this.ns.print(`${indent()}Cost: \$${formatBigNumber(nextTool.cost)}, +\$${formatBigNumber(remainingCost)}`);
@@ -335,12 +307,24 @@ class MegaController {
         let pad1: number = 7;
         let pad2: number = 5;
         this.ns.print(`Total RAM Usage:  (${formatBigRam(this.ramUsage.totalMax)})`);
-        this.ns.print(`${indent()}Batch: ${formatBigRam(this.ramUsage.batchRam).padStart(pad1)}, ${formatPercent(this.ramUsage.batchRam / this.ramUsage.totalMax, 1).padStart(pad2)}`);
-        this.ns.print(`${indent()}Hack:  ${formatBigRam(this.ramUsage.batchRam).padStart(pad1)}, ${formatPercent(this.ramUsage.hackRam / this.ramUsage.totalMax, 1).padStart(pad2)}`);
-        this.ns.print(`${indent()}Prep:  ${formatBigRam(this.ramUsage.prepRam).padStart(pad1)}, ${formatPercent(this.ramUsage.prepRam / this.ramUsage.totalMax, 1).padStart(pad2)}`);
-        this.ns.print(`${indent()}Share: ${formatBigRam(this.ramUsage.shareRam).padStart(pad1)}, ${formatPercent(this.ramUsage.shareRam / this.ramUsage.totalMax, 1).padStart(pad2)}`);
-        this.ns.print(`${indent()}EXP:   ${formatBigRam(this.ramUsage.expRam).padStart(pad1)}, ${formatPercent(this.ramUsage.expRam / this.ramUsage.totalMax, 1).padStart(pad2)}`);
-        this.ns.print(`${indent()}Other: ${formatBigRam(this.ramUsage.otherRam).padStart(pad1)}, ${formatPercent(this.ramUsage.otherRam / this.ramUsage.totalMax, 1).padStart(pad2)}`);
+        this.ns.print(`${indent()}Batch: ${formatBigRam(this.ramUsage.batchRam).padStart(pad1)}, ${formatPercent(this.ramUsage.batchRam /
+            this.ramUsage.totalMax, 1).padStart(pad2)}`);
+        this.ns.print(`${indent()}Hack:  ${formatBigRam(this.ramUsage.batchRam).padStart(pad1)}, ${formatPercent(
+            this.ramUsage.hackRam / this.ramUsage.totalMax,
+            1
+        ).padStart(pad2)}`);
+        this.ns.print(`${indent()}Prep:  ${formatBigRam(this.ramUsage.prepRam).padStart(pad1)}, ${formatPercent(
+            this.ramUsage.prepRam / this.ramUsage.totalMax,
+            1
+        ).padStart(pad2)}`);
+        this.ns.print(`${indent()}Share: ${formatBigRam(this.ramUsage.shareRam).padStart(pad1)}, ${formatPercent(this.ramUsage.shareRam /
+            this.ramUsage.totalMax, 1).padStart(pad2)}`);
+        this.ns.print(`${indent()}EXP:   ${formatBigRam(this.ramUsage.expRam).padStart(pad1)}, ${formatPercent(
+            this.ramUsage.expRam / this.ramUsage.totalMax,
+            1
+        ).padStart(pad2)}`);
+        this.ns.print(`${indent()}Other: ${formatBigRam(this.ramUsage.otherRam).padStart(pad1)}, ${formatPercent(this.ramUsage.otherRam /
+            this.ramUsage.totalMax, 1).padStart(pad2)}`);
         this.ns.print(`${indent()}Total: ${formatBigRam(this.ramUsage.totalUsed).padStart(pad1)}, ${formatPercent(
             this.ramUsage.totalUsed / this.ramUsage.totalMax,
             1
@@ -361,14 +345,14 @@ class MegaController {
         let jobs: IRunnerJob[] = [];
 
         let batchPartParams = [
-            {script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack},
+            { script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack },
             {
                 script: SCRIPTS.batchWeaken,
                 threads: request.weakenThreadsNeededFromHack,
                 delay: request.delayUntilWeakenHack
             },
-            {script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow},
-            {script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow}
+            { script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow },
+            { script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow }
         ];
         let batchId = request.batchId;
         for (const param of batchPartParams) {
@@ -403,7 +387,11 @@ class MegaController {
 
                 let scriptRam = ns.getScriptRam(j.scriptName, j.runner);
                 let availableThreads = Math.floor(getServerFreeRam(ns, j.runner) / scriptRam);
-                debugLog(ns, DebugLevel.error, `[${j.runner}] had ${round(getServerFreeRam(ns, j.runner), 1)} free ram. Should have been able to run ${availableThreads} threads`);
+                debugLog(
+                    ns,
+                    DebugLevel.error,
+                    `[${j.runner}] had ${round(getServerFreeRam(ns, j.runner), 1)} free ram. Should have been able to run ${availableThreads} threads`
+                );
             }
 
         }
@@ -415,14 +403,13 @@ class MegaController {
         if (this.workReadyForBatch.length > 0) {
             let batchSuccesses = await this.doMaxBatches();
 
-
             if (batchSuccesses === 0) {
                 //decrease the hack percent
                 let newHackPercent = (this.settings.hackPercent ?? 0) * (1 - this.HACK_PCT_SCALAR);
                 newHackPercent = Math.max(round(newHackPercent, 3), this.HACK_PCT_MIN);
 
                 if (newHackPercent !== this.settings.hackPercent) {
-                    setSettings(this.ns, {hackPercent: newHackPercent});
+                    setSettings(this.ns, { hackPercent: newHackPercent });
                 }
             } else if (batchSuccesses >= this.workReadyForBatch.length) {
 
@@ -430,12 +417,10 @@ class MegaController {
                 newHackPercent = Math.min(round(newHackPercent, 3), this.HACK_PCT_MAX);
 
                 if (newHackPercent !== this.settings.hackPercent) {
-                    setSettings(this.ns, {hackPercent: newHackPercent});
+                    setSettings(this.ns, { hackPercent: newHackPercent });
                 }
 
             }
-
-
 
         } else {
             let minHackTarget = this.targetWorkInfos.find(w => !isReadyForBatch(w));
@@ -443,7 +428,6 @@ class MegaController {
                 singleHack(this.ns, minHackTarget.target.hostname);
             }
         }
-
 
         this.prepAllTargets();
 
@@ -493,15 +477,12 @@ class MegaController {
                         //this.ns.print(`${timestamp()}Failed to run batch on ${batchRequest.target}, needed ${formatBigRam(batchRequest.totalRamNeeded)}`);
                     }
 
-
                 }
 
             }
             if (successfulBatchesThisRun > 0) {
                 //this.ns.print(`${timestamp()}${INDENT_STRING}Batch Pass #${batchPassCount}: Started: ${successfulBatchesThisRun}`);
             }
-
-
 
         }
 
@@ -511,8 +492,6 @@ class MegaController {
     private prepAllTargets(): { growThreadsStarted: number, weakenThreadsStarted: number, } {
         let weakenThreadsStarted = 0;
         let growThreadsStarted = 0;
-
-
 
         let prepRamUsed = this.ramUsage.prepRam;
         let prepPercent = prepRamUsed / this.ramUsage.totalMax;
@@ -533,7 +512,7 @@ class MegaController {
             }
 
         }
-        return {weakenThreadsStarted, growThreadsStarted};
+        return { weakenThreadsStarted, growThreadsStarted };
     }
 
     private purchaseAvailableAugmentations() {
@@ -589,7 +568,11 @@ class MegaController {
                         if (this.player.money >= augInfo.moneyCost + donationAmountNeeded) {
                             let success = this.ns.donateToFaction(augInfo.faction, donationAmountNeeded);
                             if (success) {
-                                this.ns.toast(`Donated ${formatCurrency(donationAmountNeeded)} to ${augInfo.faction} for ${additionalRepNeeded} reputation!`, TOAST_VARIANT.success, TOAST_DURATION);
+                                this.ns.toast(
+                                    `Donated ${formatCurrency(donationAmountNeeded)} to ${augInfo.faction} for ${additionalRepNeeded} reputation!`,
+                                    TOAST_VARIANT.success,
+                                    TOAST_DURATION
+                                );
                                 this.player.money -= donationAmountNeeded;
                             } else {
                                 debugLog(this.ns, DebugLevel.error, `Unable to donate ${formatCurrency(donationAmountNeeded)} to ${augInfo.faction}`);
@@ -601,7 +584,6 @@ class MegaController {
                 }
             }
         });
-
 
     }
 
@@ -661,7 +643,6 @@ class MegaController {
         this.gangMoneyGain = getGangIncome(this.ns);
 
         this.totalMoneyGain = this.scriptMoneyGain + this.gangMoneyGain + this.hacknetMoneyGain;
-
 
     }
 

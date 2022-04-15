@@ -1,7 +1,7 @@
-import { GangMemberInfo, GangOtherInfoObject, GangTaskStats, NS } from 'NetscriptDefinitions';
-import { OtherGangInfo } from 'types';
 import { CYCLES_PER_SECOND } from 'lib/consts';
 import { GANG_TASK } from 'lib/crime-consts';
+import { GangMemberInfo, GangOtherInfoObject, GangTaskStats, NS } from 'NetscriptDefinitions';
+import { OtherGangInfo } from 'types';
 
 export function getAllMembers(ns: NS): GangMemberInfo[] {
     let memberNames = ns.gang.getMemberNames();
@@ -71,29 +71,6 @@ export function getGangIncome(ns: NS) {
     } else {
         return 0;
     }
-
-}
-
-export function myGetScriptIncome(ns: NS) {
-    let scriptMoney = ns.getScriptIncome();
-    return scriptMoney[0];
-
-}
-
-export function getHacknetIncome(ns: NS) {
-    let numHacknetNodes = ns.hacknet.numNodes();
-    let totalHashGain = 0;
-    for (let i = 0; i < numHacknetNodes; i++) {
-        let nodeInfo = ns.hacknet.getNodeStats(i);
-        totalHashGain += nodeInfo.production;
-    }
-    let hacknetMoneyIncome = (totalHashGain / 4) * 1e6;
-    return hacknetMoneyIncome;
-
-}
-
-export function getTotalIncome(ns: NS): number {
-    return getGangIncome(ns) + myGetScriptIncome(ns) + getHacknetIncome(ns);
 
 }
 

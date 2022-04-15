@@ -1,6 +1,7 @@
-﻿import { AutocompleteData, NS } from 'NetscriptDefinitions';
-import { FlagSchema } from 'types';
+﻿import { HashSpendOptions } from '/lib/consts';
 import { round, timestamp } from 'lib/utils';
+import { AutocompleteData, NS } from 'NetscriptDefinitions';
+import { FlagSchema } from 'types';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     console.log(`autocomplete()`, args);
@@ -24,9 +25,9 @@ export function autocomplete(data: AutocompleteData, args: any[]) {
 }
 
 const flagSchema: FlagSchema = [
-    ['sell', ''],
+    ['sell', false],
     ['incMaxMoney', ''],
-    ['decMinSec', -1]
+    ['decMinSec', '']
 
 ];
 
@@ -55,17 +56,11 @@ export async function main(ns: NS) {
                     ns.print(`Increased max money on ${target} to ${formatCurrency(ns.getServer(target).moneyMax)}!`);
                 }
         */
-        let maxMoney = ns.hacknet.spendHashes(HacknetSpendNames.money);
+        ns.hacknet.spendHashes(HashSpendOptions.money);
 
         ns.print(`${timestamp()}Hashes: ${round(ns.hacknet.numHashes())}`);
 
         await ns.sleep(1000);
     }
 
-}
-
-export enum HacknetSpendNames {
-    money = 'Sell for Money',
-    reduceMinSec = 'Reduce Minimum Security',
-    incMaxMoney = 'Increase Maximum Money'
 }

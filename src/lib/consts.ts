@@ -333,6 +333,7 @@ export const TRAVEL_COST = 200000;
 export enum SCRIPTS {
     //////////////////////////
     //root folder
+    startController = 'start-controller.js',
     megaController = 'mega-controller.js',
     addScripts = 'addScripts.js',
     basicCrime = 'basic-crime.js',
@@ -367,7 +368,7 @@ export enum SCRIPTS_OLD_CONTROLLERS {
     batchController = 'batch-controller.js',
     controller = 'basic-controller.js', //20gm
     crimeController0 = 'crime-controller0.js',
-    crimeController1 = 'crime-controller1.js',
+    crimeController1 = '/old-controllers/crime-controller1.js',
     hackController = 'hack-controller.js',
     hacknet = 'hacknet.js',
     homeController = 'home-controller.js',

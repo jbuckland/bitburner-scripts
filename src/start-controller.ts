@@ -16,10 +16,10 @@ export async function main(ns: NS) {
 
 class StartController {
     private SLEEP_TIME: number = 1000;
-    private scriptsToStart = [
+    private scriptsToStart: string[] = [
         SCRIPTS.megaController,
-        SCRIPTS.watcher,
-        '/old-controllers/crime-controller1.js'
+        SCRIPTS.watcher
+
     ];
     private runningScriptInfo: IScriptInfo[] = [];
 
@@ -36,6 +36,11 @@ class StartController {
         this.scriptsToStart.forEach(script => {
             this.ns.run(script);
         });
+
+        if (this.ns.gang.inGang()) {
+            this.ns.run('/old-controllers/crime-controller1.js');
+        }
+
 
 
         while (true) {
@@ -57,6 +62,7 @@ class StartController {
 
 
         this.displayRunningScriptInfo();
+
 
 
     }

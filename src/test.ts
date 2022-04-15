@@ -1,7 +1,6 @@
-import { timestamp }from 'lib/utils';
-import { NOTES, SoundPlayer }from 'lib/utils-sound';
-import { NS } from 'NetscriptDefinitions';
-import { INetscriptExtra } from 'types';
+import {timestamp} from 'lib/utils';
+import {NS} from 'NetscriptDefinitions';
+import {INetscriptExtra} from 'types';
 
 export async function main(ns: NS & INetscriptExtra) {
     ns.tail();
@@ -35,20 +34,26 @@ export async function main(ns: NS & INetscriptExtra) {
     //ns.print(JSON.stringify(ns.getCrimeStats(crimes.homicide.name), null, 4));
     ns.disableLog('ALL');
     ns.print(timestamp());
+    /*
+        //await playNote(NOTES.D5);
+        playNote(NOTES.A4, 300);
+        playNote(NOTES.D5, 300);
+        await ns.sleep(300);
+        playNote(NOTES.B4, 300);
+        playNote(NOTES.E5, 300);
 
-    //await playNote(NOTES.D5);
-    playNote(NOTES.A4, 300);
-    playNote(NOTES.D5, 300);
-    await ns.sleep(300);
-    playNote(NOTES.B4, 300);
-    playNote(NOTES.E5, 300);
+        function playNote(freq: number, duration: number) {
+            // play note according to data-frequency attribute
+            let player = new SoundPlayer();
 
-    function playNote(freq: number, duration: number) {
-        // play note according to data-frequency attribute
-        let player = new SoundPlayer();
+            player.play(freq, 0.8, 'triangle').stop(duration / 1000.0);
 
-        player.play(freq, 0.8, 'triangle').stop(duration / 1000.0);
+        };
+    */
 
-    };
+    //ns.bladeburner.stopBladeburnerAction()
+    ns.print(ns.getPlayer().bladeburner_max_stamina_mult);
+
+
 
 }

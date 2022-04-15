@@ -1,5 +1,3 @@
-import {NS, Player} from 'NetscriptDefinitions';
-import {ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer} from 'types';
 import {
     CITY_FACTIONS,
     COMPANY_FACTIONS,
@@ -42,9 +40,12 @@ import {
     indent,
     logBase,
     longConnect,
-    round, timestamp
+    round,
+    timestamp
 } from 'lib/utils';
 import {getGangIncome, getHacknetIncome, getTotalIncome, myGetScriptIncome} from 'lib/utils-crime';
+import {NS, Player} from 'NetscriptDefinitions';
+import {ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer} from 'types';
 
 export async function leaveTheCave(ns: NS) {
     let player = ns.getPlayer();
@@ -67,7 +68,7 @@ export async function leaveTheCave(ns: NS) {
 
 }
 
-export async function installBackdoors(ns: NS) {
+export function installBackdoors(ns: NS) {
 
     let player = ns.getPlayer();
 

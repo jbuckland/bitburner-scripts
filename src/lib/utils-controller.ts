@@ -1,6 +1,4 @@
-import { NS, ProcessInfo, RunningScript } from 'NetscriptDefinitions';
-import { IControllerConfig, ITargetWorkInfo, ServerInfo, Task, TaskType } from 'types';
-import { DebugLevel, HOME, SCRIPTS } from 'lib/consts';
+import {DebugLevel, HOME, SCRIPTS} from 'lib/consts';
 import {
     debugLog,
     getAllHosts,
@@ -12,6 +10,8 @@ import {
     getThreadsNeededToWeakenHost,
     makePriorityTargetList
 } from 'lib/utils';
+import {NS, ProcessInfo, RunningScript} from 'NetscriptDefinitions';
+import {IControllerConfig, ITargetWorkInfo, ServerInfo, Task, TaskType} from 'types';
 
 const MIN_MONEY = 5000;
 const HACK_FRACTION_INITIAL: number = 0.1; //what percent to take when hacking
@@ -153,6 +153,7 @@ export function getThreadsNeededToGrow(ns: NS, target: ServerInfo): number {
 
     let growthMultiplier = (neededMoney / (target.currMoney || 1)) + 1;
 
+    //console.log(`getThreadsNeededToGrow()`, growthMultiplier);
     let threadsNeeded = Math.ceil(ns.growthAnalyze(target.hostname, growthMultiplier));
     return threadsNeeded;
 }
@@ -230,15 +231,15 @@ export function makeBlankWorkInfoForTargets(ns: NS, targetServers: ServerInfo[])
     for (let i = 0; i < targetServers.length; i++) {
         const server = targetServers[i];
 
-        let work: ITargetWorkInfo = { target: server, readyForBatch: false, threadInfos: {} };
+        let work: ITargetWorkInfo = {target: server, readyForBatch: false, threadInfos: {}};
 
-        work.threadInfos[TaskType.hack] = { task: TaskType.hack, inProgress: 0, moreNeeded: 0, total: 0 };
-        work.threadInfos[TaskType.grow] = { task: TaskType.grow, inProgress: 0, moreNeeded: 0, total: 0 };
-        work.threadInfos[TaskType.weaken] = { task: TaskType.weaken, inProgress: 0, moreNeeded: 0, total: 0 };
+        work.threadInfos[TaskType.hack] = {task: TaskType.hack, inProgress: 0, moreNeeded: 0, total: 0};
+        work.threadInfos[TaskType.grow] = {task: TaskType.grow, inProgress: 0, moreNeeded: 0, total: 0};
+        work.threadInfos[TaskType.weaken] = {task: TaskType.weaken, inProgress: 0, moreNeeded: 0, total: 0};
 
-        work.threadInfos[TaskType.batchGrow] = { task: TaskType.batchGrow, inProgress: 0, moreNeeded: 0, total: 0 };
-        work.threadInfos[TaskType.batchWeaken] = { task: TaskType.batchWeaken, inProgress: 0, moreNeeded: 0, total: 0 };
-        work.threadInfos[TaskType.batchHack] = { task: TaskType.batchHack, inProgress: 0, moreNeeded: 0, total: 0 };
+        work.threadInfos[TaskType.batchGrow] = {task: TaskType.batchGrow, inProgress: 0, moreNeeded: 0, total: 0};
+        work.threadInfos[TaskType.batchWeaken] = {task: TaskType.batchWeaken, inProgress: 0, moreNeeded: 0, total: 0};
+        work.threadInfos[TaskType.batchHack] = {task: TaskType.batchHack, inProgress: 0, moreNeeded: 0, total: 0};
 
         workInfo.push(work);
 
@@ -337,9 +338,9 @@ export function makeNeededWorkInfoForTargets(ns: NS, targetServers: ServerInfo[]
     for (let i = 0; i < targetServers.length; i++) {
         const server = targetServers[i];
 
-        let work: ITargetWorkInfo = { target: server, readyForBatch: false, threadInfos: {} };
+        let work: ITargetWorkInfo = {target: server, readyForBatch: false, threadInfos: {}};
 
-        work.threadInfos[TaskType.hack] = { task: TaskType.hack, inProgress: 0, moreNeeded: 0, total: 0 };
+        work.threadInfos[TaskType.hack] = {task: TaskType.hack, inProgress: 0, moreNeeded: 0, total: 0};
 
         let growThreadsTotalNeeded = Math.ceil(getThreadsNeededForTask(ns, server, TaskType.grow));
         work.threadInfos[TaskType.grow] = {
@@ -357,14 +358,14 @@ export function makeNeededWorkInfoForTargets(ns: NS, targetServers: ServerInfo[]
             total: weakenThreadsTotalNeeded
         };
 
-        work.threadInfos[TaskType.batchGrow] = { task: TaskType.batchGrow, inProgress: 0, moreNeeded: 0, total: 0 };
+        work.threadInfos[TaskType.batchGrow] = {task: TaskType.batchGrow, inProgress: 0, moreNeeded: 0, total: 0};
         work.threadInfos[TaskType.batchWeaken] = {
             task: TaskType.batchWeaken,
             inProgress: 0,
             moreNeeded: 0,
             total: 0
         };
-        work.threadInfos[TaskType.batchHack] = { task: TaskType.batchHack, inProgress: 0, moreNeeded: 0, total: 0 };
+        work.threadInfos[TaskType.batchHack] = {task: TaskType.batchHack, inProgress: 0, moreNeeded: 0, total: 0};
 
         workInfo.push(work);
 

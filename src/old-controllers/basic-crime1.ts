@@ -1,8 +1,8 @@
-import { INDENT_STRING } from 'lib/consts';
-import { crimes } from 'lib/crime-consts';
-import { NS, Player } from 'NetscriptDefinitions';
-import { formatPercent, round } from 'lib/utils';
-import { makeEtaTimeString, trainStat } from 'lib/utils-player';
+import {INDENT_STRING} from 'lib/consts';
+import {crimes} from 'lib/crime-consts';
+import {formatPercent, round} from 'lib/utils';
+import {makeEtaTimeString, trainStat} from 'lib/utils-player';
+import {NS, Player} from 'NetscriptDefinitions';
 
 export async function main(ns: NS) {
     let svc = new CrimeService0(ns);
@@ -16,7 +16,7 @@ export class CrimeService0 {
     private _player!: Player;
     private MIN_CRIME_SUCCESS: number = .6;
     private karmaAverageWindow = 10 * 1000;
-    private karmaAvgData: KarmaAvgData = { totalKarma: 0, time: 0, avgGain: 0 };
+    private karmaAvgData: KarmaAvgData = {totalKarma: 0, time: 0, avgGain: 0};
     private MIN_STARTING_STAT: number = 10;
     private readonly KARMA_TO_START_GANG: number = -54000;
 
@@ -47,16 +47,20 @@ export class CrimeService0 {
                 //crimes.gta,
                 crimes.homicide,
                 crimes.mug,
+                crimes.rob,
                 crimes.shoplift
             ];
 
             type CrimeInfo = { name: string, chance: number };
-            let crimeInfo: CrimeInfo[] = crimesToTry.map(c => {
+            let crimeInfo: CrimeInfo[] = Object.values(crimes).map(c => {
                 return {
                     name: c.name,
-                    chance: this.ns.getCrimeChance(c.name)
+                    chance: this.ns.getCrimeChance(c.name),
+                    stats: this.ns.getCrimeStats(c.name)
                 };
             });
+
+            console.log(crimeInfo);
 
             let nextCrime: CrimeInfo | undefined;
             let targetCrime: CrimeInfo | undefined;
@@ -102,7 +106,7 @@ export class CrimeService0 {
 
     private async doTraining() {
         this.updatePlayer();
-        
+
         await trainStat(this.ns, 'strength', 'str');
         while (this._player.strength < this.MIN_STARTING_STAT) {
             await this.ns.sleep(1000);

@@ -1,7 +1,22 @@
 import {IRamUsage} from '/old-controllers/home-controller';
 import {
-    CITY_FACTIONS, COMPANY_FACTIONS, CrimeMode, DARK_DATA, DebugLevel, DEFAULT_RAM_BUFFER, DEFAULT_TARGET_HACK_PERCENT, HACK_FACTIONS, HacknetMode, HOME, HOSTS,
-    MIN_MONEY, NULL_PORT_DATA, playerControllers, PORTS, SCRIPTS, THE_RED_PILL
+    CITY_FACTIONS,
+    COMPANY_FACTIONS,
+    CrimeMode,
+    DARK_DATA,
+    DebugLevel,
+    DEFAULT_RAM_BUFFER,
+    DEFAULT_TARGET_HACK_PERCENT,
+    HACK_FACTIONS,
+    HacknetMode,
+    HOME,
+    HOSTS,
+    MIN_MONEY,
+    NULL_PORT_DATA,
+    playerControllers,
+    PORTS,
+    SCRIPTS,
+    THE_RED_PILL
 } from 'lib/consts';
 import {NS} from 'NetscriptDefinitions';
 import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from 'types';
@@ -424,6 +439,7 @@ export function getThreadsNeededToGrowHost(ns: NS, hostname: string): number {
     let growthMultiplier = (neededMoney / (currMoney)) + 1;
     growthMultiplier = Math.min(growthMultiplier, 9999999);
 
+    //console.log(`getThreadsNeededToGrow()`, growthMultiplier);
     let threadsNeeded = Math.ceil(ns.growthAnalyze(hostname, growthMultiplier));
     return threadsNeeded;
 }
@@ -755,13 +771,15 @@ export function getTargetValue(ns: NS, target: ServerInfo): number {
 
 export function getSettings(ns: NS): IGlobalSettings {
     //default settings
+
+
     let settings: IGlobalSettings = {
         debug: false,
         hackPercent: DEFAULT_TARGET_HACK_PERCENT,
         ramBuffer: DEFAULT_RAM_BUFFER,
         crimeMode: CrimeMode.money,
         hacknetMode: HacknetMode.money,
-        maxHashCostBen: 500e6
+        maxHashCostBen: 2e9
     };
 
     let settingsPort = ns.getPortHandle(PORTS.settings);

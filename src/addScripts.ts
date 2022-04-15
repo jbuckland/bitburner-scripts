@@ -1,6 +1,6 @@
-import { NS } from '/NetscriptDefinitions';
-import { SCRIPTS } from 'lib/consts';
-import { getAllHosts } from 'lib/utils';
+import {NS} from '/NetscriptDefinitions';
+import {SCRIPTS} from 'lib/consts';
+import {getAllHosts} from 'lib/utils';
 
 export async function main(ns: NS) {
 
@@ -30,8 +30,8 @@ const scriptList = [
 
     //these are utility files
     'share.js',
-    '/utils/consts.js',
-    '/utils/utils.js'
+    '/lib/consts.js',
+    '/lib/utils.js'
 
 ];
 

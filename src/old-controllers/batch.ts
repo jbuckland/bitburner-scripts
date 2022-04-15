@@ -1,6 +1,4 @@
-import { NS } from 'NetscriptDefinitions';
-import { IBatchRequest, RunnerInfo } from 'types';
-import { DebugLevel, SCRIPTS } from 'lib/consts';
+import {DebugLevel, SCRIPTS} from 'lib/consts';
 import {
     debugLog,
     getAllRunners,
@@ -13,6 +11,8 @@ import {
     runBatchHack,
     runBatchWeaken
 } from 'lib/utils';
+import {NS} from 'NetscriptDefinitions';
+import {IBatchRequest, IRunnerJob, RunnerInfo} from 'types';
 
 export async function main(ns: NS) {
 
@@ -70,6 +70,10 @@ export function makeBatchRequest(ns: NS, target: string): IBatchRequest {
 
     //let growToPercent = 1.0 / (targetHackPercent - 1.0);
     let growToPercent = targetServer.moneyMax / (targetServer.moneyMax - hackAmount);
+    if (growToPercent == Number.POSITIVE_INFINITY) {
+        growToPercent = 1;
+    }
+
     //ns.print({ targetHackPercent, growToPercent });
 
     if (growToPercent === Number.POSITIVE_INFINITY) {
@@ -80,6 +84,7 @@ export function makeBatchRequest(ns: NS, target: string): IBatchRequest {
         });
     }
 
+    //console.log(`makeBatchRequest()`, {moneyMax: targetServer.moneyMax, hackAmount, growToPercent});
     let growThreadsNeeded = Math.ceil(ns.growthAnalyze(target, growToPercent));
 
     let growSecurityIncrease = ns.growthAnalyzeSecurity(growThreadsNeeded);
@@ -127,12 +132,7 @@ export async function doBatch(ns: NS, target: string, DRY_RUN: boolean = false):
 
 }
 
-interface IRunnerJob {
-    runner: string;
-    scriptName: string;
-    threads: number,
-    args: any[]
-}
+
 
 /**
  * Finds a list of runners than can run the script for the number of threads.
@@ -202,14 +202,14 @@ export async function doBatchFromRequestMultiRunner(ns: NS, request: IBatchReque
     let jobs: IRunnerJob[] = [];
 
     let batchPartParams = [
-        { script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack },
+        {script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack},
         {
             script: SCRIPTS.batchWeaken,
             threads: request.weakenThreadsNeededFromHack,
             delay: request.delayUntilWeakenHack
         },
-        { script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow },
-        { script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow }
+        {script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow},
+        {script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow}
     ];
     let batchId = request.batchId;
     for (const param of batchPartParams) {
@@ -248,7 +248,7 @@ export async function doBatchFromRequestMultiRunner(ns: NS, request: IBatchReque
         }
 
     }
-    await ns.sleep(1);
+    //await ns.sleep(1);
     return success;
 }
 

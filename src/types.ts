@@ -1,5 +1,5 @@
-import { CrimeMode, DebugLevel, EventType, HacknetMode } from 'lib/consts';
-import { GangOtherInfoObject } from 'NetscriptDefinitions';
+import {CrimeMode, DebugLevel, EventType, HacknetMode} from 'lib/consts';
+import {GangOtherInfoObject} from 'NetscriptDefinitions';
 
 export interface ServerInfo {
     currMoney: number;
@@ -169,9 +169,13 @@ export interface INetscriptExtra {
          */
         break(): number;
     };
+
     alterReality(): void;
+
     bypass(doc: Document): void;
+
     exploit(): void;
+
     rainbow(guess: string): void;
 }
 
@@ -187,3 +191,10 @@ export interface IRamUsageSettings {
 }
 
 export type FlagSchema = [string, string | number | boolean | string[]][]
+
+export interface IRunnerJob {
+    runner: string;
+    scriptName: string;
+    threads: number,
+    args: any[]
+}

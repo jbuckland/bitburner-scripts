@@ -1,5 +1,5 @@
-import {CrimeMode, DebugLevel, EventType, HacknetMode} from 'lib/consts';
-import {GangOtherInfoObject} from 'NetscriptDefinitions';
+import { CrimeMode, DebugLevel, EventType, HacknetMode } from 'lib/consts';
+import { GangOtherInfoObject } from 'NetscriptDefinitions';
 
 export interface ServerInfo {
     currMoney: number;
@@ -99,7 +99,8 @@ export interface IGlobalSettings {
     hacknetMode?: HacknetMode;
     maxHashCostBen?: number;
     moneyBuffer?: number;
-    autoSwitchTasks?: boolean;
+    autoStartWork?: boolean;
+    forceSwitchWork?: boolean;
 
 }
 

@@ -1,9 +1,9 @@
-import {displayHeader} from '/lib/utils-player';
-import {FlagSchema, IGlobalSettings} from '/types';
-import {addScripts} from 'addScripts';
-import {DebugLevel, HacknetMode, HashSpendOptions, TOAST_DURATION, TOAST_VARIANT} from 'lib/consts';
-import {debugLog, formatBigNumber, formatCurrency, getAvailablePlayerMoney, getHacknetHashGain, getSettings, indent, round, timestamp} from 'lib/utils';
-import {AutocompleteData, Hacknet, NodeStats, NS, Player} from 'NetscriptDefinitions';
+import { displayHeader } from '/lib/utils-player';
+import { FlagSchema, IGlobalSettings } from '/types';
+import { addScripts } from 'addScripts';
+import { DebugLevel, HacknetMode, HashSpendOptions, TOAST_DURATION, TOAST_VARIANT } from 'lib/consts';
+import { debugLog, formatBigNumber, formatCurrency, getAvailablePlayerMoney, getHacknetHashGain, getSettings, indent, round, timestamp } from 'lib/utils';
+import { AutocompleteData, Hacknet, NodeStats, NS, Player } from 'NetscriptDefinitions';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     data.flags(flagSchema);
@@ -191,7 +191,7 @@ class HacknetController {
             let name = this.bestUpgrade.node.name;
             let type = this.bestUpgrade.upgradeType;
             let cost = `\$${formatBigNumber(this.bestUpgrade.upgradeCost)}`;
-            let costBen = formatCurrency(this.bestUpgrade.costBenefit);
+            let costBen = formatCurrency(this.bestUpgrade.costBenefit, 1);
             this.ns.print(`${indent()}Next: [${name}] +${type}`);
             this.ns.print(`${indent()}Cost: ${cost}, Benefit: ${round(this.bestUpgrade.upgradeBenefit, 3).toFixed(3)}, Cost/Ben: ${costBen}`);
         }
@@ -278,12 +278,12 @@ class HacknetController {
                 }
             }
             if (soldCount > 0) {
-                this.ns.print(`${timestamp()}Sold ${upgradeCost * soldCount} hashes for \$${soldCount}m!!`);
+                this.ns.print(`Sold ${upgradeCost * soldCount} hashes for \$${soldCount}m!!`);
             }
         } else if (this.spendTarget === HashSpendOptions.bbSkill) {
 
             if (this.hn.spendHashes(HashSpendOptions.bbSkill)) {
-                this.ns.print(`${timestamp()}Exchanged ${upgradeCost} hashes for Blade Burner SP!!`);
+                this.ns.print(`Exchanged ${upgradeCost} hashes for Blade Burner SP!!`);
             }
 
         }

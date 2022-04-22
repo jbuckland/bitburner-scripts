@@ -1,4 +1,4 @@
-import {addScripts} from '/addScripts';
+import { addScripts } from '/addScripts';
 import {
     COMPANY_FACTIONS,
     DARK_DATA,
@@ -14,7 +14,7 @@ import {
     TOAST_DURATION,
     TOAST_VARIANT
 } from '/lib/consts';
-import {useAvailableRunnersForWork, useRunnersForWork} from '/lib/hack-utils';
+import { useAvailableRunnersForWork, useRunnersForWork } from '/lib/hack-utils';
 import {
     debugLog,
     filterFirstAvailableRunnerForScriptThreads,
@@ -41,7 +41,7 @@ import {
     runHack,
     setSettings
 } from '/lib/utils';
-import {getAllTargetWorkInfo, isReadyForBatch} from '/lib/utils-controller';
+import { getAllTargetWorkInfo, isReadyForBatch } from '/lib/utils-controller';
 import {
     bigFactionList,
     calcNextFavorResetAmount,
@@ -69,11 +69,11 @@ import {
     purchaseProgram,
     workOnReputation
 } from '/lib/utils-player';
-import {NS, Player} from '/NetscriptDefinitions';
-import {getRunnerJobsForScript, makeBatchRequest} from '/old-controllers/batch';
-import {IRamUsage} from '/old-controllers/home-controller';
-import {doDonationReset} from '/old-controllers/player-controller';
-import {IBatchRequest, IDarkwebTool, IFaction, IGlobalSettings, IRamUsageSettings, IRunnerJob, ITargetWorkInfo, RunnerInfo, TaskType} from '/types';
+import { NS, Player } from '/NetscriptDefinitions';
+import { getRunnerJobsForScript, makeBatchRequest } from '/old-controllers/batch';
+import { IRamUsage } from '/old-controllers/home-controller';
+import { doDonationReset } from '/old-controllers/player-controller';
+import { IBatchRequest, IDarkwebTool, IFaction, IGlobalSettings, IRamUsageSettings, IRunnerJob, ITargetWorkInfo, RunnerInfo, TaskType } from '/types';
 
 export async function main(ns: NS) {
 
@@ -109,9 +109,8 @@ interface IPlayerTools {
     sql: boolean;
 }
 
-
 class MegaController {
-    private readonly DEFAULT_RAM_USAGE_SETTINGS: IRamUsageSettings = {batchPct: .80, prepPct: .40, sharePct: .10, expPct: .99};
+    private readonly DEFAULT_RAM_USAGE_SETTINGS: IRamUsageSettings = { batchPct: .80, prepPct: .40, sharePct: .10, expPct: .99 };
     private readonly HACK_PCT_MAX: number = .90;
     private readonly HACK_PCT_MIN: number = 0.005;
     private readonly HACK_PCT_SCALAR: number = 0.1;
@@ -150,7 +149,6 @@ class MegaController {
     private runners: RunnerInfo[] = [];
     private favorToDonate: number = 0;
 
-
     constructor(private ns: NS) {
         ns.tail();
         ns.disableLog('ALL');
@@ -182,16 +180,11 @@ class MegaController {
 
             await this.doReputationWork();
 
-
-
             joinFactions(this.ns);
 
             await this.tryPurchaseServer();
 
-
             await this.doRunnerWork();
-
-
 
             await leaveTheCave(this.ns);
 
@@ -347,10 +340,8 @@ class MegaController {
         displayFactionProgress(this.ns);
         displayNFGInfo(this.ns);
 
-
         displayHomeUpgradeInfo(this.ns);
         displayServerStats(this.ns, this.costMultiplierBeforeBuying);
-
 
         this.displayHackingInfo();
         this.displayRamUsage();
@@ -451,14 +442,14 @@ class MegaController {
         let jobs: IRunnerJob[] = [];
 
         let batchPartParams = [
-            {script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack},
+            { script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack },
             {
                 script: SCRIPTS.batchWeaken,
                 threads: request.weakenThreadsNeededFromHack,
                 delay: request.delayUntilWeakenHack
             },
-            {script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow},
-            {script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow}
+            { script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow },
+            { script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow }
         ];
         let batchId = request.batchId;
         for (const param of batchPartParams) {
@@ -505,7 +496,7 @@ class MegaController {
                 if (runner) {
                     runner.freeRam -= j.ramUsed;
                 } else {
-                    debugLog(this.ns, DebugLevel.error, `Could not find runner ${j.runner} for the job!`, {job: j});
+                    debugLog(this.ns, DebugLevel.error, `Could not find runner ${j.runner} for the job!`, { job: j });
                 }
             }
 
@@ -514,8 +505,6 @@ class MegaController {
     }
 
     private async doHacking() {
-
-
 
     }
 
@@ -573,14 +562,11 @@ class MegaController {
         return totalSuccessfulBatchCount;
     }
 
-
-
     private findNextAugmentationToWorkToward(): ITargetAugmentation | undefined {
 
         //based on the Rep we have right now,
         // which faction has the augmentation that requires the least additional reputation?
         let allFactions: IFaction[] = [];
-
 
         //only include hacking factions that we've joined, else we might not be able to work for them yet.
         let joinedHackingFactions = Object.values(HACK_FACTIONS).filter(faction => this.player.factions.includes(faction.name));
@@ -591,7 +577,6 @@ class MegaController {
         //only add gang factions we've already joined, since they're hard to join
         let joinedGangFactions = Object.values(GANG_FACTIONS).filter(gangFac => this.player.factions.includes(gangFac.name));
         allFactions.push(...joinedGangFactions);
-
 
         let availableCityFactions = getAvailableCityFactions(this.ns);
         allFactions.push(...availableCityFactions);
@@ -623,14 +608,12 @@ class MegaController {
 
             let totalRepMult = factionFavorMult * repMult;
 
-
             let neededAugments = getUnownedFactionAugmentations(this.ns, faction.name);
 
             //filter out non hacking augments
             neededAugments = neededAugments.filter(a => {
                 return !NON_HACKING_AUGMENTS.find(nha => nha === a);
             });
-
 
             if (neededAugments.length > 0) {
                 for (let i1 = 0; i1 < neededAugments.length; i1++) {
@@ -704,7 +687,7 @@ class MegaController {
             }
 
         }
-        return {weakenThreadsStarted, growThreadsStarted};
+        return { weakenThreadsStarted, growThreadsStarted };
     }
 
     private purchaseAvailableAugmentations() {
@@ -792,7 +775,6 @@ class MegaController {
         this.availableMoney = getAvailablePlayerMoney(this.ns, this.player, this.settings);
         this.targetWorkInfos = getAllTargetWorkInfo(this.ns);
 
-
         this.workReadyForBatch = this.targetWorkInfos.filter(w => isReadyForBatch(w));
 
         this.targetAug = this.findNextAugmentationToWorkToward();
@@ -809,8 +791,6 @@ class MegaController {
         */
 
         if (this.targetAug) {
-
-
 
             if (this.targetAug.moneyCost <= this.availableMoney) {
                 //we have enough money,
@@ -846,8 +826,6 @@ class MegaController {
             debugLog(this.ns, DebugLevel.warn, `Missing exp target! [${EXP_TARGET}]`);
         }
 
-
-
         if (this.workReadyForBatch.length === 0) {
             //if we have nothing ready for batch, let prep use all the ram
             this.adjustedPrepPct *= 1.1;
@@ -856,8 +834,6 @@ class MegaController {
         } else {
             this.adjustedPrepPct = this.DEFAULT_RAM_USAGE_SETTINGS.prepPct;
         }
-
-
 
         this.playerFactionInfo = [];
         this.unownedAugmentationInfo = [];
@@ -900,7 +876,7 @@ class MegaController {
             newHackPercent = Math.max(round(newHackPercent, 3), this.HACK_PCT_MIN);
 
             if (newHackPercent !== this.settings.hackPercent) {
-                setSettings(this.ns, {hackPercent: newHackPercent});
+                setSettings(this.ns, { hackPercent: newHackPercent });
             }
         } else if (this.batchSuccesses >= this.workReadyForBatch.length) {
 
@@ -908,7 +884,7 @@ class MegaController {
             newHackPercent = Math.min(round(newHackPercent, 3), this.HACK_PCT_MAX);
 
             if (newHackPercent !== this.settings.hackPercent) {
-                setSettings(this.ns, {hackPercent: newHackPercent});
+                setSettings(this.ns, { hackPercent: newHackPercent });
             }
 
         }
@@ -940,20 +916,16 @@ class MegaController {
 
     private async doExtra() {
 
-
-
     }
 
     private async doExtraShare(): Promise<number> {
         let shareThreads = 0;
-
 
         if (this.player.isWorking && this.player.currentWorkFactionName) {
 
             let ramUsedToShare = this.ramUsage.shareRam;
             let maxRamToUse = this.ramUsage.totalMax * this.adjustedSharePct;
             let singleShareRam = this.ns.getScriptRam(SCRIPTS.myShare);
-
 
             for (const runner of this.runners) {
                 let availableThreads = getThreadsAvailableForScript(this.ns, runner.hostname, SCRIPTS.myShare);
@@ -1024,7 +996,6 @@ class MegaController {
 
     private async doRunnerWork() {
 
-
         if (this.workReadyForBatch.length > 0) {
             this.batchSuccesses = await this.doMaxBatches();
 
@@ -1048,8 +1019,6 @@ class MegaController {
             }
         }
 
-
-
         this.prepAllTargets();
 
         if (this.doSharing) {
@@ -1067,8 +1036,6 @@ class MegaController {
         if (this.targetAug) {
             targetFaction = this.targetAug.fromFaction;
 
-
-
             let bigFactionProgress: any[] = [];
             bigFactionList.forEach(faction => {
                 if (this.player.factions.includes(faction.name)) {
@@ -1077,7 +1044,6 @@ class MegaController {
 
                     let nextResetAmount = calcNextFavorResetAmount(this.ns, currFavor);
                     let remainingFavorUntilReset = nextResetAmount - currFavor - gainedFavor;
-
 
                     bigFactionProgress.push({
                         faction: faction,
@@ -1088,8 +1054,6 @@ class MegaController {
                     });
                 }
             });
-
-
 
             //if we're ready to reset this faction, we can target the next big faction
             bigFactionProgress = bigFactionProgress.filter(f => f.remainingFavorUntilReset > 0);
@@ -1106,10 +1070,10 @@ class MegaController {
                 targetFaction = bigFactionProgress[0].faction;
             }
 
-
-
             debugLog(this.ns, DebugLevel.info, `Target Faction to work on: ${targetFaction.name}`, bigFactionProgress);
-            workOnReputation(this.ns, targetFaction, this.targetAug.totalRepCost, this.settings.autoSwitchTasks);
+            if (this.settings.autoStartWork) {
+                workOnReputation(this.ns, targetFaction, this.targetAug.totalRepCost, this.settings.forceSwitchWork);
+            }
 
             await doDonationReset(this.ns, bigFactionList);
 

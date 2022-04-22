@@ -1,10 +1,9 @@
-import {CrimeMode, FragmentEffect, SCRIPTS, STANEK_PATTERNS} from '/lib/consts';
-import {formatBigNumber, getAllRunners, runChargeFragment} from '/lib/utils';
-import {displayHeader} from '/lib/utils-player';
-import {ITableData, Table} from '/lib/utils-table';
-import {ActiveFragment, AutocompleteData, Fragment, NS} from '/NetscriptDefinitions';
-import {FlagSchema} from '/types';
-
+import { CrimeMode, FragmentEffect, OTHER_FACTIONS, SCRIPTS, STANEK_PATTERNS } from '/lib/consts';
+import { formatBigNumber, getAllRunners, runChargeFragment } from '/lib/utils';
+import { displayHeader } from '/lib/utils-player';
+import { ITableData, Table } from '/lib/utils-table';
+import { ActiveFragment, AutocompleteData, Fragment, NS } from '/NetscriptDefinitions';
+import { FlagSchema } from '/types';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     console.log(`autocomplete()`, args);
@@ -47,8 +46,6 @@ export async function main(ns: NS) {
         await controller.doRun();
     }
 
-
-
 }
 
 type MyFragmentInfo = ActiveFragment & Fragment & { startedChargeThreads: number }
@@ -65,7 +62,8 @@ class StanekController {
     private activeFragments: MyFragmentInfo[] = [];
     private chargeRam: number;
     private chargeMode: 'faction' | 'normal' = 'normal';
-
+    private cotmgRep: number = 0;
+    private cotmgRepGain: number = 0;
 
     constructor(private ns: NS) {
 
@@ -77,14 +75,10 @@ class StanekController {
     public async doRun() {
         this.ns.tail();
 
-
         while (true) {
             this.updateData();
 
-
             this.doCharging();
-
-
 
             this.displayInfo();
             this.runTime = new Date().getTime() - this.lastRunTime;
@@ -99,6 +93,8 @@ class StanekController {
         //stuff here
 
         this.ns.print(`Charge Mode: ${this.chargeMode}`);
+        this.ns.print(`CotMG Rep: ${formatBigNumber(this.cotmgRep, 3)}, ${formatBigNumber(this.cotmgRepGain, 1)}/sec`);
+
         this.ns.print(`Fragment Info:`);
         this.activeFragments.sort((a, b) => (b.numCharge * b.highestCharge) - (a.numCharge * a.highestCharge));
 
@@ -109,7 +105,6 @@ class StanekController {
         this.activeFragments.forEach(frag => {
 
             let effectString = FragmentEffect[frag.id] ?? '!?Missing FragmentEffect entry?!';
-
 
             tableData.push({
                 'Id': frag.id.toString(),
@@ -129,13 +124,12 @@ class StanekController {
 
         table.print();
 
-
-
     }
 
     private updateData() {
-        this.chargeMode = 'faction';
+        let timeDelta = new Date().getTime() - this.lastRunTime;
         this.lastRunTime = new Date().getTime();
+        this.chargeMode = 'faction';
 
         this.width = this.ns.stanek.giftWidth();
         this.height = this.ns.stanek.giftHeight();
@@ -159,25 +153,22 @@ class StanekController {
         this.activeFragments = this.activeFragments.filter(f => FragmentEffect[f.id] !== 'Booster');
         this.activeFragments.sort((a, b) => a.numCharge - b.numCharge);
 
+        let currRep = this.ns.singularity.getFactionRep(OTHER_FACTIONS.cotmg.name);
+        this.cotmgRepGain = (currRep - this.cotmgRep) / (timeDelta / 1000);
+        this.cotmgRep = currRep;
 
     }
 
-
-
     private doCharging() {
         //let fragmentsToCharge = this.activeFragments.filter(frag => frag.)
-
 
         if (this.activeFragments.length > 0) {
 
             let runners = getAllRunners(this.ns);
             runners.sort((a, b) => b.freeRam - a.freeRam);
 
-
-
             let currFragIndex = 0;
             this.activeFragments.sort((a, b) => (a.numCharge * a.highestCharge) - (b.numCharge * b.highestCharge));
-
 
             runners.forEach((runner, index) => {
 
@@ -206,10 +197,7 @@ class StanekController {
                         }
                     }
 
-
                 }
-
-
 
             });
 
@@ -218,9 +206,7 @@ class StanekController {
 
     public async loadPattern() {
 
-
-
-        let selection = await this.ns.prompt('Select the pattern to load', {type: 'select', choices: Object.keys(STANEK_PATTERNS.x5y6)});
+        let selection = await this.ns.prompt('Select the pattern to load', { type: 'select', choices: Object.keys(STANEK_PATTERNS.x5y6) });
 
         if (selection) {
             let doLoad = await this.ns.prompt(`Are you sure you want to remove all fragments an load the [${selection}] pattern?`);
@@ -234,7 +220,6 @@ class StanekController {
                 let key = Object.keys(STANEK_PATTERNS.x5y6).find(k => k === selection);
                 if (key) {
                     let pattern = STANEK_PATTERNS.x5y6[key];
-
 
                     let success = true;
                     for (const fragLoc of pattern) {
@@ -251,12 +236,10 @@ class StanekController {
                     this.ns.print(`ERROR! Could not find pattern [${selection}]`);
                 }
 
-
             } else {
 
             }
         }
-
 
     }
 
@@ -273,17 +256,13 @@ class StanekController {
 
         let patternString = JSON.stringify(activeFrags);
 
-
         await this.ns.write('stanek-patterns.txt', patternString, 'a');
 
         this.ns.print(`pattern string to save:`);
 
-
         let lines = activeFrags.map(frag => '  ' + JSON.stringify(frag)).join(',\n');
         patternString = `[\n${lines}\n]`;
         this.ns.print(patternString);
-
-
 
     }
 }

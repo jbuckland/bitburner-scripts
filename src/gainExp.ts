@@ -1,8 +1,10 @@
-import {SCRIPTS} from '/lib/consts';
-import {formatBigNumber, formatCurrency, getAllRunners, getServerInfo, getThreadsAvailableForScript, indent, round} from '/lib/utils';
-import {displayHeader} from '/lib/utils-player';
-import {NS} from '/NetscriptDefinitions';
-import {ServerInfo} from '/types';
+import { SCRIPTS } from '/lib/consts';
+import { useAvailableRunnersForWork } from '/lib/hack-utils';
+import { formatBigNumber, formatCurrency, getAllRunners, getServerInfo, getThreadsAvailableForScript, indent, round } from '/lib/utils';
+import { getAllTargetWorkInfo, getTargetWorkInfoForTargets } from '/lib/utils-controller';
+import { displayHeader } from '/lib/utils-player';
+import { NS } from '/NetscriptDefinitions';
+import { ServerInfo, TaskType } from '/types';
 
 export async function main(ns: NS) {
 
@@ -27,14 +29,11 @@ class TemplateController {
 
     public async doRun() {
 
-
-
         while (true) {
 
             this.lastRunTime = new Date().getTime();
             this.updateData();
             this.displayInfo();
-
 
             if (this.targetIsReady) {
                 let runners = getAllRunners(this.ns);
@@ -47,7 +46,14 @@ class TemplateController {
                     }
                 });
 
-
+            } else {
+                let targetInfo = getServerInfo(this.ns, this.target);
+                let work = getTargetWorkInfoForTargets(this.ns, [targetInfo]);
+                let targetWork = work.find(w => w.target.hostname === this.target);
+                if (targetWork) {
+                    useAvailableRunnersForWork(this.ns, this.target, SCRIPTS.weaken, targetWork.threadInfos[TaskType.weaken], 1);
+                    useAvailableRunnersForWork(this.ns, this.target, SCRIPTS.grow, targetWork.threadInfos[TaskType.grow], 1);
+                }
 
             }
 
@@ -62,7 +68,6 @@ class TemplateController {
         //stuff here
         displayHeader(this.ns, this.runTime);
 
-
         if (this.targetIsReady) {
             this.ns.print(`Using ALL ram from EVERY server to gain exp!`);
             let expGain = this.ns.getScriptExpGain();
@@ -74,7 +79,6 @@ class TemplateController {
             this.ns.print(`EXP Target [${this.target}] is not ready!! ${secString}, ${moneyString}`);
         }
 
-
         this.ns.print('');
 
     }
@@ -83,7 +87,6 @@ class TemplateController {
         this.targetInfo = getServerInfo(this.ns, this.target);
 
         this.targetIsReady = this.targetInfo.currSecurity === this.targetInfo.minSecurity && this.targetInfo.currMoney === this.targetInfo.maxMoney;
-
 
     }
 }

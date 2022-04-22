@@ -1,14 +1,13 @@
-﻿import {CrimeMode, DebugLevel, HacknetMode} from 'lib/consts';
-import {debugLog, getSettings, setSettings, timestamp} from 'lib/utils';
-import {addOptionsToSelect, ISelectOption, makeMainUIContainer} from 'lib/utils-ui';
-import {NS} from 'NetscriptDefinitions';
-import {IGlobalSettings, INetscriptExtra} from 'types';
+﻿import { CrimeMode, DebugLevel, HacknetMode } from 'lib/consts';
+import { debugLog, getSettings, setSettings, timestamp } from 'lib/utils';
+import { addOptionsToSelect, ISelectOption, makeMainUIContainer } from 'lib/utils-ui';
+import { NS } from 'NetscriptDefinitions';
+import { IGlobalSettings, INetscriptExtra } from 'types';
 
 interface ISettingsView {
-    setAutoSwitch(value: boolean): void;
-
+    setForceSwitchWork(value: boolean): void;
+    setAutoStartWork(value: boolean): void;
     setCrimeModeSelection(value: string): void;
-
     setHacknetModeSelection(hacknetMode: string): void;
 }
 
@@ -28,13 +27,20 @@ export async function main(ns: NS & INetscriptExtra) {
                 cmbCrimeMode.value = value;
             }
         },
-        setAutoSwitch(value: boolean) {
-            if (chkAutoSwitch) {
-                chkAutoSwitch.checked = value;
+        setForceSwitchWork(value: boolean) {
+            if (chkForceSwitchWork) {
+                chkForceSwitchWork.checked = value;
+            }
+        },
+        setAutoStartWork(value: boolean) {
+            if (chkAutoStartWork) {
+                chkAutoStartWork.checked = value;
             }
         }
     };
-    let chkAutoSwitch: HTMLInputElement;
+
+    let chkAutoStartWork: HTMLInputElement;
+    let chkForceSwitchWork: HTMLInputElement;
     let cmbCrimeMode: HTMLSelectElement;
     let cmbHacknetMode: HTMLSelectElement;
     let template = `
@@ -60,14 +66,15 @@ export async function main(ns: NS & INetscriptExtra) {
               font-size: 16px;
               font-weight: bold;
             }
+        
         </style>
         
         <div class="settingsRow">
-            <label>Auto Switch Tasks:</label> <input id="chkAutoSwitch" type="checkbox">
+            <label>Auto Start Work:</label> <input id="chkAutoStartWork" type="checkbox">
         </div>
         <div class="settingsRow">
-          <label>Hack Percent:</label> <label id="lblHackPercent"></label>
-        </div>
+            <label>Force Switch Work:</label> <input id="chkForceSwitchWork" type="checkbox">
+        </div>        
         <div class="settingsRow">
           <label>Crime Mode:</label> <select id="cmbCrimeMode"></select>
         </div> 
@@ -75,7 +82,6 @@ export async function main(ns: NS & INetscriptExtra) {
           <label>Hacknet Mode:</label> <select id="cmbHacknetMode"></select>
         </div>        
         `;
-
 
     let controller = new SettingsUiController(ns, view);
     let mainContainer = makeMainUIContainer(ns);
@@ -85,9 +91,14 @@ export async function main(ns: NS & INetscriptExtra) {
 
         mainContainer.style.padding = '10px';
 
-        chkAutoSwitch = document.getElementById('chkAutoSwitch') as HTMLInputElement;
-        if (chkAutoSwitch) {
-            chkAutoSwitch.onclick = () => controller.onChange_autoSwitch(chkAutoSwitch.checked);
+        chkAutoStartWork = document.getElementById('chkAutoStartWork') as HTMLInputElement;
+        if (chkAutoStartWork) {
+            chkAutoStartWork.onclick = () => controller.onChange_AutoStartWork(chkAutoStartWork.checked);
+        }
+
+        chkForceSwitchWork = document.getElementById('chkForceSwitchWork') as HTMLInputElement;
+        if (chkForceSwitchWork) {
+            chkForceSwitchWork.onclick = () => controller.onChange_forceSwitchWork(chkForceSwitchWork.checked);
         }
 
         cmbCrimeMode = document.getElementById('cmbCrimeMode') as HTMLSelectElement;
@@ -100,7 +111,6 @@ export async function main(ns: NS & INetscriptExtra) {
             cmbHacknetMode.onchange = () => controller.onChange_hacknetMode(cmbHacknetMode.value);
             addOptionsToSelect(cmbHacknetMode, controller.hacknetModeOptions);
         }
-
 
     }
 
@@ -120,16 +130,12 @@ class SettingsUiController {
     constructor(private ns: NS, private view: ISettingsView) {
 
         for (let crimeModeKey in CrimeMode) {
-            this.crimeModeOptions.push({text: crimeModeKey, value: crimeModeKey});
+            this.crimeModeOptions.push({ text: crimeModeKey, value: crimeModeKey });
         }
         for (let modeKey in HacknetMode) {
-            this.hacknetModeOptions.push({text: modeKey, value: modeKey});
+            this.hacknetModeOptions.push({ text: modeKey, value: modeKey });
         }
 
-    }
-
-    public doFoo() {
-        console.log(timestamp());
     }
 
     public init() {
@@ -142,28 +148,31 @@ class SettingsUiController {
                 this.view.setHacknetModeSelection(this.settings.hacknetMode);
             }
 
-
-            this.view.setAutoSwitch(this.settings.autoSwitchTasks ?? false);
+            this.view.setAutoStartWork(this.settings.autoStartWork ?? false);
+            this.view.setForceSwitchWork(this.settings.forceSwitchWork ?? false);
         }
     }
 
     public onChange_crimeMode(value: string) {
         console.log(`onChange_crimeMode()`, value);
         if (value) {
-            setSettings(this.ns, {crimeMode: value as CrimeMode});
+            setSettings(this.ns, { crimeMode: value as CrimeMode });
         }
     }
 
     public onChange_hacknetMode(value: string) {
         debugLog(this.ns, DebugLevel.info, `onChange_hacknetMode(${value})`);
         if (value) {
-            setSettings(this.ns, {hacknetMode: value as HacknetMode});
+            setSettings(this.ns, { hacknetMode: value as HacknetMode });
         }
     }
 
-    public onChange_autoSwitch(checked: boolean) {
-        debugLog(this.ns, DebugLevel.info, `onChange_autoSwitch(${checked})`);
-        setSettings(this.ns, {autoSwitchTasks: checked});
+    public onChange_forceSwitchWork(checked: boolean) {
+        setSettings(this.ns, { forceSwitchWork: checked });
+    }
+
+    public onChange_AutoStartWork(checked: boolean) {
+        setSettings(this.ns, { autoStartWork: checked });
     }
 }
 

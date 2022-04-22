@@ -1,4 +1,4 @@
-import {IRamUsage} from '/old-controllers/home-controller';
+import { IRamUsage } from '/old-controllers/home-controller';
 import {
     CITY_FACTIONS,
     COMPANY_FACTIONS,
@@ -19,8 +19,8 @@ import {
     SCRIPTS,
     THE_RED_PILL
 } from 'lib/consts';
-import {ActiveFragment, NS, Player} from 'NetscriptDefinitions';
-import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from 'types';
+import { ActiveFragment, NS, Player } from 'NetscriptDefinitions';
+import { IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo } from 'types';
 
 export function timerStart(ns: NS, label: string) {
     let settings = getSettings(ns);
@@ -141,7 +141,7 @@ export function findServerNodeRecursive(currentNode: IServerNode, targetHostname
  * gets the server node tree starting with HOME
  */
 export function getServerTree(ns: NS): IServerNode {
-    let rootNode: IServerNode = {hostname: HOME, children: []};
+    let rootNode: IServerNode = { hostname: HOME, children: [] };
     rootNode.children = getChildrenRecursive(rootNode);
 
     return rootNode;
@@ -656,7 +656,6 @@ export function makePriorityTargetList(ns: NS, serverList: ServerInfo[]): Server
     return priorityList;
 }
 
-
 export function runChargeFragment(ns: NS, runner: string, fragment: ActiveFragment, numThreads: number) {
     return ns.exec(SCRIPTS.chargeFragment, runner, numThreads, fragment.x, fragment.y, getRandomId());
 }
@@ -774,7 +773,8 @@ export function getSettings(ns: NS): IGlobalSettings {
     //default settings
 
     let settings: IGlobalSettings = {
-        autoSwitchTasks: true,
+        autoStartWork: true,
+        forceSwitchWork: true,
         debug: false,
         hackPercent: DEFAULT_TARGET_HACK_PERCENT,
         ramBuffer: DEFAULT_RAM_BUFFER,
@@ -996,7 +996,6 @@ export function getAvailablePlayerMoney(ns: NS, player: Player, settings: IGloba
     return Math.max(0, player.money - (settings.moneyBuffer ?? 0));
 }
 
-
 export interface IFactionInfo {
     name: string,
     reputation: number,
@@ -1026,8 +1025,6 @@ export function myIsBusy(ns: NS): boolean {
 
     let defaultIsBusy = ns.singularity.isBusy();
 
-
-
     let bbIsBusy = false;
 
     let NAME_OF_THAT_ONE_AUGMENT = 'banana';
@@ -1037,8 +1034,6 @@ export function myIsBusy(ns: NS): boolean {
     if (!playerHasThatOneAugment) {
         bbIsBusy = ns.bladeburner.getCurrentAction().type !== 'idle';
     }
-
-
 
     return defaultIsBusy || bbIsBusy;
 }

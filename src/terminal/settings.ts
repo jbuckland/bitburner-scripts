@@ -1,7 +1,7 @@
-import {CrimeMode, HacknetMode} from 'lib/consts';
-import {getSettings, setSettings, timestamp} from 'lib/utils';
-import {AutocompleteData, NS} from 'NetscriptDefinitions';
-import {FlagSchema} from 'types';
+import { CrimeMode, HacknetMode, HashSpendOptions } from 'lib/consts';
+import { getSettings, setSettings, timestamp } from 'lib/utils';
+import { AutocompleteData, NS } from 'NetscriptDefinitions';
+import { FlagSchema, IGlobalSettings } from 'types';
 
 let SLEEP_TIME = 1000;
 
@@ -14,6 +14,8 @@ export function autocomplete(data: AutocompleteData, args: any[]) {
             flagOptions = Object.values(CrimeMode);
         } else if (args[0] === '--hacknetMode') {
             flagOptions = Object.values(HacknetMode);
+        } else if (args[0] === '--hashUse') {
+            flagOptions = Object.values(HashSpendOptions);
         }
     }
 
@@ -30,10 +32,12 @@ const flagSchema: FlagSchema = [
     ['debug', ''],
     ['hackPercent', -1],
     ['hacknetMode', ''],
+    ['hashUse', ''],
     ['maxHashCostBen', -1],
     ['ramBuffer', -1],
     ['moneyBuffer', 0],
-    ['autoSwitchTasks', '']
+    ['autoStartWork', ''],
+    ['forceSwitchWork', '']
 
 ];
 
@@ -56,48 +60,58 @@ export async function main(ns: NS) {
     //Floats
     let moneyBuffer = parseFloat(flags.moneyBuffer);
     if (moneyBuffer > 0) {
-        setSettings(ns, {moneyBuffer: moneyBuffer});
+        setSettings(ns, { moneyBuffer: moneyBuffer });
     }
 
     let maxHashCostBen = parseFloat(flags.maxHashCostBen);
     if (maxHashCostBen > 0) {
-        setSettings(ns, {maxHashCostBen: maxHashCostBen});
+        setSettings(ns, { maxHashCostBen: maxHashCostBen });
     }
 
     let value = parseFloat(flags.hackPercent);
     if (value > 0) {
-        setSettings(ns, {hackPercent: value});
+        setSettings(ns, { hackPercent: value });
     }
 
     value = parseFloat(flags.ramBuffer);
     if (value > 0) {
-        setSettings(ns, {ramBuffer: value});
+        setSettings(ns, { ramBuffer: value });
     }
 
+    function setEnumSetting<T>(settingsKey: keyof IGlobalSettings) {
+        let enumValue = flags[settingsKey] as any;
+        if (enumValue != undefined && enumValue.length > 0) {
+
+            let newSettings: IGlobalSettings = {};
+            newSettings[settingsKey] = enumValue;
+
+            setSettings(ns, newSettings);
+        }
+    }
 
     //Enums
-    let hacknetMode = flags.hacknetMode as HacknetMode;
-    if (hacknetMode != undefined && hacknetMode.length > 0) {
-        setSettings(ns, {hacknetMode: hacknetMode});
-    }
+    setEnumSetting('hacknetMode');
 
     let crimeMode = flags.crimeMode as CrimeMode;
     if (crimeMode != undefined && crimeMode.length > 0) {
-        setSettings(ns, {crimeMode: crimeMode});
+        setSettings(ns, { crimeMode: crimeMode });
     }
 
     //Bools
     let debugValue = convertBool(flags.debug);
     if (debugValue != undefined) {
-        setSettings(ns, {debug: debugValue});
+        setSettings(ns, { debug: debugValue });
     }
 
-    let autoSwitchTasks = convertBool(flags.autoSwitchTasks);
-    if (autoSwitchTasks != undefined) {
-        setSettings(ns, {autoSwitchTasks: autoSwitchTasks});
+    let autoStartWork = convertBool(flags.autoStartWork);
+    if (autoStartWork != undefined) {
+        setSettings(ns, { autoStartWork: autoStartWork });
     }
 
-
+    let forceSwitchWork = convertBool(flags.forceSwitchWork);
+    if (forceSwitchWork != undefined) {
+        setSettings(ns, { forceSwitchWork: forceSwitchWork });
+    }
 
     if (watch) {
         //if watch flag is set,

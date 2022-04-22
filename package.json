@@ -3,8 +3,7 @@
     "version": "1.0.0",
     "description": "",
     "type": "module",
-    "config": {
-        "bitburnerAuthToken": "6QVVmvKGhQIQW67BRgr3LfgG0I4sc+H2z5o4l17LBCUe2EcsRmeBSnDnLnfaLjKi",
+    "config": {        
         "bitburnerScriptRoot": "./dist",
         "bitburnerAllowDelete": true,
         "bitburnerDryRun": true

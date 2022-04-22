@@ -1,6 +1,6 @@
-import {NS} from 'NetscriptDefinitions';
 import {round} from 'lib/utils';
 import {doInstallReset} from 'lib/utils-player';
+import {NS} from 'NetscriptDefinitions';
 
 export async function main(ns: NS) {
 
@@ -11,7 +11,7 @@ export async function main(ns: NS) {
     if (flags.force) {
         reset = true;
     } else {
-        reset = await ns.prompt('Are you sure you want to reset?');
+        reset = await ns.prompt('Are you sure you want to reset?') as boolean;
     }
 
 

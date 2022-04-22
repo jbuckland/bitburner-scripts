@@ -38,7 +38,7 @@ class HackController0 {
         while (true) {
             this.ns.clearLog();
             this.ns.print(timestamp());
-            //this.SLEEP_TIME = this.ns.commitCrime('mug');
+            //this.SLEEP_TIME = this.ns.singularity.commitCrime('mug');
 
             let targetWorkInfos = getTargetWorkInfoForTargets(this.ns, getAllTargetInfo(this.ns));
 

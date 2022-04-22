@@ -1,37 +1,46 @@
-﻿import {CrimeMode} from '/lib/consts';
+import {CRIME} from '/lib/crime-consts';
 import {displayHeader} from '/lib/utils-player';
 import {AutocompleteData, NS} from '/NetscriptDefinitions';
 import {FlagSchema} from '/types';
 
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
-    console.log(`autocomplete()`, args);
     data.flags(flagSchema);
     let flagOptions: string[] = [];
     if (args && args.length >= 0) {
-        if (args[0] === '--crimeMode') {
-            flagOptions = Object.values(CrimeMode);
+        if (args[0] === '--crime') {
+            flagOptions = Object.keys(CRIME);
         }
     }
 
-    return [
+    let autoCompData = [
         ...flagOptions
         //...data.servers,
         //...data.scripts,
         //...data.txts
     ]; //return what you want to have in autocomplete
+
+    console.log(`autocomplete()`, args, autoCompData);
+    return autoCompData;
 }
 
 const flagSchema: FlagSchema = [
-    ['debug', '']
-
+    ['crime', '']
 ];
+
 
 export async function main(ns: NS) {
 
-    let controller = new TemplateController(ns);
     let flags = ns.flags(flagSchema);
-    await controller.doRun();
+
+    let targetCrime: CRIME | undefined = flags.crime as CRIME;
+    if (targetCrime) {
+        let controller = new TemplateController(ns);
+        await controller.doRun(targetCrime);
+
+    } else {
+        ns.tprint('Please provide `--crime`');
+    }
 
 }
 
@@ -42,24 +51,36 @@ class TemplateController {
 
     constructor(private ns: NS) {
         ns.tail();
-        ns.disableLog('ALL');
+        //ns.disableLog('ALL');
 
     }
 
-    public async doRun() {
+    public async doRun(targetCrime: CRIME) {
 
         while (true) {
             this.updateData();
             this.displayInfo();
 
+
+
+            let crimeTime = this.SLEEP_TIME;
+
+            if (!this.ns.singularity.isBusy()) {
+                crimeTime = this.ns.singularity.commitCrime(targetCrime);
+            }
+
+
+
             this.runTime = new Date().getTime() - this.lastRunTime;
-            await this.ns.sleep(this.SLEEP_TIME);
+            await this.ns.sleep(crimeTime);
         }
+
+
 
     }
 
     private displayInfo() {
-        this.ns.clearLog();
+        //this.ns.clearLog();
         displayHeader(this.ns, this.runTime);
         //stuff here
 

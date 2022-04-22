@@ -1,8 +1,8 @@
-﻿import { AugmentationStats, NS } from '/NetscriptDefinitions';
-import { IFaction } from '/types';
-import { CITY_FACTIONS, COMPANY_FACTIONS, GANG_FACTIONS, HACK_FACTIONS, NON_HACKING_AUGMENTS, OTHER_FACTIONS }from 'lib/consts';
-import { formatBigNumber, formatCurrency, formatPercent, getUnownedFactionAugmentations }from 'lib/utils';
-import { Table }from 'lib/utils-table';
+﻿import {AugmentationStats, NS} from '/NetscriptDefinitions';
+import {IFaction} from '/types';
+import {CITY_FACTIONS, COMPANY_FACTIONS, GANG_FACTIONS, HACK_FACTIONS, NON_HACKING_AUGMENTS, OTHER_FACTIONS} from 'lib/consts';
+import {formatBigNumber, formatCurrency, formatPercent, getUnownedFactionAugmentations} from 'lib/utils';
+import {Table} from 'lib/utils-table';
 
 export async function main(ns: NS) {
     ns.tail();
@@ -36,15 +36,15 @@ export async function main(ns: NS) {
         if (factionAugs.length > 0) {
 
             factionAugs.forEach(aug => {
-                let stats = ns.getAugmentationStats(aug);
+                let stats = ns.singularity.getAugmentationStats(aug);
 
-                let repCost = ns.getAugmentationRepReq(aug);
-                let addRepCost = repCost - ns.getFactionRep(faction.name);
+                let repCost = ns.singularity.getAugmentationRepReq(aug);
+                let addRepCost = repCost - ns.singularity.getFactionRep(faction.name);
 
                 augData.push({
                     name: aug,
                     faction: faction.name,
-                    moneyCost: ns.getAugmentationPrice(aug),
+                    moneyCost: ns.singularity.getAugmentationPrice(aug),
                     repCost,
                     addRepCost,
                     stats
@@ -54,16 +54,17 @@ export async function main(ns: NS) {
         }
 
     });
-    augData.sort((a, b) => a.addRepCost - b.addRepCost);
+    augData.sort((a, b) => b.addRepCost - a.addRepCost);
 
     let table = new Table(ns);
+    table.SHOW_FOOTER = true;
 
     let tableData = augData.map(aug => {
         return {
             'Faction': aug.faction,
             'Augment': aug.name,
-            'Rep. Cost': formatBigNumber(aug.repCost),
             'AddlRepCost:': formatBigNumber(aug.addRepCost),
+            'Rep. Cost': formatBigNumber(aug.repCost),
             '$ Cost': formatCurrency(aug.moneyCost),
             '+Hack': (formatPercent((aug.stats.hacking_mult ?? 1) - 1)).toString(),
             '+H-Chance': (formatPercent((aug.stats.hacking_chance_mult ?? 1) - 1)).toString(),

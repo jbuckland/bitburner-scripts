@@ -1,6 +1,6 @@
-import { NS } from 'NetscriptDefinitions';
-import { IServerNode } from 'types';
-import { getServerTree } from 'lib/utils';
+import {getServerTree} from 'lib/utils';
+import {NS} from 'NetscriptDefinitions';
+import {IServerNode} from 'types';
 
 export async function main(ns: NS) {
 
@@ -38,7 +38,7 @@ export async function main(ns: NS) {
 
             //can't directly connect until Source 4 :(
             for (let i = 0; i < path.length; i++) {
-                ns.connect(path[i]);
+                ns.singularity.connect(path[i]);
             }
 
         } else {

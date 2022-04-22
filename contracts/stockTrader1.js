@@ -9,7 +9,8 @@ A: 188
 Determine the maximum possible profit you can earn using at most one transaction (i.e. you can only buy and sell the stock once). If no profit can be made then the answer should be 0. Note that you have to buy the stock before you can sell it
  */
 
-let prices = [98, 162, 47, 51, 141, 180, 90, 52, 39, 93, 101, 50, 78, 9, 130, 134, 19, 179, 142, 118, 197, 152, 185, 160, 86, 75, 171, 66, 26, 93, 3, 34, 163, 143, 180, 166]
+
+let prices = [193,68,147,198]
 
 let transactions = [];
 

@@ -1,7 +1,7 @@
-import { CrimeMode, HacknetMode } from 'lib/consts';
-import { AutocompleteData, NS } from 'NetscriptDefinitions';
-import { FlagSchema } from 'types';
-import { getSettings, setSettings, timestamp } from 'lib/utils';
+import {CrimeMode, HacknetMode} from 'lib/consts';
+import {getSettings, setSettings, timestamp} from 'lib/utils';
+import {AutocompleteData, NS} from 'NetscriptDefinitions';
+import {FlagSchema} from 'types';
 
 let SLEEP_TIME = 1000;
 
@@ -31,7 +31,9 @@ const flagSchema: FlagSchema = [
     ['hackPercent', -1],
     ['hacknetMode', ''],
     ['maxHashCostBen', -1],
-    ['ramBuffer', -1]
+    ['ramBuffer', -1],
+    ['moneyBuffer', 0],
+    ['autoSwitchTasks', '']
 
 ];
 
@@ -51,35 +53,51 @@ export async function main(ns: NS) {
 
     ns.tprint(`flags:`, flags);
 
+    //Floats
+    let moneyBuffer = parseFloat(flags.moneyBuffer);
+    if (moneyBuffer > 0) {
+        setSettings(ns, {moneyBuffer: moneyBuffer});
+    }
+
     let maxHashCostBen = parseFloat(flags.maxHashCostBen);
     if (maxHashCostBen > 0) {
-        setSettings(ns, { maxHashCostBen: maxHashCostBen });
-    }
-
-    let hacknetMode = flags.hacknetMode as HacknetMode;
-    if (hacknetMode != undefined && hacknetMode.length > 0) {
-        setSettings(ns, { hacknetMode: hacknetMode });
-    }
-
-    let crimeMode = flags.crimeMode as CrimeMode;
-    if (crimeMode != undefined && crimeMode.length > 0) {
-        setSettings(ns, { crimeMode: crimeMode });
-    }
-
-    let debugValue = convertBool(flags.debug);
-    if (debugValue != undefined) {
-        setSettings(ns, { debug: debugValue });
+        setSettings(ns, {maxHashCostBen: maxHashCostBen});
     }
 
     let value = parseFloat(flags.hackPercent);
     if (value > 0) {
-        setSettings(ns, { hackPercent: value });
+        setSettings(ns, {hackPercent: value});
     }
 
     value = parseFloat(flags.ramBuffer);
     if (value > 0) {
-        setSettings(ns, { ramBuffer: value });
+        setSettings(ns, {ramBuffer: value});
     }
+
+
+    //Enums
+    let hacknetMode = flags.hacknetMode as HacknetMode;
+    if (hacknetMode != undefined && hacknetMode.length > 0) {
+        setSettings(ns, {hacknetMode: hacknetMode});
+    }
+
+    let crimeMode = flags.crimeMode as CrimeMode;
+    if (crimeMode != undefined && crimeMode.length > 0) {
+        setSettings(ns, {crimeMode: crimeMode});
+    }
+
+    //Bools
+    let debugValue = convertBool(flags.debug);
+    if (debugValue != undefined) {
+        setSettings(ns, {debug: debugValue});
+    }
+
+    let autoSwitchTasks = convertBool(flags.autoSwitchTasks);
+    if (autoSwitchTasks != undefined) {
+        setSettings(ns, {autoSwitchTasks: autoSwitchTasks});
+    }
+
+
 
     if (watch) {
         //if watch flag is set,

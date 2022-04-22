@@ -1,12 +1,12 @@
-import { NS } from 'NetscriptDefinitions';
-import { myFormatCurrency } from 'lib/utils';
+import {myFormatCurrency} from 'lib/utils';
+import {NS} from 'NetscriptDefinitions';
 
 export async function main(ns: NS) {
 
     let flags = ns.flags([['loop', false]]);
 
     do {
-        let results = await ns.manualHack();
+        let results = await ns.singularity.manualHack();
 
         ns.tprint(`hacked ${myFormatCurrency(results)}`);
 

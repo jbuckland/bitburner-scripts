@@ -1,5 +1,5 @@
-﻿import { AutocompleteData, NS } from 'NetscriptDefinitions';
-import { getThreadsAvailableForScript } from 'lib/utils';
+﻿import {getThreadsAvailableForScript} from 'lib/utils';
+import {AutocompleteData, NS} from 'NetscriptDefinitions';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
 
@@ -15,7 +15,7 @@ export function autocomplete(data: AutocompleteData, args: any[]) {
 export async function main(ns: NS) {
     ns.disableLog('ALL');
     let scriptName = ns.args.shift() as string;
-    let runner = ns.getCurrentServer();
+    let runner = ns.singularity.getCurrentServer();
 
     if (scriptName) {
         let maxThreads = getThreadsAvailableForScript(ns, runner, scriptName);

@@ -1,11 +1,26 @@
-import { getGangIncome } from '/lib/utils-crime';
-import { IRamUsage } from '/old-controllers/home-controller';
+import {IRamUsage} from '/old-controllers/home-controller';
 import {
-    CITY_FACTIONS, COMPANY_FACTIONS, CrimeMode, DARK_DATA, DebugLevel, DEFAULT_RAM_BUFFER, DEFAULT_TARGET_HACK_PERCENT, HACK_FACTIONS, HacknetMode, HOME, HOSTS,
-    MIN_MONEY, NULL_PORT_DATA, playerControllers, PORTS, SCRIPTS, THE_RED_PILL
+    CITY_FACTIONS,
+    COMPANY_FACTIONS,
+    CrimeMode,
+    CYCLES_PER_SECOND,
+    DARK_DATA,
+    DebugLevel,
+    DEFAULT_RAM_BUFFER,
+    DEFAULT_TARGET_HACK_PERCENT,
+    HACK_FACTIONS,
+    HacknetMode,
+    HOME,
+    HOSTS,
+    MIN_MONEY,
+    NULL_PORT_DATA,
+    playerControllers,
+    PORTS,
+    SCRIPTS,
+    THE_RED_PILL
 } from 'lib/consts';
-import { NS } from 'NetscriptDefinitions';
-import { IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo } from 'types';
+import {ActiveFragment, NS, Player} from 'NetscriptDefinitions';
+import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from 'types';
 
 export function timerStart(ns: NS, label: string) {
     let settings = getSettings(ns);
@@ -51,8 +66,10 @@ export function debugLog(ns: NS, debugLevel: DebugLevel, msg: string, ...data: a
     let consoleMsg = `${timestamp(debugMsg.time)} ${levelString} [${debugMsg.source}] `;
     if (debugLevel === DebugLevel.error) {
         console.error(consoleMsg, debugMsg.msg, data);
+        console.trace();
     } else if (debugLevel === DebugLevel.warn) {
         console.warn(consoleMsg, debugMsg.msg, data);
+        console.trace(consoleMsg, debugMsg.msg, data);
     } else if (debugLevel === DebugLevel.info) {
         console.info(`%c${consoleMsg} ${debugMsg.msg}`, infoStyle, data);
     } else {
@@ -71,9 +88,9 @@ export function longConnect(ns: NS, target: string) {
     if (targetNode) {
         let path = getPathToServerNode(targetNode);
 
-        //need Source 4 to run ns.connect()
+        //need Source 4 to run ns.singularity.connect()
         for (let i = 0; i < path.length; i++) {
-            ns.connect(path[i]);
+            ns.singularity.connect(path[i]);
         }
 
     } else {
@@ -124,7 +141,7 @@ export function findServerNodeRecursive(currentNode: IServerNode, targetHostname
  * gets the server node tree starting with HOME
  */
 export function getServerTree(ns: NS): IServerNode {
-    let rootNode: IServerNode = { hostname: HOME, children: [] };
+    let rootNode: IServerNode = {hostname: HOME, children: []};
     rootNode.children = getChildrenRecursive(rootNode);
 
     return rootNode;
@@ -221,11 +238,11 @@ export function getFirstRunnerWithFreeRam(ns: NS, amountFree: number): string | 
 
 }
 
-export function filterFirstAvailableRunnerForScriptThreads(ns: NS, runners: RunnerInfo[], scriptName: string, threadCount: number): string | undefined {
+export function filterFirstAvailableRunnerForScriptThreads(ns: NS, runners: RunnerInfo[], scriptName: string, threadCount: number): RunnerInfo | undefined {
 
     threadCount = Math.ceil(threadCount);
 
-    let availableHost = undefined;
+    let availableRunner = undefined;
 
     runners.sort((a, b) => {
         return b.freeRam - a.freeRam;
@@ -242,7 +259,7 @@ export function filterFirstAvailableRunnerForScriptThreads(ns: NS, runners: Runn
 
         if (ramNeeded > 0) {
             if (runner.freeRam >= ramNeeded) {
-                availableHost = runner;
+                availableRunner = runner;
                 break;
             } else {
 
@@ -252,13 +269,7 @@ export function filterFirstAvailableRunnerForScriptThreads(ns: NS, runners: Runn
         }
 
     }
-    if (availableHost) {
-        return availableHost.hostname;
-    } else {
-        return undefined;
-
-    }
-
+    return availableRunner;
 }
 
 /**
@@ -268,12 +279,12 @@ export function filterFirstAvailableRunnerForScriptThreads(ns: NS, runners: Runn
  */
 export function getFirstAvailableRunnerForScript(ns: NS, scriptName: string): string | undefined {
     let runners: RunnerInfo[] = getAllRunners(ns);
-    return filterFirstAvailableRunnerForScriptThreads(ns, runners, scriptName, 1);
+    return filterFirstAvailableRunnerForScriptThreads(ns, runners, scriptName, 1)?.hostname;
 }
 
 export function getFirstAvailableRunnerForScriptNoPurchased(ns: NS, scriptName: string): string | undefined {
     let runners: RunnerInfo[] = getAllRunnersNoPurchased(ns);
-    return filterFirstAvailableRunnerForScriptThreads(ns, runners, scriptName, 1);
+    return filterFirstAvailableRunnerForScriptThreads(ns, runners, scriptName, 1)?.hostname;
 }
 
 export function indent(count: number = 1): string {
@@ -403,7 +414,6 @@ export function getAllTargetInfo(ns: NS): ServerInfo[] {
 }
 
 export function getRandomId(): string {
-
     return Math.floor(Math.random() * 10000000).toString(36);
 }
 
@@ -480,8 +490,8 @@ export function hasRemainingAugmentionsToBuy(ns: NS) {
 }
 
 export function getUnownedFactionAugmentations(ns: NS, factionName: string): string[] {
-    let factionAugments = ns.getAugmentationsFromFaction(factionName);
-    let myAugments = ns.getOwnedAugmentations(true);
+    let factionAugments = ns.singularity.getAugmentationsFromFaction(factionName);
+    let myAugments = ns.singularity.getOwnedAugmentations(true);
 
     let remainingFactionAugments = factionAugments.filter(a => !myAugments.includes(a));
     return remainingFactionAugments;
@@ -552,8 +562,8 @@ export function formatBigRam(value: number): string {
     return `${scaledValue}${letter}`;
 }
 
-export function formatBigTime(value: number): string {
-    let scaledValue = value / 1000;
+export function formatBigTime(msecs: number): string {
+    let scaledValue = msecs / 1000;
     let letter = '';
     if (scaledValue > 86400) {
         //display $x.ym
@@ -614,7 +624,7 @@ export function formatBigNumber(value: number, roundPlaces: number = 1): string 
 
     scaledValue = round(scaledValue, roundPlaces);
 
-    return `${scaledValue}${letter}`;
+    return `${scaledValue.toFixed(roundPlaces)}${letter}`;
 }
 
 export function myFormatCurrency(value: number) {
@@ -646,7 +656,12 @@ export function makePriorityTargetList(ns: NS, serverList: ServerInfo[]): Server
     return priorityList;
 }
 
-export function runHack(ns: NS, runner: string, target: string, numThreads: number) {
+
+export function runChargeFragment(ns: NS, runner: string, fragment: ActiveFragment, numThreads: number) {
+    return ns.exec(SCRIPTS.chargeFragment, runner, numThreads, fragment.x, fragment.y, getRandomId());
+}
+
+export function runHack(ns: NS, runner: string, target: string, numThreads: number): number {
     debug(ns, `HACK [${target}] with [${runner}] using ${numThreads} threads`);
     return ns.exec(SCRIPTS.hack, runner, numThreads, target, getRandomId());
 }
@@ -709,7 +724,7 @@ export function hasJoinedDaedalus(ns: NS): boolean {
 }
 
 export function hasRedPillInstalled(ns: NS): boolean {
-    return ns.getOwnedAugmentations().includes(THE_RED_PILL);
+    return ns.singularity.getOwnedAugmentations().includes(THE_RED_PILL);
 }
 
 export function getAllHosts(ns: NS): string[] {
@@ -759,12 +774,14 @@ export function getSettings(ns: NS): IGlobalSettings {
     //default settings
 
     let settings: IGlobalSettings = {
+        autoSwitchTasks: true,
         debug: false,
         hackPercent: DEFAULT_TARGET_HACK_PERCENT,
         ramBuffer: DEFAULT_RAM_BUFFER,
         crimeMode: CrimeMode.money,
         hacknetMode: HacknetMode.money,
-        maxHashCostBen: 2e9
+        maxHashCostBen: 2e9,
+        moneyBuffer: 0
     };
 
     let settingsPort = ns.getPortHandle(PORTS.settings);
@@ -883,6 +900,7 @@ export function getAllRamUsage(ns: NS): IRamUsage {
     ];
     let shareScripts: string[] = [SCRIPTS.myShare];
     let expScripts: string[] = [SCRIPTS.expGain];
+    let stanekScripts: string[] = [SCRIPTS.chargeFragment];
 
     let usage: IRamUsage = {
         batchRam: 0,
@@ -890,6 +908,7 @@ export function getAllRamUsage(ns: NS): IRamUsage {
         expRam: 0,
         prepRam: 0,
         shareRam: 0,
+        stanekRam: 0,
         totalMax: 0,
         totalUsed: 0,
         otherRam: 0,
@@ -918,6 +937,8 @@ export function getAllRamUsage(ns: NS): IRamUsage {
                 usage.prepRam += ramUse;
             } else if (shareScripts.includes(p.filename)) {
                 usage.shareRam += ramUse;
+            } else if (stanekScripts.includes(p.filename)) {
+                usage.stanekRam += ramUse;
             } else {
                 usage.otherRam += ramUse;
                 usage.otherNames.push(p.filename);
@@ -960,4 +981,64 @@ export function myGetScriptIncome(ns: NS) {
 
 export function getTotalIncome(ns: NS): number {
     return getGangIncome(ns) + myGetScriptIncome(ns) + getHacknetIncome(ns);
+}
+
+export function getGangIncome(ns: NS) {
+    if (ns.gang.inGang()) {
+        return ns.gang.getGangInformation().moneyGainRate * CYCLES_PER_SECOND;
+    } else {
+        return 0;
+    }
+
+}
+
+export function getAvailablePlayerMoney(ns: NS, player: Player, settings: IGlobalSettings) {
+    return Math.max(0, player.money - (settings.moneyBuffer ?? 0));
+}
+
+
+export interface IFactionInfo {
+    name: string,
+    reputation: number,
+    favor: number
+}
+
+export function getPlayerFactionInfo(ns: NS): IFactionInfo[] {
+    let player = ns.getPlayer();
+
+    let playerFactions: IFactionInfo[] = [];
+    player.factions.forEach(factionName => {
+
+        let info: IFactionInfo = {
+            name: factionName,
+            reputation: ns.singularity.getFactionRep(factionName),
+            favor: ns.singularity.getFactionFavor(factionName)
+        };
+
+        playerFactions.push(info);
+
+    });
+
+    return playerFactions;
+}
+
+export function myIsBusy(ns: NS): boolean {
+
+    let defaultIsBusy = ns.singularity.isBusy();
+
+
+
+    let bbIsBusy = false;
+
+    let NAME_OF_THAT_ONE_AUGMENT = 'banana';
+    let playerHasThatOneAugment = ns.singularity.getOwnedAugmentations().includes(NAME_OF_THAT_ONE_AUGMENT);
+
+    //if we don't have that one augment, then we need to check if the player is doing a BB action
+    if (!playerHasThatOneAugment) {
+        bbIsBusy = ns.bladeburner.getCurrentAction().type !== 'idle';
+    }
+
+
+
+    return defaultIsBusy || bbIsBusy;
 }

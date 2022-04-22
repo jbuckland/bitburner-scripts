@@ -1,10 +1,11 @@
+import {INetscriptExtra} from '/types';
 import {INDENT_STRING} from 'lib/consts';
 import {crimes} from 'lib/crime-consts';
 import {formatPercent, round} from 'lib/utils';
 import {makeEtaTimeString, trainStat} from 'lib/utils-player';
 import {NS, Player} from 'NetscriptDefinitions';
 
-export async function main(ns: NS) {
+export async function main(ns: NS & INetscriptExtra) {
     let svc = new CrimeService0(ns);
     await svc.doRun();
 }
@@ -20,7 +21,7 @@ export class CrimeService0 {
     private MIN_STARTING_STAT: number = 10;
     private readonly KARMA_TO_START_GANG: number = -54000;
 
-    public constructor(private ns: NS) {
+    public constructor(private ns: NS & INetscriptExtra) {
         this.updatePlayer();
         //ns.disableLog('ALL');
     }
@@ -55,8 +56,8 @@ export class CrimeService0 {
             let crimeInfo: CrimeInfo[] = Object.values(crimes).map(c => {
                 return {
                     name: c.name,
-                    chance: this.ns.getCrimeChance(c.name),
-                    stats: this.ns.getCrimeStats(c.name)
+                    chance: this.ns.singularity.getCrimeChance(c.name),
+                    stats: this.ns.singularity.getCrimeStats(c.name)
                 };
             });
 
@@ -77,14 +78,14 @@ export class CrimeService0 {
                 targetCrime = crimeInfo[crimeInfo.length - 1];
             }
 
-            if (!this.ns.isBusy()) {
+            if (!this.ns.singularity.isBusy()) {
                 this.ns.print(`Doing "${targetCrime.name}", ${formatPercent(targetCrime.chance)}`);
 
                 if (nextCrime) {
                     this.ns.print(`${INDENT_STRING}Next: "${nextCrime.name}", ${formatPercent(nextCrime.chance)}`);
                 }
 
-                crimeTime = this.ns.commitCrime(targetCrime.name);
+                crimeTime = this.ns.singularity.commitCrime(targetCrime.name);
             }
 
             await this.ns.sleep(crimeTime);
@@ -112,30 +113,30 @@ export class CrimeService0 {
             await this.ns.sleep(1000);
             this.updatePlayer();
         }
-        this.ns.stopAction();
+        this.ns.singularity.stopAction();
 
         await trainStat(this.ns, 'defense', 'def');
         while (this._player.defense < this.MIN_STARTING_STAT) {
             await this.ns.sleep(1000);
             this.updatePlayer();
         }
-        this.ns.stopAction();
+        this.ns.singularity.stopAction();
 
         await trainStat(this.ns, 'dexterity', 'dex');
         while (this._player.dexterity < this.MIN_STARTING_STAT) {
             await this.ns.sleep(1000);
             this.updatePlayer();
         }
-        this.ns.stopAction();
+        this.ns.singularity.stopAction();
 
         await trainStat(this.ns, 'agility', 'agi');
         while (this._player.agility < this.MIN_STARTING_STAT) {
             await this.ns.sleep(1000);
             this.updatePlayer();
         }
-        this.ns.stopAction();
+        this.ns.singularity.stopAction();
 
-        this.ns.stopAction();
+        this.ns.singularity.stopAction();
     }
 
     private updateAvgKarmaGain() {

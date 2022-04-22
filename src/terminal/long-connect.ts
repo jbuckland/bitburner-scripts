@@ -47,9 +47,9 @@ export async function main(ns: NS) {
 
                 ns.tprint(connectString);
 
-                //need Source 4 to run ns.connect()
+                //need Source 4 to run ns.singularity.connect()
                 for (let i = 0; i < path.length; i++) {
-                    ns.connect(path[i]);
+                    ns.singularity.connect(path[i]);
                 }
             }
 

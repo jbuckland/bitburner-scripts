@@ -27,6 +27,7 @@ const scriptList = [
     SCRIPTS.hack,
     SCRIPTS.weaken,
     SCRIPTS.expGain,
+    SCRIPTS.chargeFragment,
 
     //these are utility files
     'share.js',

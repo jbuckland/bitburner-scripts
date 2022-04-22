@@ -1,4 +1,4 @@
-﻿import { NS } from '/NetscriptDefinitions';
+﻿import {NS} from '/NetscriptDefinitions';
 
 export function resizeScriptWindow(ns: NS, scriptName: string, args: any[], width: number, height: number) {
 
@@ -49,8 +49,11 @@ export function makeMainUIContainer(ns: NS): HTMLDivElement | undefined {
     let contentEl = getTailWindowContentsNode(ns, ns.getScriptName());
     if (contentEl) {
 
-        let root = document.querySelector('.MuiTypography-root');
-        const rootStyle = globalThis.getComputedStyle(root!);
+        //let root = contentEl.parentNode!.parentNode!.parentNode!.querySelector('.MuiTypography-root');
+
+        let bitburnerTitleLabel = document.querySelector('.MuiTypography-root .MuiTypography-body1');
+
+        const rootStyle = globalThis.getComputedStyle(bitburnerTitleLabel!);
 
         //remove any divs in the contentEl
         //but don't kill the resizing span
@@ -58,6 +61,7 @@ export function makeMainUIContainer(ns: NS): HTMLDivElement | undefined {
         contentDivs.forEach(n => n.parentNode?.removeChild(n));
 
         mainContainer = document.createElement('div');
+        mainContainer.id = 'mainContainer';
 
         mainContainer.style.fontFamily = rootStyle.fontFamily;
         mainContainer.style.fontSize = rootStyle.fontSize;

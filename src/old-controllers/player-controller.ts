@@ -1,8 +1,7 @@
-import { ServerManager } from '/old-controllers/server-controller';
-import { IFaction } from '/types';
-import { NS } from 'NetscriptDefinitions';
-import { DebugLevel } from 'lib/consts';
-import { debugLog, setSettings, timestamp } from 'lib/utils';
+import {ServerManager} from '/old-controllers/server-controller';
+import {IFaction} from '/types';
+import {DebugLevel} from 'lib/consts';
+import {debugLog, setSettings, timestamp} from 'lib/utils';
 import {
     bigFactionList,
     buyDarkwebTools,
@@ -23,6 +22,7 @@ import {
     upgradeHomeComputer,
     workOnReputation
 } from 'lib/utils-player';
+import {NS} from 'NetscriptDefinitions';
 
 const SLEEP_TIME = 1000;
 
@@ -59,11 +59,11 @@ export async function main(ns: NS) {
         await installBackdoors(ns);
         upgradeHomeComputer(ns);
         claimedEarnedFactionRep(ns, true); //should be before purchaseAvailableAugmentations()
-        purchaseAvailableAugmentations(ns); //should be before findNextAugmentationToWorkToward()
+        await purchaseAvailableAugmentations(ns); //should be before findNextAugmentationToWorkToward()
 
         let targetAug = findNextAugmentationToWorkToward(ns);
         if (targetAug) {
-            workOnReputation(ns, targetAug.fromFaction);
+            workOnReputation(ns, targetAug.fromFaction, targetAug.totalRepCost);
 
             await doDonationReset(ns, bigFactionList);
 
@@ -100,8 +100,8 @@ export async function doDonationReset(ns: NS, factionList: IFaction[]) {
     for (const targetFaction of factionList) {
         if (!donationResetsCanceled.includes(targetFaction.name)) {
 
-            let currFavor = ns.getFactionFavor(targetFaction.name);
-            let factionFavorGain = ns.getFactionFavorGain(targetFaction.name);
+            let currFavor = ns.singularity.getFactionFavor(targetFaction.name);
+            let factionFavorGain = ns.singularity.getFactionFavorGain(targetFaction.name);
 
             let favorToDonate = ns.getFavorToDonate();
             let totalFavorAfterReset = currFavor + factionFavorGain;

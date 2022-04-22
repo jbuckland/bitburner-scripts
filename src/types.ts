@@ -98,6 +98,8 @@ export interface IGlobalSettings {
     crimeMode?: CrimeMode;
     hacknetMode?: HacknetMode;
     maxHashCostBen?: number;
+    moneyBuffer?: number;
+    autoSwitchTasks?: boolean;
 
 }
 
@@ -196,5 +198,6 @@ export interface IRunnerJob {
     runner: string;
     scriptName: string;
     threads: number,
+    ramUsed: number,
     args: any[]
 }

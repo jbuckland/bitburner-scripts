@@ -16,6 +16,7 @@ export async function main(ns: NS) {
 
 }
 
+
 export async function installBackdoor(ns: NS, faction: IServerFaction): Promise<boolean> {
     let success = false;
     let player = ns.getPlayer();
@@ -27,9 +28,9 @@ export async function installBackdoor(ns: NS, faction: IServerFaction): Promise<
                 if (server.requiredHackingSkill <= player.hacking) {
                     ns.print(`Connecting to ${server.hostname} and installing backdoor!`);
                     longConnect(ns, server.hostname);
-                    await ns.installBackdoor();
+                    await ns.singularity.installBackdoor();
                     ns.toast(`backdoor installed on ${server.hostname}!`, TOAST_VARIANT.info, TOAST_DURATION);
-                    ns.connect(HOME);
+                    ns.singularity.connect(HOME);
                 }
             }
         }

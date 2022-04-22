@@ -1,28 +1,32 @@
-import { makeEtaTimeString, trainStat } from '/lib/utils-player';
-import { INDENT_STRING } from 'lib/consts';
-import { crimes } from 'lib/crime-consts';
-import { formatPercent, round } from 'lib/utils';
-import { NS, Player } from 'NetscriptDefinitions';
+import {makeEtaTimeString, trainStat} from '/lib/utils-player';
+import {INetscriptExtra} from '/types';
+import {INDENT_STRING} from 'lib/consts';
+import {crimes} from 'lib/crime-consts';
+import {formatBigTime, formatPercent, round} from 'lib/utils';
+import {NS, Player} from 'NetscriptDefinitions';
 
-export async function main(ns: NS) {
+export async function main(ns: NS & INetscriptExtra) {
     let svc = new BasicCrimeService(ns);
     await svc.doRun();
 }
 
 type KarmaAvgData = { totalKarma: number, time: number, avgGain: number; }
+type CrimeInfo = { name: string, chance: number }
 
 //this is to help get you to 64gb home ram
 export class BasicCrimeService {
 
-    private CRIME_THRESHOLD: number = .6;
+    private CRIME_THRESHOLD: number = .7;
     private KARMA_TO_START_GANG: number = -54000;
-    private MIN_CRIME_SUCCESS: number = .6;
     private MIN_STARTING_STAT: number = 10;
     private karmaAverageWindow = 10 * 1000;
-    private karmaAvgData: KarmaAvgData = { totalKarma: 0, time: 0, avgGain: 0 };
+    private karmaAvgData: KarmaAvgData = {totalKarma: 0, time: 0, avgGain: 0};
     private player!: Player;
+    private crimeTime: number = 0;
+    private nextCrime: CrimeInfo | undefined;
+    private targetCrime: CrimeInfo | undefined;
 
-    public constructor(private ns: NS) {
+    public constructor(private ns: NS & INetscriptExtra) {
         this.updatePlayer();
     }
 
@@ -37,9 +41,7 @@ export class BasicCrimeService {
             this.updateAvgKarmaGain();
             this.ns.print('');
 
-            this.displayKarmaInfo();
 
-            let crimeTime = 0;
 
             let crimesToTry = [
                 //crimes.heist,
@@ -51,53 +53,57 @@ export class BasicCrimeService {
                 crimes.shoplift
             ];
 
-            type CrimeInfo = { name: string, chance: number }
+
             let crimeInfo: CrimeInfo[] = crimesToTry.map(c => {
                 return {
                     name: c.name,
-                    chance: this.ns.getCrimeChance(c.name)
+                    chance: this.ns.singularity.getCrimeChance(c.name)
                 };
             });
 
-            let nextCrime: CrimeInfo | undefined;
-            let targetCrime: CrimeInfo | undefined;
+            this.nextCrime = undefined;
+            this.targetCrime = undefined;
 
             for (let crime of crimeInfo) {
                 if (crime.chance >= this.CRIME_THRESHOLD) {
-                    targetCrime = crime;
+                    this.targetCrime = crime;
                     break;
                 } else {
-                    nextCrime = crime;
+                    this.nextCrime = crime;
                 }
             }
-            if (!targetCrime) {
-                targetCrime = crimeInfo[crimeInfo.length - 1];
+            if (!this.targetCrime) {
+                this.targetCrime = crimeInfo[crimeInfo.length - 1];
             }
 
-            if (!this.ns.isBusy()) {
-                this.ns.print(`Doing "${targetCrime.name}", ${formatPercent(targetCrime.chance)}`);
-
-                if (nextCrime) {
-                    this.ns.print(`${INDENT_STRING}Next: "${nextCrime.name}", ${formatPercent(nextCrime.chance)}`);
-                }
-
-                crimeTime = this.ns.commitCrime(targetCrime.name);
+            if (!this.ns.singularity.isBusy()) {
+                this.crimeTime = this.ns.singularity.commitCrime(this.targetCrime.name);
             }
 
-            await this.ns.sleep(crimeTime);
+            this.displayInfo();
+            await this.ns.sleep(this.crimeTime);
         }
 
     }
 
-    private displayKarmaInfo() {
+    private displayInfo() {
 
         let total = this.karmaAvgData.totalKarma;
         let remaining = this.KARMA_TO_START_GANG - total;
 
-        this.ns.print(`Karma: ${round(this.karmaAvgData.avgGain, 2)}/s`);
+        if (this.targetCrime) {
+            this.ns.print(`Doing "${this.targetCrime.name}", takes ${formatBigTime(this.crimeTime)} sec,  ${formatPercent(this.targetCrime.chance)}`);
+        }
 
-        let etaString = makeEtaTimeString(this.ns, total, remaining, this.karmaAvgData.avgGain);
-        this.ns.print(etaString);
+        if (this.nextCrime) {
+            this.ns.print(`${INDENT_STRING}Next: "${this.nextCrime.name}", ${formatPercent(this.nextCrime.chance)}`);
+        }
+
+
+        this.ns.print(`Neg. Karm: ${round(total) * -1}, ${round(this.karmaAvgData.avgGain * -1, 2)}/s`);
+
+        let etaString = makeEtaTimeString(this.ns, this.KARMA_TO_START_GANG * -1, remaining * -1, this.karmaAvgData.avgGain * -1);
+        this.ns.print(`Neg. Karma for Gang: ${etaString}`);
 
     }
 
@@ -117,7 +123,7 @@ export class BasicCrimeService {
                 await this.ns.sleep(1000);
                 this.updatePlayer();
             }
-            this.ns.stopAction();
+            this.ns.singularity.stopAction();
 
         }
     }

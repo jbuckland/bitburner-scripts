@@ -1,9 +1,10 @@
-import { NS, Player } from 'NetscriptDefinitions';
-import { crimes } from 'lib/crime-consts';
-import { formatPercent, round } from 'lib/utils';
-import { INDENT_STRING } from 'lib/consts';
+import {INetscriptExtra} from '/types';
+import {INDENT_STRING} from 'lib/consts';
+import {crimes} from 'lib/crime-consts';
+import {formatPercent, round} from 'lib/utils';
+import {NS, Player} from 'NetscriptDefinitions';
 
-export async function main(ns: NS) {
+export async function main(ns: NS & INetscriptExtra) {
     let svc = new CrimeService0(ns);
     await svc.doRun();
 }
@@ -15,9 +16,9 @@ export class CrimeService0 {
     private _player!: Player;
     private CRIME_THRESHOLD: number = .6;
     private karmaAverageWindow = 10 * 1000;
-    private karmaAvgData: KarmaAvgData = { totalKarma: 0, time: 0, avgGain: 0 };
+    private karmaAvgData: KarmaAvgData = {totalKarma: 0, time: 0, avgGain: 0};
 
-    public constructor(private _ns: NS) {
+    public constructor(private _ns: NS & INetscriptExtra) {
         this.updatePlayer();
     }
 
@@ -48,7 +49,7 @@ export class CrimeService0 {
             let crimeInfo: CrimeInfo[] = crimesToTry.map(c => {
                 return {
                     name: c.name,
-                    chance: this._ns.getCrimeChance(c.name)
+                    chance: this._ns.singularity.getCrimeChance(c.name)
                 };
             });
 
@@ -67,14 +68,14 @@ export class CrimeService0 {
                 targetCrime = crimeInfo[crimeInfo.length - 1];
             }
 
-            if (!this._ns.isBusy()) {
+            if (!this._ns.singularity.isBusy()) {
                 this._ns.print(`Doing "${targetCrime.name}", ${formatPercent(targetCrime.chance)}`);
 
                 if (nextCrime) {
                     this._ns.print(`${INDENT_STRING}Next: "${nextCrime.name}", ${formatPercent(nextCrime.chance)}`);
                 }
 
-                crimeTime = this._ns.commitCrime(targetCrime.name);
+                crimeTime = this._ns.singularity.commitCrime(targetCrime.name);
             }
 
             await this._ns.sleep(crimeTime);

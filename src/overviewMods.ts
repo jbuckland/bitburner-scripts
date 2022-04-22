@@ -21,7 +21,7 @@ export async function main(ns: NS) {
 
         let workGainRate = 0;
         if (player.currentWorkFactionName) {
-            let factionFavor = ns.getFactionFavor(player.currentWorkFactionName);
+            let factionFavor = ns.singularity.getFactionFavor(player.currentWorkFactionName);
 
             workGainRate = player.workRepGainRate * player.faction_rep_mult * (1 + (factionFavor / 100.0));
         }

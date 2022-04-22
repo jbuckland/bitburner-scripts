@@ -1,8 +1,7 @@
-import { NS } from 'NetscriptDefinitions';
-import { SCRIPTS } from 'lib/consts';
-import { doBatches, prepAllTargets, singleHack } from 'lib/hack-utils';
-import { getAllTargetInfo, setSettings, timestamp } from 'lib/utils';
-import { getTargetWorkInfoForTargets, isReadyForBatch } from 'lib/utils-controller';
+import {SCRIPTS} from 'lib/consts';
+import {doBatches, prepAllTargets, singleHack} from 'lib/hack-utils';
+import {getAllTargetInfo, setSettings, timestamp} from 'lib/utils';
+import {getTargetWorkInfoForTargets, isReadyForBatch} from 'lib/utils-controller';
 import {
     buyDarkwebTools,
     displayIncomeStats,
@@ -12,6 +11,7 @@ import {
     joinFactions,
     upgradeHomeComputer
 } from 'lib/utils-player';
+import {NS} from 'NetscriptDefinitions';
 
 const SLEEP_TIME = 1000;
 
@@ -21,7 +21,7 @@ export async function main(ns: NS) {
     ns.disableLog('ALL');
     ns.tail();
 
-    setSettings(ns, { hackPercent: 0.05 });
+    setSettings(ns, {hackPercent: 0.05});
 
     runInitialScripts();
 

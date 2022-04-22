@@ -1,6 +1,6 @@
-import { ICityFaction, ICompanyFaction, IControllerConfig, IDarkwebTool, IFaction, IHackFaction, IServerFaction } from 'types';
+import {ICityFaction, ICompanyFaction, IControllerConfig, IDarkwebTool, IFaction, IHackFaction, IServerFaction} from 'types';
 
-export const WORLD_DAEMON: IServerFaction = { name: 'w0r1d_d43m0n', hostname: 'w0r1d_d43m0n' };
+export const WORLD_DAEMON: IServerFaction = {name: 'w0r1d_d43m0n', hostname: 'w0r1d_d43m0n'};
 export const DEFAULT_RAM_BUFFER = 90;
 export const DEFAULT_TARGET_HACK_PERCENT = .1;
 export const HOME = 'home';
@@ -124,35 +124,35 @@ export enum TOAST_VARIANT {
 export const DARK_DATA = {
     torCost: 200000,
     tools: {
-        brute: { name: 'BruteSSH.exe', cost: 500000, createSkill: 50 } as IDarkwebTool,
-        ftp: { name: 'FTPCrack.exe', cost: 1500000, createSkill: 100 } as IDarkwebTool,
-        smtp: { name: 'relaySMTP.exe', cost: 5000000, createSkill: 250 } as IDarkwebTool,
-        http: { name: 'HTTPWorm.exe', cost: 30000000, createSkill: 500 } as IDarkwebTool,
-        scan1: { name: 'DeepscanV1.exe', cost: 500000, createSkill: 75 } as IDarkwebTool,
-        scan2: { name: 'DeepscanV2.exe', cost: 25000000, createSkill: 400 } as IDarkwebTool,
-        sql: { name: 'SQLInject.exe', cost: 250000000, createSkill: 750 } as IDarkwebTool,
-        alink: { name: 'AutoLink.exe', cost: 1000000, createSkill: 25 } as IDarkwebTool,
-        prof: { name: 'ServerProfiler.exe', cost: 500000, createSkill: 50 } as IDarkwebTool
+        brute: {name: 'BruteSSH.exe', cost: 500000, createSkill: 50} as IDarkwebTool,
+        ftp: {name: 'FTPCrack.exe', cost: 1500000, createSkill: 100} as IDarkwebTool,
+        smtp: {name: 'relaySMTP.exe', cost: 5000000, createSkill: 250} as IDarkwebTool,
+        http: {name: 'HTTPWorm.exe', cost: 30000000, createSkill: 500} as IDarkwebTool,
+        scan1: {name: 'DeepscanV1.exe', cost: 500000, createSkill: 75} as IDarkwebTool,
+        scan2: {name: 'DeepscanV2.exe', cost: 25000000, createSkill: 400} as IDarkwebTool,
+        sql: {name: 'SQLInject.exe', cost: 250000000, createSkill: 750} as IDarkwebTool,
+        alink: {name: 'AutoLink.exe', cost: 1000000, createSkill: 25} as IDarkwebTool,
+        prof: {name: 'ServerProfiler.exe', cost: 500000, createSkill: 50} as IDarkwebTool
 
     }
 };
 
 export const GANG_FACTIONS = {
-    snakes: { name: 'Slum Snakes' } as IFaction,
-    tetrads: { name: 'Tetrads' } as IFaction,
-    silhouette: { name: 'Silhouette' } as IFaction,
-    speakers: { name: 'Speakers for the Dead' } as IFaction,
-    army: { name: 'The Dark Army' } as IFaction,
-    syndicate: { name: 'The Syndicate' } as IFaction
+    snakes: {name: 'Slum Snakes'} as IFaction,
+    tetrads: {name: 'Tetrads'} as IFaction,
+    silhouette: {name: 'Silhouette'} as IFaction,
+    speakers: {name: 'Speakers for the Dead'} as IFaction,
+    army: {name: 'The Dark Army'} as IFaction,
+    syndicate: {name: 'The Syndicate'} as IFaction
 
 };
 
 export const HACK_FACTIONS = {
-    csec: { name: 'CyberSec', hostname: 'CSEC' } as IHackFaction,
-    nite: { name: 'NiteSec', hostname: 'avmnite-02h' } as IHackFaction,
-    blackHand: { name: 'The Black Hand', hostname: 'I.I.I.I' } as IHackFaction,
-    bitrunners: { name: 'BitRunners', hostname: 'run4theh111z' } as IHackFaction,
-    daedalus: { name: 'Daedalus', hostname: '' } as IHackFaction
+    csec: {name: 'CyberSec', hostname: 'CSEC'} as IHackFaction,
+    nite: {name: 'NiteSec', hostname: 'avmnite-02h'} as IHackFaction,
+    blackHand: {name: 'The Black Hand', hostname: 'I.I.I.I'} as IHackFaction,
+    bitrunners: {name: 'BitRunners', hostname: 'run4theh111z'} as IHackFaction,
+    daedalus: {name: 'Daedalus', hostname: ''} as IHackFaction
 };
 
 export enum CITIES {
@@ -161,15 +161,15 @@ export enum CITIES {
 }
 
 export const OTHER_FACTIONS = {
-    netburner: { name: 'Netburners' } as IFaction
+    netburner: {name: 'Netburners'} as IFaction
 };
 export const CITY_FACTIONS = {
-    aevum: { name: 'Aevum', homeCity: 'Aevum' } as ICityFaction,
-    sec12: { name: 'Sector-12', homeCity: 'Sector-12' } as ICityFaction,
-    tian: { name: 'Tian Di Hui', homeCity: 'Chongqing' } as ICityFaction,
-    tokyo: { name: 'New Tokyo', homeCity: 'New Tokyo' } as ICityFaction,
-    vol: { name: 'Volhaven', homeCity: 'Volhaven' } as ICityFaction,
-    ishi: { name: 'Ishima', homeCity: 'Ishima' } as ICityFaction
+    aevum: {name: 'Aevum', homeCity: 'Aevum'} as ICityFaction,
+    sec12: {name: 'Sector-12', homeCity: 'Sector-12'} as ICityFaction,
+    tian: {name: 'Tian Di Hui', homeCity: 'Chongqing'} as ICityFaction,
+    tokyo: {name: 'New Tokyo', homeCity: 'New Tokyo'} as ICityFaction,
+    vol: {name: 'Volhaven', homeCity: 'Volhaven'} as ICityFaction,
+    ishi: {name: 'Ishima', homeCity: 'Ishima'} as ICityFaction
 
 };
 
@@ -332,7 +332,7 @@ export const TRAVEL_COST = 200000;
 
 export enum SCRIPTS {
     //////////////////////////
-    //root folder
+    //root folder    ,
     startController = 'start-controller.js',
     megaController = 'mega-controller.js',
     addScripts = 'addScripts.js',
@@ -356,6 +356,7 @@ export enum SCRIPTS {
     batchGrow = '/runner/batch-grow.js',
     batchHack = '/runner/batch-hack.js',
     batchWeaken = '/runner/batch-weaken.js',
+    chargeFragment = '/runner/charge-fragment.js',
     expGain = '/runner/expGain.js',
     grow = '/runner/grow.js',
     hack = '/runner/hack.js',
@@ -363,6 +364,7 @@ export enum SCRIPTS {
     weaken = '/runner/weaken.js',
 
 }
+
 
 export enum SCRIPTS_OLD_CONTROLLERS {
     batchController = 'batch-controller.js',
@@ -379,10 +381,10 @@ export enum SCRIPTS_OLD_CONTROLLERS {
 }
 
 export const playerControllers: IControllerConfig[] = [
-    { scriptName: SCRIPTS_OLD_CONTROLLERS.playerController0, sequenceNumber: 0, ramBuffer: 16, ramReq: 0 },
-    { scriptName: SCRIPTS_OLD_CONTROLLERS.playerController1, sequenceNumber: 1, ramBuffer: 32, ramReq: 0 },
-    { scriptName: SCRIPTS_OLD_CONTROLLERS.playerController2, sequenceNumber: 2, ramBuffer: 32, ramReq: 0 },
-    { scriptName: SCRIPTS_OLD_CONTROLLERS.playerController, sequenceNumber: 3, ramBuffer: 190, ramReq: 0 }
+    {scriptName: SCRIPTS_OLD_CONTROLLERS.playerController0, sequenceNumber: 0, ramBuffer: 16, ramReq: 0},
+    {scriptName: SCRIPTS_OLD_CONTROLLERS.playerController1, sequenceNumber: 1, ramBuffer: 32, ramReq: 0},
+    {scriptName: SCRIPTS_OLD_CONTROLLERS.playerController2, sequenceNumber: 2, ramBuffer: 32, ramReq: 0},
+    {scriptName: SCRIPTS_OLD_CONTROLLERS.playerController, sequenceNumber: 3, ramBuffer: 190, ramReq: 0}
 ];
 
 export const OVERVIEW_EXTRA_0_ID = 'overview-extra-hook-0';
@@ -412,6 +414,8 @@ export const NON_HACKING_AUGMENTS = [
     'Graphene Bone Lacings', //+str +dex
     'Graphene BrachiBlades Upgrade', //str def crime money and success
     'HemoRecirculator',// +8% combat
+    'LuminCloaking-V1 Skin Implant', //agi, crime money
+    'LuminCloaking-V2 Skin Implant', //agi def, crime money
     'Hydroflame Left Arm', //str skill
     'INFRARET Enhancement',
     'Nanofiber Weave',
@@ -490,4 +494,59 @@ export enum HashSpendOptions {
     reduceMinSec = 'Reduce Minimum Security',
     incMaxMoney = 'Increase Maximum Money',
     bbSkill = 'Exchange for Bladeburner SP',
+    bbRank = 'Exchange for Bladeburner Rank',
 }
+
+
+
+export const FragmentEffect: { [key: number]: string } = {
+    0: 'Hacking skill',
+    1: 'Hacking skill',
+    5: 'Faster hack(), grow(), and weaken()',
+    6: 'Hack() power',
+    7: 'Grow() power',
+
+    12: 'Defense Skill',
+    14: 'Dexterity Skill',
+    16: 'Agility Skill',
+
+    20: 'Hacknet production',
+    21: 'Cheaper Hacknet cost',
+    25: 'Reputation from factions and companies',
+    28: 'Crime Money',
+    30: 'All Bladeburner stats',
+    100: 'Booster',
+    101: 'Booster',
+    102: 'Booster',
+    103: 'Booster',
+    105: 'Booster'
+
+
+};
+
+export type StanekPatternCollection = { [key: string]: StanekFragmentLocation[] }
+export type StanekFragmentLocation = { x: number, y: number, id: number, rotation: number }
+
+export const STANEK_PATTERNS = {
+    x5y6: {
+        hacking: [
+            {'x': 4, 'y': 2, 'id': 25, 'rotation': 3},
+            {'x': 0, 'y': 3, 'id': 28, 'rotation': 0},
+            {'x': 0, 'y': 2, 'id': 0, 'rotation': 0},
+            {'x': 4, 'y': 0, 'id': 1, 'rotation': 1},
+            {'x': 1, 'y': 0, 'id': 6, 'rotation': 2},
+            {'x': 0, 'y': 0, 'id': 5, 'rotation': 3},
+            {'x': 2, 'y': 1, 'id': 101, 'rotation': 1}
+        ],
+        hack_hacknet_rep: [
+            {'x': 4, 'y': 0, 'id': 1, 'rotation': 1},
+            {'x': 1, 'y': 0, 'id': 6, 'rotation': 2},
+            {'x': 0, 'y': 0, 'id': 5, 'rotation': 3},
+            {'x': 1, 'y': 1, 'id': 0, 'rotation': 0},
+            {'x': 0, 'y': 3, 'id': 21, 'rotation': 0},
+            {'x': 3, 'y': 2, 'id': 25, 'rotation': 0},
+            {'x': 2, 'y': 4, 'id': 20, 'rotation': 0}
+        ]
+
+    } as StanekPatternCollection
+};

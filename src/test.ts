@@ -1,13 +1,14 @@
-import {timestamp} from 'lib/utils';
+import {CITY_FACTIONS, COMPANY_FACTIONS, GANG_FACTIONS, HACK_FACTIONS, NON_HACKING_AUGMENTS, OTHER_FACTIONS} from '/lib/consts';
+import {getAvailableCityFactions} from '/lib/utils-player';
+import {getUnownedFactionAugmentations, timestamp} from 'lib/utils';
 import {NS} from 'NetscriptDefinitions';
-import {INetscriptExtra} from 'types';
+import {IFaction, INetscriptExtra} from 'types';
 
 export async function main(ns: NS & INetscriptExtra) {
     ns.tail();
 
     //ns.disableLog('ALL');
     ns.clearLog();
-    let player = ns.getPlayer();
 
     /*  let targets = getAllTargetInfo(ns);
 
@@ -31,29 +32,71 @@ export async function main(ns: NS & INetscriptExtra) {
 
   */
 
-    //ns.print(JSON.stringify(ns.getCrimeStats(crimes.homicide.name), null, 4));
+    //ns.print(JSON.stringify(ns.singularity.getCrimeStats(crimes.homicide.name), null, 4));
     ns.disableLog('ALL');
     ns.print(timestamp());
-    /*
-        //await playNote(NOTES.D5);
-        playNote(NOTES.A4, 300);
-        playNote(NOTES.D5, 300);
-        await ns.sleep(300);
-        playNote(NOTES.B4, 300);
-        playNote(NOTES.E5, 300);
-
-        function playNote(freq: number, duration: number) {
-            // play note according to data-frequency attribute
-            let player = new SoundPlayer();
-
-            player.play(freq, 0.8, 'triangle').stop(duration / 1000.0);
-
-        };
-    */
-
-    //ns.bladeburner.stopBladeburnerAction()
-    ns.print(ns.getPlayer().bladeburner_max_stamina_mult);
 
 
+    //get all remaining augments
+    let player = ns.getPlayer();
+
+/*
+    let augs: any[] = [];
+
+
+    let joinedGangFactions = Object.values(GANG_FACTIONS).filter(gangFac => player.factions.includes(gangFac.name));
+
+    let allFactions: IFaction[] = [
+        ...Object.values(CITY_FACTIONS),
+        ...Object.values(HACK_FACTIONS),
+        ...Object.values(COMPANY_FACTIONS),
+        ...joinedGangFactions
+    ];
+
+    allFactions = filterUnavailableCityFactions(ns, allFactions);
+
+    if (player.factions.includes(OTHER_FACTIONS.netburner.name)) {
+        allFactions.push(OTHER_FACTIONS.netburner);
+    }
+
+    //if we have a Gang, remove it's faction because we can't 'work' for them directly
+    if (ns.gang.inGang()) {
+        let gangFaction = ns.gang.getGangInformation().faction;
+        allFactions = allFactions.filter(f => f.name !== gangFaction);
+    }
+
+
+
+    allFactions.forEach(faction => {
+
+        let factionAugs = getUnownedFactionAugmentations(ns, faction.name)
+            .filter(aName => !NON_HACKING_AUGMENTS.includes(aName))
+            //.filter(aName => !augs.some(a => a.name === aName))
+            .map(aName => {
+                return {
+                    faction: faction.name,
+                    duplicate: augs.some(a => a.name === aName),
+                    name: aName
+                };
+            });
+
+        augs.push(...factionAugs);
+
+
+    });
+
+    //augs.sort((a, b) => a.faction.localeCompare(b.faction));
+
+
+    augs.forEach(aug => {
+        ns.print(aug);
+    });
+
+*/
+
+    ns.bladeburner.getCurrentAction()
+
+
+    ns.print(ns.singularity.isBusy());
 
 }

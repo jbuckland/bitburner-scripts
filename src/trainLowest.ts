@@ -77,7 +77,7 @@ export async function main(ns: NS & INetscriptExtra) {
         if (lowestStat.name !== statToTrain.name) {
             statToTrain = lowestStat;
 
-            ns.gymWorkout(GYMS.powerhouse, statToTrain.name, true);
+            ns.singularity.gymWorkout(GYMS.powerhouse, statToTrain.name, true);
         }
 
         ns.clearLog();
@@ -90,7 +90,7 @@ export async function main(ns: NS & INetscriptExtra) {
 
         ns.print(`${timestamp()} Training '${statToTrain.name}'`);
         if (TARGET_HOMICIDE) {
-            ns.print(`${timestamp()} ${targetCrime.name} Chance: ${formatPercent(ns.getCrimeChance(targetCrime.name))}`);
+            ns.print(`${timestamp()} ${targetCrime.name} Chance: ${formatPercent(ns.singularity.getCrimeChance(targetCrime.name))}`);
         }
         await ns.sleep(trainingWaitTime);
 

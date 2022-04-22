@@ -341,6 +341,21 @@ export const PlayerCrimes: IPlayerCrime[] = [
 ];
 
 
+export enum CRIME {
+    shoplift = 'shoplift',
+    rob = 'rob store',
+    larceny = 'larceny',
+    mug = 'mug',
+    drugs = 'deal drugs',
+    arms = 'traffick illegal arms',
+    homicide = 'homicide',
+    bond = 'bond forgery',
+    gta = 'gta',
+    kidnap = 'kidnap and ransom',
+    assassinate = 'assassinate',
+    heist = 'heist',
+}
+
 export const crimes = {
     shoplift: {name: 'shoplift', time: 3, money: 15000, moneyRate: 5000, moneyRatio: 1, karma: 0.05, karmaRate: 0.0167},
     rob: {name: 'rob store', time: 60, money: 400000, moneyRate: 6666.666, moneyRatio: 1.333, karma: 0.5, karmaRate: 0.00833},

@@ -1,7 +1,6 @@
-import { CYCLES_PER_SECOND } from 'lib/consts';
-import { GANG_TASK } from 'lib/crime-consts';
-import { GangMemberInfo, GangOtherInfoObject, GangTaskStats, NS } from 'NetscriptDefinitions';
-import { OtherGangInfo } from 'types';
+import {GANG_TASK} from 'lib/crime-consts';
+import {GangMemberInfo, GangOtherInfoObject, GangTaskStats, NS} from 'NetscriptDefinitions';
+import {OtherGangInfo} from 'types';
 
 export function getAllMembers(ns: NS): GangMemberInfo[] {
     let memberNames = ns.gang.getMemberNames();
@@ -63,15 +62,6 @@ export function getGangDiscountMult(ns: NS): number {
 
     const discount = Math.pow(respect, 0.01) + respect / respectLinearFac + Math.pow(power, 0.01) + power / powerLinearFac - 1;
     return (1 / Math.max(1, discount));
-}
-
-export function getGangIncome(ns: NS) {
-    if (ns.gang.inGang()) {
-        return ns.gang.getGangInformation().moneyGainRate * CYCLES_PER_SECOND;
-    } else {
-        return 0;
-    }
-
 }
 
 export function getWantedPenaltyMult(respect: number, wanted: number): number {

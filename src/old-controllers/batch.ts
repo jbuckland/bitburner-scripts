@@ -165,6 +165,7 @@ export function getRunnerJobsForScript(ns: NS, runnersList: RunnerInfo[], script
                     runner: runner.hostname,
                     scriptName: script,
                     threads: threadsToRun,
+                    ramUsed: threadsToRun * scriptRam,
                     args: [...args]
                 };
 

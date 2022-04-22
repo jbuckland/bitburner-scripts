@@ -1,17 +1,55 @@
 import {
-    CITY_FACTIONS, COMPANY_FACTIONS, COMPANY_QUIT_PENALTY, DARK_DATA, DebugLevel, FACTION_WORK_HACKING, GANG_FACTIONS, HACK_FACTIONS, HOME, HOSTS, JOB_FIELDS,
-    MAX_HOME_SERVER_RAM, NEURO_FLUX_GOVERNOR, NON_HACKING_AUGMENTS, OTHER_FACTIONS, SCRIPTS, SCRIPTS_OLD_CONTROLLERS, THE_RED_PILL, TOAST_DURATION,
-    TOAST_VARIANT, TRAVEL_COST, WORK_TYPE, WORLD_DAEMON
+    CITY_FACTIONS,
+    COMPANY_FACTIONS,
+    COMPANY_QUIT_PENALTY,
+    DARK_DATA,
+    DebugLevel,
+    FACTION_WORK_HACKING,
+    GANG_FACTIONS,
+    HACK_FACTIONS,
+    HOME,
+    HOSTS,
+    JOB_FIELDS,
+    MAX_HOME_SERVER_RAM,
+    NEURO_FLUX_GOVERNOR,
+    NON_HACKING_AUGMENTS,
+    OTHER_FACTIONS,
+    SCRIPTS,
+    SCRIPTS_OLD_CONTROLLERS,
+    THE_RED_PILL,
+    TOAST_DURATION,
+    TOAST_VARIANT,
+    TRAVEL_COST,
+    WORK_TYPE,
+    WORLD_DAEMON
 } from 'lib/consts';
-import { GYMS } from 'lib/crime-consts';
+import {GYMS} from 'lib/crime-consts';
 import {
-    debug, debugLog, formatBigNumber, formatBigRam, formatBigTime, getAllHosts, getDonationNeededForReputation, getFirstAvailableRunnerForScript,
-    getHacknetIncome, getPlayerTools, getTotalIncome, getUnownedFactionAugmentations, hasRedPillInstalled, hasRemainingAugmentionsToBuy, indent, logBase,
-    longConnect, myGetScriptIncome, round, timestamp
+    debug,
+    debugLog,
+    formatBigNumber,
+    formatBigRam,
+    formatBigTime,
+    getAllHosts,
+    getDonationNeededForReputation,
+    getGangIncome,
+    getHacknetIncome,
+    getPlayerFactionInfo,
+    getPlayerTools,
+    getServerFreeRam,
+    getTotalIncome,
+    getUnownedFactionAugmentations,
+    hasRedPillInstalled,
+    hasRemainingAugmentionsToBuy,
+    indent,
+    logBase,
+    longConnect,
+    myGetScriptIncome,
+    round,
+    timestamp
 } from 'lib/utils';
-import { getGangIncome } from 'lib/utils-crime';
-import { NS, Player } from 'NetscriptDefinitions';
-import { ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer } from 'types';
+import {NS, Player} from 'NetscriptDefinitions';
+import {ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer} from 'types';
 
 export async function leaveTheCave(ns: NS) {
     let player = ns.getPlayer();
@@ -22,7 +60,7 @@ export async function leaveTheCave(ns: NS) {
             let response = await ns.prompt(`Are you ready to leave the cave???`);
             if (response) {
                 longConnect(ns, WORLD_DAEMON.hostname);
-                await ns.installBackdoor();
+                await ns.singularity.installBackdoor();
                 //ns.exec(SCRIPTS.backdoor, HOME, 1, WORLD_DAEMON.hostname);
             } else {
                 //we're just going to ask again on the next pass :)
@@ -60,12 +98,28 @@ export function installBackdoors(ns: NS) {
                 if (server.hasAdminRights) {
                     if (server.requiredHackingSkill <= player.hacking) {
 
-                        let runner = getFirstAvailableRunnerForScript(ns, SCRIPTS.backdoor);
-                        if (runner) {
-                            ns.exec(SCRIPTS.backdoor, runner, 1, faction.hostname);
+                        //always run on 'home'
+                        if (!ns.scriptRunning(SCRIPTS.backdoor, HOME)) {
+
+                            //manual ram check, allows us to use reserved ram
+                            if (getServerFreeRam(ns, HOME) > ns.getScriptRam(HOME)) {
+
+                                let pid = ns.exec(SCRIPTS.backdoor, HOME, 1, faction.hostname);
+                                if (pid) {
+
+                                } else {
+                                    debugLog(ns, DebugLevel.error, `Unable to start ${SCRIPTS.backdoor} on ${HOME}`);
+                                }
+                            } else {
+                                //not enough ram on HOME
+                            }
+
+
                         } else {
-                            debugLog(ns, DebugLevel.error, `No available runner for "${SCRIPTS.backdoor}", targeting [${faction.hostname}] !`);
+                            //already running
                         }
+                    } else {
+                        //not enough hacking skill
                     }
                 }
             }
@@ -78,7 +132,7 @@ export function buyDarkwebTools(ns: NS) {
     let player = ns.getPlayer();
 
     if (!player.tor && player.money > DARK_DATA.torCost) {
-        player.tor = ns.purchaseTor();
+        player.tor = ns.singularity.purchaseTor();
         ns.toast(`TOR router purchased!`, TOAST_VARIANT.info, TOAST_DURATION);
     }
 
@@ -124,13 +178,28 @@ export function buyDarkwebTools(ns: NS) {
 export function purchaseProgram(ns: NS, player: Player, program: IDarkwebTool): boolean {
     let success = false;
     if (player.money > program.cost) {
-        success = ns.purchaseProgram(program.name);
+        success = ns.singularity.purchaseProgram(program.name);
         if (success) {
             ns.toast(`Purchased ${program.name} !`, TOAST_VARIANT.info, TOAST_DURATION);
-            let nukeResults = ns.exec(SCRIPTS.autoNuke, HOME, 1, 'tail');
-            if (nukeResults === 0) {
-                ns.toast(`${SCRIPTS.autoNuke} did not run after purchase of ${program.name}!!`, 'error' as TOAST_VARIANT);
+
+            let hackingTools: string [] = [
+                DARK_DATA.tools.sql.name,
+                DARK_DATA.tools.ftp.name,
+                DARK_DATA.tools.brute.name,
+                DARK_DATA.tools.http.name,
+                DARK_DATA.tools.smtp.name
+            ];
+
+            if (hackingTools.includes(program.name)) {
+                //include the program name as an arg just in case we buy a second hacking tool before the first autoNuke completes
+                let nukeResults = ns.exec(SCRIPTS.autoNuke, HOME, 1, 'tail', program.name);
+                if (nukeResults === 0) {
+                    ns.toast(`${SCRIPTS.autoNuke} did not run after purchase of ${program.name}!!`, 'error' as TOAST_VARIANT);
+                }
+
             }
+
+
         }
 
     }
@@ -139,14 +208,14 @@ export function purchaseProgram(ns: NS, player: Player, program: IDarkwebTool): 
 
 export function upgradeHomeComputer(ns: NS) {
     let player = ns.getPlayer();
-    if (player.money > ns.getUpgradeHomeRamCost()) {
-        let success = ns.upgradeHomeRam();
+    if (player.money > ns.singularity.getUpgradeHomeRamCost()) {
+        let success = ns.singularity.upgradeHomeRam();
         if (success) {
             let server = ns.getServer(HOME);
             ns.toast(`Home Computer RAM upgraded to ${formatBigRam(server.maxRam)}!!`, TOAST_VARIANT.info, TOAST_DURATION);
         }
-    } else if (player.money > ns.getUpgradeHomeCoresCost()) {
-        let success = ns.upgradeHomeCores();
+    } else if (player.money > ns.singularity.getUpgradeHomeCoresCost()) {
+        let success = ns.singularity.upgradeHomeCores();
         if (success) {
             let server = ns.getServer(HOME);
             ns.toast(`Home Computer Cores upgraded to ${server.cpuCores}!!`, TOAST_VARIANT.info, TOAST_DURATION);
@@ -154,41 +223,39 @@ export function upgradeHomeComputer(ns: NS) {
     }
 }
 
-export function workOnReputation(ns: NS, targetFaction: IFaction) {
+export function workOnReputation(ns: NS, targetFaction: IFaction, targetRepAmount: number, forceWork: boolean = true) {
 
     let player = ns.getPlayer();
+    let currFactions = player.factions;
 
     if (isCityFaction(targetFaction.name)) {
         workOnCityReputation(targetFaction);
     } else if (isCompanyFaction(targetFaction.name)) {
         workOnCompanyReputation(targetFaction);
     } else {
-        workOnFactionReputation(targetFaction);
+        workOnFactionReputation(targetFaction, false);
     }
 
     //////////////////////////
     function workOnCityReputation(targetFaction: IFaction) {
         let cityFaction = targetFaction as ICityFaction;
-        let currFactions = player.factions;
 
-        if (currFactions.includes(cityFaction.name)) {
-            if (!ns.isBusy()) {
-                myWorkForFaction(ns, targetFaction.name, false);
+
+        if (!currFactions.includes(cityFaction.name)) {
+            if (player.city !== cityFaction.homeCity && player.money > TRAVEL_COST) {
+                let success = ns.singularity.travelToCity(cityFaction.homeCity);
+                if (success) {
+                    ns.toast(`Traveling to ${cityFaction.homeCity} to join ${cityFaction.name}`, TOAST_VARIANT.info, TOAST_DURATION);
+                } else {
+                    debugLog(ns, DebugLevel.error, `Unable to travel to ${cityFaction.homeCity}!`);
+                }
             }
         } else {
-            if (player.city !== cityFaction.homeCity && player.money > TRAVEL_COST) {
-                ns.travelToCity(cityFaction.homeCity);
-            }
-
-            if (ns.joinFaction(cityFaction.name)) {
-                ns.toast(`Joined ${cityFaction.name}!`, TOAST_VARIANT.info, TOAST_DURATION);
-            }
-
+            workOnFactionReputation(targetFaction, false);
         }
     }
 
     function workOnCompanyReputation(targetFaction: IFaction) {
-
         let compFaction = targetFaction as ICompanyFaction;
 
         if (!player.factions.includes(compFaction.name)) {
@@ -196,22 +263,22 @@ export function workOnReputation(ns: NS, targetFaction: IFaction) {
             //we need to build our rep with this company before we get an invite
             let fieldName = JOB_FIELDS.Software;
 
-            if (!ns.isBusy() || player.currentWorkFactionName === targetFaction.name) {
+            if (player.currentWorkFactionName === targetFaction.name) {
                 //Note: if we already have this job, we'll be trying for a promotion
-                let success = ns.applyToCompany(compFaction.name, fieldName);
+                let success = ns.singularity.applyToCompany(compFaction.name, fieldName);
                 if (success) {
                     ns.toast(`Got a ${fieldName} job with ${compFaction.name}!!`);
                 }
             }
 
-            if (ns.isBusy()) {
+            if (ns.singularity.isBusy()) {
 
                 //check if we're already working for the company
                 //and we have enough gained rep to get an invite
                 if (player.workType === WORK_TYPE.Company && player.companyName === compFaction?.name) {
                     let repGain = getCompanyRepGainedAfterPenalty(ns, compFaction.name);
-                    if (repGain + ns.getCompanyRep(compFaction.name) >= compFaction.repNeededForInvite) {
-                        ns.stopAction();
+                    if (repGain + ns.singularity.getCompanyRep(compFaction.name) >= compFaction.repNeededForInvite) {
+                        ns.singularity.stopAction();
                         ns.toast(`Got enough company rep with ${compFaction.name}!`, TOAST_VARIANT.success, TOAST_DURATION);
                     }
 
@@ -223,22 +290,36 @@ export function workOnReputation(ns: NS, targetFaction: IFaction) {
                 let factionJob = myJobs.find(j => j.copmpanyName === compFaction.name);
                 if (factionJob) {
                     debugLog(ns, DebugLevel.info, `trying to work at ${factionJob?.jobName} job, for ${factionJob?.copmpanyName} `);
-                    ns.workForCompany(factionJob?.copmpanyName);
+                    ns.singularity.workForCompany(factionJob?.copmpanyName);
                 }
             }
 
         } else {
-            if (!ns.isBusy()) {
-                myWorkForFaction(ns, targetFaction.name, false);
-            }
+            workOnFactionReputation(targetFaction, false);
         }
     }
 
-    function workOnFactionReputation(targetFaction: IFaction) {
-        if (!ns.isBusy()) {
-            myWorkForFaction(ns, targetFaction.name, false);
+    function workOnFactionReputation(targetFaction: IFaction, focus: boolean) {
+        if (ns.singularity.isBusy()) {
+            if (player.currentWorkFactionName === targetFaction.name) {
+                let totalFactionRep = ns.singularity.getFactionRep(targetFaction.name) + player.workRepGained;
+
+                if (totalFactionRep >= targetRepAmount) {
+                    ns.singularity.stopAction();
+                    debugLog(ns, DebugLevel.info, `We got our target rep. of ${formatBigNumber(targetRepAmount)} with ${targetFaction.name}`);
+                } else {
+                    //debugLog(ns, DebugLevel.info, `We're not at our target rep. of ${formatBigNumber(targetRepAmount)} with ${targetFaction.name}`);
+                }
+            } else if (forceWork) {
+                //switch work to new faction
+                console.log(`workOnReputation().workOnFactionReputation() forcing work for faction ${targetFaction.name}`);
+                myWorkForFaction(ns, targetFaction.name, focus);
+            }
+        } else {
+            myWorkForFaction(ns, targetFaction.name, focus);
         }
     }
+
 
 }
 
@@ -257,18 +338,18 @@ export function claimedEarnedFactionRep(ns: NS, restart: boolean = false) {
         if (player.workType === WORK_TYPE.Faction) {
             if (player.workRepGained >= factionRepAmount) {
 
-                let isFocused = ns.isFocused();
+                let isFocused = ns.singularity.isFocused();
                 let currWorkType = player.currentWorkFactionDescription;
                 let currWorkFaction = player.currentWorkFactionName;
 
                 let msg = `Cashing in ${formatBigNumber(player.workRepGained)} gained reputation for '${currWorkFaction}', doing '${currWorkType}'`;
                 debugLog(ns, DebugLevel.info, msg);
                 ns.toast(msg, TOAST_VARIANT.info, TOAST_DURATION);
-                ns.stopAction();
+                ns.singularity.stopAction();
 
                 if (restart) {
 
-                    if (ns.isBusy()) {
+                    if (ns.singularity.isBusy()) {
                         debugLog(ns, DebugLevel.error, `Was still busy when trying to restart myWorkForFaction()`);
                     }
                     let success = myWorkForFaction(ns, currWorkFaction, isFocused);
@@ -301,14 +382,14 @@ export function claimedEarnedFactionRep(ns: NS, restart: boolean = false) {
                 let targetRep = company.repNeededForInvite / (1 - quitPenalty);
 
                 if (player.workRepGained >= targetRep) {
-                    let isFocused = ns.isFocused();
+                    let isFocused = ns.singularity.isFocused();
                     let msg = `Cashing in ${formatBigNumber(player.workRepGained)} gained reputation for ${company.name}`;
                     ns.toast(msg, TOAST_VARIANT.info, TOAST_DURATION);
                     debugLog(ns, DebugLevel.info, msg);
-                    ns.stopAction();
+                    ns.singularity.stopAction();
 
                     if (restart) {
-                        let success = ns.workForCompany(company.name, isFocused);
+                        let success = ns.singularity.workForCompany(company.name, isFocused);
 
                         if (success) {
                             debugLog(ns, DebugLevel.info, 'Work resumed!');
@@ -341,7 +422,7 @@ export interface ITargetAugmentation {
 export async function trainStat(ns: NS, playerStatName: keyof Player, gymStatName: string) {
     let trainingWaitTime = 1000;
     ns.print(`training ${playerStatName}!`);
-    ns.gymWorkout(GYMS.powerhouse, gymStatName, true);
+    ns.singularity.gymWorkout(GYMS.powerhouse, gymStatName, true);
     await ns.sleep(trainingWaitTime);
 
 }
@@ -361,7 +442,7 @@ export function findNextAugmentationToWorkToward(ns: NS): ITargetAugmentation | 
 
     ];
 
-    allFactions = filterUnavailableCityFactions(ns, allFactions);
+    allFactions = getAvailableCityFactions(ns);
 
     if (player.factions.includes(OTHER_FACTIONS.netburner.name)) {
         allFactions.push(OTHER_FACTIONS.netburner);
@@ -388,7 +469,7 @@ export function findNextAugmentationToWorkToward(ns: NS): ITargetAugmentation | 
 
     for (let i = 0; i < allFactions.length; i++) {
         let faction = allFactions[i];
-        let factionFavorMult = 1 + (ns.getFactionFavor(faction.name) / 100.0);
+        let factionFavorMult = 1 + (ns.singularity.getFactionFavor(faction.name) / 100.0);
 
         let totalRepMult = factionFavorMult * repMult;
 
@@ -407,9 +488,9 @@ export function findNextAugmentationToWorkToward(ns: NS): ITargetAugmentation | 
         if (neededAugments.length > 0) {
             for (let i1 = 0; i1 < neededAugments.length; i1++) {
                 const a = neededAugments[i1];
-                let rawRepCost = ns.getAugmentationRepReq(a);
-                let currRep = ns.getFactionRep(faction.name);
-                let moneyCost = ns.getAugmentationPrice(a);
+                let rawRepCost = ns.singularity.getAugmentationRepReq(a);
+                let currRep = ns.singularity.getFactionRep(faction.name);
+                let moneyCost = ns.singularity.getAugmentationPrice(a);
 
                 let additionalRepCost = rawRepCost - currRep;
                 let adjustedRepCost = additionalRepCost / totalRepMult;
@@ -418,10 +499,10 @@ export function findNextAugmentationToWorkToward(ns: NS): ITargetAugmentation | 
                     let company = getCompany(ns, faction.name);
                     if (company) {
                         //we need to take into consideration how long it would take to join the company
-                        let compRep = ns.getCompanyRep(faction.name);
+                        let compRep = ns.singularity.getCompanyRep(faction.name);
                         let additionalCompanyRep = company?.repNeededForInvite - compRep;
 
-                        let companyFavorMult = 1 + (ns.getCompanyFavor(faction.name) / 100.0);
+                        let companyFavorMult = 1 + (ns.singularity.getCompanyFavor(faction.name) / 100.0);
                         let repMult = player.company_rep_mult;
 
                         let totalCompanyMult = companyFavorMult * repMult;
@@ -453,7 +534,8 @@ export function findNextAugmentationToWorkToward(ns: NS): ITargetAugmentation | 
     return targetAug;
 }
 
-export function filterUnavailableCityFactions(ns: NS, allFactions: IFaction[]): IFaction[] {
+export function getAvailableCityFactions(ns: NS): ICityFaction[] {
+    let availableCityFacs = [...Object.values(CITY_FACTIONS)];
 
     let currFactions = ns.getPlayer().factions;
 
@@ -462,7 +544,7 @@ export function filterUnavailableCityFactions(ns: NS, allFactions: IFaction[]): 
     //Sector-12 != Chongqing, New Tokyo, Ishima, Volhaven
     //Aevum != Chongqing, New Tokyo, Ishima, Volhaven
     if (currFactions.includes(CITY_FACTIONS.sec12.name) || currFactions.includes(CITY_FACTIONS.aevum.name)) {
-        allFactions = allFactions.filter(f =>
+        availableCityFacs = availableCityFacs.filter(f =>
             f.name != CITY_FACTIONS.tian.name &&
             f.name != CITY_FACTIONS.tokyo.name &&
             f.name != CITY_FACTIONS.ishi.name &&
@@ -477,7 +559,7 @@ export function filterUnavailableCityFactions(ns: NS, allFactions: IFaction[]): 
         currFactions.includes(CITY_FACTIONS.tokyo.name) ||
         currFactions.includes(CITY_FACTIONS.ishi.name)
     ) {
-        allFactions = allFactions.filter(f =>
+        availableCityFacs = availableCityFacs.filter(f =>
             f.name != CITY_FACTIONS.sec12.name &&
             f.name != CITY_FACTIONS.aevum.name &&
             f.name != CITY_FACTIONS.vol.name
@@ -486,7 +568,7 @@ export function filterUnavailableCityFactions(ns: NS, allFactions: IFaction[]): 
 
     //Volhaven != Sector-12, Aevum, Chongqing, New Tokyo, Ishima
     if (currFactions.includes(CITY_FACTIONS.vol.name)) {
-        allFactions = allFactions.filter(f =>
+        availableCityFacs = availableCityFacs.filter(f =>
             f.name != CITY_FACTIONS.sec12.name &&
             f.name != CITY_FACTIONS.aevum.name &&
             f.name != CITY_FACTIONS.tian.name &&
@@ -495,18 +577,18 @@ export function filterUnavailableCityFactions(ns: NS, allFactions: IFaction[]): 
         );
     }
 
-    return allFactions;
+    return availableCityFacs;
 
 }
 
 export function getAugmentFactionCostInfo(ns: NS, augmentName: string, factionName: string) {
     let player = ns.getPlayer();
-    let baseRepCost = ns.getAugmentationRepReq(augmentName);
-    let currRep = ns.getFactionRep(factionName);
-    let price = ns.getAugmentationPrice(augmentName);
+    let baseRepCost = ns.singularity.getAugmentationRepReq(augmentName);
+    let currRep = ns.singularity.getFactionRep(factionName);
+    let price = ns.singularity.getAugmentationPrice(augmentName);
 
     let baseAdditionalRepCost = baseRepCost - currRep;
-    let factionFavorRepMult = 1 + (ns.getFactionFavor(factionName) / 100.0);
+    let factionFavorRepMult = 1 + (ns.singularity.getFactionFavor(factionName) / 100.0);
     let repMult = player.faction_rep_mult;
     let totalRepMult = factionFavorRepMult * repMult;
     let adjustedAdditionalRepCost = baseAdditionalRepCost / totalRepMult;
@@ -515,10 +597,10 @@ export function getAugmentFactionCostInfo(ns: NS, augmentName: string, factionNa
         let company = getCompany(ns, factionName);
         if (company) {
             //we need to take into consideration how long it would take to join the company
-            let compRep = ns.getCompanyRep(factionName);
+            let compRep = ns.singularity.getCompanyRep(factionName);
             let additionalCompanyRep = company?.repNeededForInvite - compRep;
 
-            let companyFavorMult = 1 + (ns.getCompanyFavor(factionName) / 100.0);
+            let companyFavorMult = 1 + (ns.singularity.getCompanyFavor(factionName) / 100.0);
             let repMult = player.company_rep_mult;
 
             let totalCompanyMult = companyFavorMult * repMult;
@@ -549,28 +631,18 @@ export function myWorkForFaction(ns: NS, factionName: string, focus: boolean): b
 
     if (player.factions.includes(factionName)) {
 
-        //do they still have augments I need?
-        let remainingFactionAugments = getUnownedFactionAugmentations(ns, factionName);
-        let totalCount = remainingFactionAugments.length;
-        //filter out non hacking augments
-        remainingFactionAugments = remainingFactionAugments.filter(a => {
-            return !NON_HACKING_AUGMENTS.includes(a);
-        });
-        let wantedCount = remainingFactionAugments.length;
-        let unwantedCount = totalCount - wantedCount;
+        ns.enableLog('ALL');
+        success = ns.singularity.workForFaction(factionName, workType, focus);
+        ns.disableLog('ALL');
 
-        if (remainingFactionAugments.length > 0) {
-            //ns.print(`${factionName} still has ${wantedCount} augments I need! (and ${unwantedCount} I don't want)`);
-            ns.enableLog('ALL');
-            success = ns.workForFaction(factionName, workType, focus);
-            ns.disableLog('ALL');
-            if (success) {
-                ns.toast(`Working for '${factionName}' doing '${workType}'`, TOAST_VARIANT.info, TOAST_DURATION);
-            } else {
-                debugLog(ns, DebugLevel.error, `Failed to work for '${factionName}' doing '${workType}'`);
-                //ns.exit()
-            }
+
+        if (success) {
+            ns.toast(`Working for '${factionName}' doing '${workType}'`, TOAST_VARIANT.info, TOAST_DURATION);
+        } else {
+            debugLog(ns, DebugLevel.error, `Failed to work for '${factionName}' doing '${workType}'`);
+            //ns.exit()
         }
+
 
     }
 
@@ -578,25 +650,25 @@ export function myWorkForFaction(ns: NS, factionName: string, focus: boolean): b
 }
 
 export function joinFactions(ns: NS) {
-    let invites = ns.checkFactionInvitations();
+    let invites = ns.singularity.checkFactionInvitations();
     //join everyone EXCEPT city factions, because they exclude other factions.
     let cityFactions = Object.values(CITY_FACTIONS).map(f => f.name);
 
     invites.forEach(factionName => {
         if (!cityFactions.includes(factionName)) {
-            ns.joinFaction(factionName);
+            ns.singularity.joinFaction(factionName);
             ns.toast(`Joined ${factionName}!`, TOAST_VARIANT.info, TOAST_DURATION);
         }
     });
 
 }
 
-export function purchaseAvailableAugmentations(ns: NS) {
+export async function purchaseAvailableAugmentations(ns: NS) {
     let player = ns.getPlayer();
     for (let i = 0; i < player.factions.length; i++) {
         let faction = player.factions[i];
 
-        let currRepWithFaction = ns.getFactionRep(faction);
+        let currRepWithFaction = ns.singularity.getFactionRep(faction);
         let remainingAugs = getUnownedFactionAugmentations(ns, faction);
 
         //filter out non hacking augments
@@ -609,27 +681,31 @@ export function purchaseAvailableAugmentations(ns: NS) {
         for (let j = 0; j < remainingAugs.length; j++) {
             let augName = remainingAugs[j];
 
-            let price = ns.getAugmentationPrice(augName);
-            let repReq = ns.getAugmentationRepReq(augName);
+            let price = ns.singularity.getAugmentationPrice(augName);
+            let repReq = ns.singularity.getAugmentationRepReq(augName);
 
             //we have the money to buy it
             if (player.money >= price) {
 
                 if (repReq <= currRepWithFaction) {
-                    let success = ns.purchaseAugmentation(faction, augName);
+                    let success = ns.singularity.purchaseAugmentation(faction, augName);
                     if (success) {
                         ns.toast(`'${augName}' purchased from ${faction}!`, TOAST_VARIANT.success, TOAST_DURATION);
                     }
 
                     if (augName === THE_RED_PILL) {
-                        doInstallReset(ns);
+                        let results = await ns.prompt('Ready to take the Red Pill??');
+                        if (results) {
+                            doInstallReset(ns);
+
+                        }
                     }
 
                 } else {
                     // it requires too much reputation
                     //donations
                     let neededFavor = ns.getFavorToDonate();
-                    let currFavor = ns.getFactionFavor(faction);
+                    let currFavor = ns.singularity.getFactionFavor(faction);
 
                     if (currFavor >= neededFavor) {
 
@@ -638,7 +714,7 @@ export function purchaseAvailableAugmentations(ns: NS) {
                         let donationAmountNeeded = getDonationNeededForReputation(ns, additionalRepNeeded);
 
                         if (player.money >= price + donationAmountNeeded) {
-                            ns.donateToFaction(faction, donationAmountNeeded);
+                            ns.singularity.donateToFaction(faction, donationAmountNeeded);
                         }
                     }
 
@@ -652,7 +728,7 @@ export function purchaseAvailableAugmentations(ns: NS) {
 
             ns.toast(`Purchased the last augmentation from ${faction}!`, TOAST_VARIANT.info, TOAST_DURATION);
             if (hasRemainingAugmentionsToBuy(ns)) {
-                ns.stopAction();
+                ns.singularity.stopAction();
             }
 
         }
@@ -688,7 +764,7 @@ export function tryPurchaseServer(ns: NS, costMultiplierBeforeBuying: number) {
         aServerNeedsUpgraded = smallestServer && smallestServer.maxRam < MAX_HOME_SERVER_RAM;
     }
 
-    debug(ns, 'tryPurchaseServer()', { nextRamSize, serverCost, playerHasEnoughMoney, homeServersFull, smallestServer });
+    debug(ns, 'tryPurchaseServer()', {nextRamSize, serverCost, playerHasEnoughMoney, homeServersFull, smallestServer});
     if (playerHasEnoughMoney) {
         if (homeServersFull && smallestServer && aServerNeedsUpgraded) {
             //delete
@@ -720,7 +796,7 @@ export function getHomeServers(ns: NS): HomeServer[] {
         const serverName = homeServersNames[i];
         const serverRam = ns.getServerMaxRam(serverName);
 
-        homeServers.push({ hostname: serverName, maxRam: serverRam });
+        homeServers.push({hostname: serverName, maxRam: serverRam});
     }
 
     return homeServers;
@@ -751,6 +827,10 @@ export function getNextHomeServerSize(ns: NS): number {
     nextRamSize = Math.max(nextRamSize, homeMaxRam);
 
     return nextRamSize;
+}
+
+export function isHackingFaction(factionName: string) {
+    return Object.values(HACK_FACTIONS).map(f => f.name).includes(factionName);
 }
 
 export function isCompanyFaction(factionName: string) {
@@ -928,19 +1008,19 @@ export function displayFactionProgress(ns: NS) {
 
         if (player.currentWorkFactionName) {
             factionTypeString = `Faction`;
-            currRep = ns.getFactionRep(factionWorkingFor);
-            currFavor = ns.getFactionFavor(factionWorkingFor);
-            gainedFavor = ns.getFactionFavorGain(factionWorkingFor);
+            currRep = ns.singularity.getFactionRep(factionWorkingFor);
+            currFavor = ns.singularity.getFactionFavor(factionWorkingFor);
+            gainedFavor = ns.singularity.getFactionFavorGain(factionWorkingFor);
         } else if (isCompanyFaction(factionWorkingFor)) {
             factionTypeString = `Company`;
-            currRep = ns.getCompanyRep(factionWorkingFor);
+            currRep = ns.singularity.getCompanyRep(factionWorkingFor);
             let company = getCompany(ns, factionWorkingFor);
             if (company) {
                 remainingRep = company.repNeededForInvite - currRep;
             }
 
-            currFavor = ns.getCompanyFavor(factionWorkingFor);
-            gainedFavor = ns.getCompanyFavorGain(factionWorkingFor);
+            currFavor = ns.singularity.getCompanyFavor(factionWorkingFor);
+            gainedFavor = ns.singularity.getCompanyFavorGain(factionWorkingFor);
 
             let quitPenalty = getCompanyQuitPenalty(ns, factionWorkingFor);
             penaltyString = ` (${formatBigNumber(gainedRep * (1 - quitPenalty))} after -${round(quitPenalty * 100)}%)`;
@@ -985,16 +1065,7 @@ export function displayFactionProgress(ns: NS) {
         if (bigFaction) {
             //show ETA to next big faction reset
 
-            let nextResetAmount = 0;
-            let favorToDonate = ns.getFavorToDonate();
-            if (currFavor + gainedFavor < favorToDonate * .333) {
-                nextResetAmount = favorToDonate * .333;
-            } else if (currFavor + gainedFavor < favorToDonate * .666) {
-                nextResetAmount = favorToDonate * .666;
-            } else {
-                nextResetAmount = favorToDonate;
-            }
-
+            let nextResetAmount = calcNextFavorResetAmount(ns, currFavor);
             let remainingFavorUntilReset = nextResetAmount - currFavor - gainedFavor;
 
             let totalFactionRep = 0;
@@ -1025,11 +1096,83 @@ export function displayFactionProgress(ns: NS) {
 
 //these factions have very high Rep requirements, so we're going to go the donation route
 export const bigFactionList: IFaction[] = [
-    HACK_FACTIONS.daedalus,
-    COMPANY_FACTIONS.nwo,
+    HACK_FACTIONS.blackHand,
     HACK_FACTIONS.bitrunners,
-    HACK_FACTIONS.blackHand
+    COMPANY_FACTIONS.nwo,
+    HACK_FACTIONS.daedalus
 ];
+
+export function calcNextFavorResetAmount(ns: NS, currFavor: number) {
+    let nextResetAmount = ns.getFavorToDonate();
+
+    //these numbers were manually determined as optimal for 150 favor to donate
+    let resetPoints = [
+        42,
+        82,
+        117
+    ];
+
+    for (let resetPoint of resetPoints) {
+        if (currFavor < resetPoint) {
+            nextResetAmount = resetPoint;
+            break;
+        }
+    }
+
+    return nextResetAmount;
+}
+
+
+
+export function displayNFGInfo(ns: NS) {
+    ns.print(`Next NFG:`);
+
+    let nfgPrice = ns.singularity.getAugmentationPrice(NEURO_FLUX_GOVERNOR);
+    let nfgRepReq = ns.singularity.getAugmentationRepReq(NEURO_FLUX_GOVERNOR);
+
+    //display the faction with the most rep, that has enough to buy it
+
+    let playerFactions = getPlayerFactionInfo(ns);
+    if (playerFactions.length > 0) {
+
+        playerFactions.sort((a, b) => b.reputation - a.reputation);
+
+        let bestFaction = playerFactions.find(f => f.reputation >= nfgRepReq);
+        let additionalRepNeeded = 0;
+        if (!bestFaction) {
+            //else the closest, factoring in favor
+
+            let moreFactionInfo = playerFactions.map(f => {
+
+                let favorMult = 1 + (f.favor / 100.0);
+
+                return {
+                    ...f,
+                    scaledRemainingFaction: (nfgRepReq - f.reputation) / favorMult
+                };
+            });
+            moreFactionInfo.sort((a, b) => {
+                return a.scaledRemainingFaction - b.scaledRemainingFaction;
+            });
+
+            bestFaction = moreFactionInfo[0];
+            additionalRepNeeded = Math.max(0, moreFactionInfo[0].scaledRemainingFaction);
+        }
+
+
+
+        let moneyCostTimeString = makeMoneyCostTimeString(ns, nfgPrice);
+        let repCostTimeString = makeRepCostTimeString(ns, nfgRepReq, additionalRepNeeded);
+
+        ns.print(`${indent()}From [${bestFaction.name}], Rep: ${formatBigNumber(bestFaction.reputation)}`);
+        ns.print(`${indent()}Money Needed: ${moneyCostTimeString}`);
+        ns.print(`${indent()}Rep. Needed: ${repCostTimeString}`);
+    }
+
+
+
+    ns.print('');
+}
 
 export function displayNextAugmentInfo(ns: NS, targetAug: ITargetAugmentation | undefined) {
 
@@ -1041,7 +1184,7 @@ export function displayNextAugmentInfo(ns: NS, targetAug: ITargetAugmentation | 
         //if we can donate to this faction
         //show how much money we'd need
         let favorToDonate = ns.getFavorToDonate();
-        let currFavor = ns.getFactionFavor(targetAug?.fromFaction.name);
+        let currFavor = ns.singularity.getFactionFavor(targetAug?.fromFaction.name);
         let donateString = '';
 
         let additionalRepNeeded = Math.max(0, targetAug.additionalRepNeeded);
@@ -1053,6 +1196,7 @@ export function displayNextAugmentInfo(ns: NS, targetAug: ITargetAugmentation | 
         ns.print(`${indent()}'${targetAug.augName}' from [${targetAug.fromFaction.name}]`);
         ns.print(`${indent()}Money Needed: ${moneyCostTimeString}`);
         ns.print(`${indent()}Rep. Needed: ${repCostTimeString}`);
+
 
         if (currFavor >= favorToDonate) {
             let donationNeeded = getDonationNeededForReputation(ns, targetAug.additionalRepNeeded);
@@ -1070,7 +1214,7 @@ export function displayNextAugmentInfo(ns: NS, targetAug: ITargetAugmentation | 
 
 export function displayHeader(ns: NS, scriptRunTimeMs?: number) {
     let msg = `${timestamp()} `;
-    if (scriptRunTimeMs) {
+    if (scriptRunTimeMs != null) {
         msg += `Run Time: ${scriptRunTimeMs}ms, `;
     }
     msg += `RAM Used: ${formatBigRam(ns.getScriptRam(ns.getScriptName()))}`;
@@ -1152,7 +1296,7 @@ export function displayNextDarkwebTool(ns: NS) {
         let etaTime = new Date();
         let estTimeLeft = (remainingCost / incomePerSec) * 1000;
         etaTime.setTime(new Date().getTime() + estTimeLeft);
-        let etaString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+        let etaString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
 
         ns.print(`Next Darkweb tool: '${nextTool.name}'`);
         ns.print(`${indent()}Cost: \$${formatBigNumber(nextTool.cost)}, +\$${formatBigNumber(remainingCost)}`);
@@ -1213,27 +1357,30 @@ export function getReputationGainRate(ns: NS) {
     return ns.getPlayer().workRepGainRate * 5;// why *5?? Because of the game code
 }
 
-function makeRepCostTimeString(ns: NS, totalCost: number, remainingCost: number): string {
+export function makeRepCostTimeString(ns: NS, totalCost: number, remainingCost: number): string {
     let incomePerSec = getReputationGainRate(ns);
     return makeEtaTimeString(ns, totalCost, remainingCost, incomePerSec);
 }
 
 export function makeEtaTimeString(ns: NS, totalCost: number, remainingCost: number, gain: number): string {
 
-    let etaTime = new Date();
-    let estTimeLeft = (remainingCost / gain) * 1000;
-    etaTime.setTime(new Date().getTime() + estTimeLeft);
-    let etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
-
     let costString = `${formatBigNumber(totalCost)}`;
-    let remainingCostString = `+${formatBigNumber(remainingCost)}`;
-    let timeLeftString = `Time left: ${formatBigTime(estTimeLeft).padStart(5)}`;
-    let etaString = `ETA: ${etaDurationString}`;
+    let etaDurationString = 'None!';
+    let timeLeftString = 'Now!';
+    if (remainingCost > 0) {
+        let etaTime = new Date();
+        let estTimeLeft = (remainingCost / gain) * 1000;
+        etaTime.setTime(new Date().getTime() + estTimeLeft);
+        etaDurationString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
 
-    return `${costString}, ${remainingCostString.padStart(7)}, ${timeLeftString}, ${etaString}`;
+        timeLeftString = `${formatBigTime(estTimeLeft).padStart(5)}`;
+    }
+
+    let remainingCostString = `+${formatBigNumber(remainingCost)}`;
+    return `${costString}, ${remainingCostString}, Time left: ${timeLeftString}, ETA: ${etaDurationString}`;
 }
 
-function makeMoneyCostTimeString(ns: NS, itemCost: number): string {
+export function makeMoneyCostTimeString(ns: NS, itemCost: number): string {
     let player = ns.getPlayer();
 
     let incomePerSec = getTotalIncome(ns);
@@ -1245,21 +1392,21 @@ function makeMoneyCostTimeString(ns: NS, itemCost: number): string {
         let etaTime = new Date();
         let estTimeLeft = (remainingCost / incomePerSec) * 1000;
         etaTime.setTime(new Date().getTime() + estTimeLeft);
-        etaDurationString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+        etaDurationString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
         timeLeftString = formatBigTime(estTimeLeft).padStart(5);
     }
 
     let itemCostString = `\$${formatBigNumber(itemCost)}`;
     let remainingCostString = `+\$${formatBigNumber(remainingCost)}`;
 
-    return `${itemCostString}, ${remainingCostString.padStart(6)}, Time left: ${timeLeftString}, ETA: ${etaDurationString}`;
+    return `${itemCostString}, ${remainingCostString}, Time left: ${timeLeftString}, ETA: ${etaDurationString}`;
 }
 
 export function displayHomeUpgradeInfo(ns: NS) {
-    let homeCoreCost = formatBigNumber(ns.getUpgradeHomeCoresCost());
+    let homeCoreCost = formatBigNumber(ns.singularity.getUpgradeHomeCoresCost());
 
     ns.print(`Next Home Upgrades:`);
-    ns.print(`${indent()}Ram: ${makeMoneyCostTimeString(ns, ns.getUpgradeHomeRamCost())}`);
+    ns.print(`${indent()}Ram: ${makeMoneyCostTimeString(ns, ns.singularity.getUpgradeHomeRamCost())}`);
     ns.print(`${indent()}Cores: \$${homeCoreCost}`);
     ns.print('');
 
@@ -1286,8 +1433,8 @@ export function displayHacknetInfo(ns: NS) {
 }
 
 export function getPendingAugmentations(ns: NS) {
-    let allAugs = ns.getOwnedAugmentations(true);
-    let installedAugs = ns.getOwnedAugmentations(false);
+    let allAugs = ns.singularity.getOwnedAugmentations(true);
+    let installedAugs = ns.singularity.getOwnedAugmentations(false);
 
     return allAugs.filter(a => !installedAugs.includes(a));
 
@@ -1296,9 +1443,9 @@ export function getPendingAugmentations(ns: NS) {
 export function doInstallReset(ns: NS) {
     //if we have uninstalled augmentations
     if (getPendingAugmentations(ns).length > 0) {
-        ns.installAugmentations(SCRIPTS_OLD_CONTROLLERS.hackController);
+        ns.singularity.installAugmentations(SCRIPTS_OLD_CONTROLLERS.hackController);
     } else {
-        ns.softReset(SCRIPTS_OLD_CONTROLLERS.hackController);
+        ns.singularity.softReset(SCRIPTS_OLD_CONTROLLERS.hackController);
     }
 }
 
@@ -1308,8 +1455,8 @@ export function buyNFGs(ns: NS) {
 
     let player = ns.getPlayer();
 
-    let nfgPrice = ns.getAugmentationPrice(NEURO_FLUX_GOVERNOR);
-    let nfgRepReq = ns.getAugmentationRepReq(NEURO_FLUX_GOVERNOR);
+    let nfgPrice = ns.singularity.getAugmentationPrice(NEURO_FLUX_GOVERNOR);
+    let nfgRepReq = ns.singularity.getAugmentationRepReq(NEURO_FLUX_GOVERNOR);
 
     ns.print(`'${NEURO_FLUX_GOVERNOR}' price: \$${formatBigNumber(nfgPrice)}, rep: ${formatBigNumber(nfgRepReq)}`);
 
@@ -1323,8 +1470,8 @@ export function buyNFGs(ns: NS) {
         let factionReps = joinedFactions.map(f => {
             return {
                 name: f,
-                reputation: ns.getFactionRep(f),
-                favor: ns.getFactionFavor(f)
+                reputation: ns.singularity.getFactionRep(f),
+                favor: ns.singularity.getFactionFavor(f)
             };
         });
 
@@ -1340,7 +1487,7 @@ export function buyNFGs(ns: NS) {
         if (targetFaction) {
             if (player.money > nfgPrice) {
                 ns.print(`Purchase ${NEURO_FLUX_GOVERNOR} from ${targetFaction.name} for \$${formatBigNumber(nfgPrice)}, requires ${formatBigNumber(nfgRepReq)}`);
-                let success = ns.purchaseAugmentation(targetFaction.name, NEURO_FLUX_GOVERNOR);
+                let success = ns.singularity.purchaseAugmentation(targetFaction.name, NEURO_FLUX_GOVERNOR);
                 if (success) {
                     ns.toast(`Purchased ${NEURO_FLUX_GOVERNOR}! `, TOAST_VARIANT.info, TOAST_DURATION);
                 }
@@ -1366,7 +1513,7 @@ export function buyNFGs(ns: NS) {
 
                 if (player.money >= donationRequired) {
                     ns.print(`Donating \$${formatBigNumber(donationRequired)} to [${targetFaction.name}] to gain ${formatBigNumber(additionalRepNeeded)} rep!`);
-                    ns.donateToFaction(targetFaction.name, donationRequired);
+                    ns.singularity.donateToFaction(targetFaction.name, donationRequired);
                 } else {
                     ns.print('not enough money for NFG donation!');
                 }

@@ -42,8 +42,8 @@ export class ManualCrime {
 
 
 
-        if (!this._ns.isBusy()) {
-            crimeTime = this._ns.commitCrime(crimes.shoplift.name);
+        if (!this._ns.singularity.isBusy()) {
+            crimeTime = this._ns.singularity.commitCrime(crimes.shoplift.name);
         }
         return crimeTime;
     }
@@ -60,17 +60,17 @@ export class ManualCrime {
     private trainForShoplift() {
 
         if (this._player.dexterity < this.SHOPLIFT_DEX) {
-            this._ns.gymWorkout(GYMS.powerhouse, 'dex', true);
+            this._ns.singularity.gymWorkout(GYMS.powerhouse, 'dex', true);
         } else if (this._player.agility < this.SHOPLIFT_AGI) {
-            this._ns.gymWorkout(GYMS.powerhouse, 'agi', true);
+            this._ns.singularity.gymWorkout(GYMS.powerhouse, 'agi', true);
         }
 
     }
 
     private async doShopLift() {
         let crimeTime = 0;
-        if (!this._ns.isBusy()) {
-            crimeTime = this._ns.commitCrime(crimes.shoplift.name);
+        if (!this._ns.singularity.isBusy()) {
+            crimeTime = this._ns.singularity.commitCrime(crimes.shoplift.name);
         }
 
         await this._ns.sleep(crimeTime);

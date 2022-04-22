@@ -1,14 +1,24 @@
 import {IGlobalSettings, OtherGangInfo} from '/types';
 import {CrimeMode, DebugLevel, INDENT_STRING, MAX_GANG_MEMBERS, TOAST_DURATION, TOAST_VARIANT} from 'lib/consts';
 import {GANG_EQUIP_TYPES, GANG_TASK, MEMBER_NAME} from 'lib/crime-consts';
-import {debugLog, formatBigNumber, formatCurrency, formatPercent, getSettings, getUnownedFactionAugmentations, round, timestamp} from 'lib/utils';
+import {
+    debugLog,
+    formatBigNumber,
+    formatCurrency,
+    formatPercent,
+    getAvailablePlayerMoney,
+    getSettings,
+    getUnownedFactionAugmentations,
+    round,
+    timestamp
+} from 'lib/utils';
 import {getAllMembers, getGangDiscountMult, getOtherGangsInfo, getWantedPenaltyMult} from 'lib/utils-crime';
 import {getAugmentFactionCostInfo} from 'lib/utils-player';
 import {ITableData, Table} from 'lib/utils-table';
 import {Gang, GangGenInfo, GangMemberAscension, GangMemberInfo, GangTaskStats, NS, Player} from 'NetscriptDefinitions';
 
 type MyMemberInfo = GangMemberInfo & {
-    targetTask: GANG_TASK | undefined,
+    targetTask: GANG_TASK,
     totalAvgAscIncrease: number,
     totalAvgAscMult: number,
     afterAscAvgMult: number,
@@ -26,16 +36,23 @@ export async function main(ns: NS) {
 }
 
 const SLEEP_TIME = 2000;
-const MAX_ASCENSION_THRESHOLD: number = 1.50; //this is a percentage. 1.5 = 150% of original
-const WANTED_PENALTY_THRESHOLD: number = .005;
+const MAX_ASCENSION_THRESHOLD: number = 1.25; //this is a percentage. 1.5 = 150% of original
+const MIN_ASCENSION_THRESHOLD: number = 1.1;
+
+const WANTED_PENALTY_THRESHOLD: number = .01;
 
 let territoryPercent = .1;
-const MIN_ON_TERRITORY = 0;
 let minOnMainTask = 1;
-let TARGET_CLASH_WIN_CHANCE = 0.8;
-let CLASH_CHANCE_WINDOW_SIZE = .2;
+
 const MAX_PERCENT_TO_TRAIN = 0.4; // this will be scaled by gangDiscountMult
-const MAX_TARGET_GANG_RESPECT = 10e6;
+const MAX_GANG_FACTION_REP_NEEDED: number = 2.5e6;
+const PER_MEMBER_RESPECT_EXP: number = 2.5;
+const PER_MEMBER_RESPECT_MULT: number = 1200;
+
+//Territory Consts
+const MIN_ON_TERRITORY = 1;
+const WIN_CHANCE_TO_START_WAR: number = 0.6;
+const WIN_CHANCE_TARGET = 0.9;
 
 //const TASK_MONEY: GANG_TASK = GANG_TASK.trafficking;
 
@@ -45,19 +62,20 @@ export class CrimeController {
     private equipmentList: { name: string, type: GANG_EQUIP_TYPES, cost: number }[] = [];
     //private taskList: GangTaskStats[];
     private taskMain: GANG_TASK = GANG_TASK.mug;
-    private MAX_TERRITORY: number = .90;
+    private MAX_TERRITORY_TARGET: number = .90;
     private gangInfo!: GangGenInfo;
     private wantedPenalty: number = 0;
     private members: MyMemberInfo[] = [];
     private settings: IGlobalSettings = {};
 
     private tasksInfo: { [key: string]: GangTaskStats } = {};
-    private adjustedTargetGangRespect: number = MAX_TARGET_GANG_RESPECT;
     private adjustedAscensionThreshold: number = MAX_ASCENSION_THRESHOLD;
     private otherGangs: OtherGangInfo[] = [];
     private otherGangsWithTerritory: OtherGangInfo[] = [];
     private adjustedNumberToTrain: number = 0;
-    private perMemberRespectTagetMult: number = 10000;
+    private gangFactionRep: number = 0;
+
+
 
     public constructor(private ns: NS) {
         this._gang = ns.gang;
@@ -104,7 +122,7 @@ export class CrimeController {
                     this.otherGangsWithTerritory.sort((a, b) => a.winChance - b.winChance);
                     let strongest = this.otherGangsWithTerritory[0];
 
-                    if (strongest.winChance > .5) {
+                    if (strongest.winChance >= WIN_CHANCE_TO_START_WAR) {
 
                         if (!this.gangInfo.territoryWarfareEngaged) {
                             debugLog(this.ns, DebugLevel.info, 'Begun, the Territory Wars has!');
@@ -122,7 +140,7 @@ export class CrimeController {
                 this.managerMemberJobsRespect();
 
             } else {
-                this.managerMemberJobs();
+                this.managerMemberJobsMoney();
             }
 
             this.displayStats(this.members);
@@ -131,80 +149,12 @@ export class CrimeController {
 
     }
 
-    private adjustWantedLevel(members: MyMemberInfo[]) {
-
-        let wantedFixTask: GANG_TASK = GANG_TASK.vigilante;
-        let secondaryWantedFixTask: GANG_TASK = GANG_TASK.mug;
-        let vigMembers = this.members.filter(m => m.targetTask === wantedFixTask);
-        let secondaryMembers = this.members.filter(m => m.targetTask === secondaryWantedFixTask);
-
-        let taskToUse: GANG_TASK = wantedFixTask;
-
-        if (vigMembers.length > secondaryMembers.length) {
-            taskToUse = secondaryWantedFixTask;
-        }
-
-        //we need more vigilantes
-        if (!this.wantedLevelOk()) {
-
-            //we'll take the biggest wanted gainers first
-            //NOTE: this doesn't account for reputation offsetting wanted level... somehow
-
-            members.sort((a, b) => b.wantedPenaltyGain - a.wantedPenaltyGain);
-
-            let memberToUse = members.find(m => m.targetTask === GANG_TASK.unassigned);
-
-            if (!memberToUse) {
-                memberToUse = members.find(m => m.targetTask !== wantedFixTask && m.targetTask !== secondaryWantedFixTask);
-            }
-
-            if (!memberToUse) {
-                memberToUse = members.find(m => m.targetTask !== taskToUse);
-            }
-
-            if (memberToUse) {
-
-                debugLog(this.ns, DebugLevel.info, `Fix wanted penalty of ${this.wantedPenalty
-                }%. Switching ${memberToUse.name} from ${memberToUse.targetTask} to ${taskToUse}`);
-                memberToUse.targetTask = taskToUse;
-            }
-
+    private adjustWantedLevel() {
+        if (this.wantedLevelOk()) {
+            this.decreaseVigilante();
         } else {
-            //we can assign some users to doing real work!
-            //debugLog(this._ns, DebugLevel.info, `Wanted penalty is ok! ${wantedPenalty}%`);
-            let memberToUse = members.find(m => m.targetTask === GANG_TASK.unassigned);
-
-            if (!memberToUse) {
-                memberToUse = members.find(m => m.targetTask == wantedFixTask);
-            }
-            if (!memberToUse) {
-                memberToUse = members.find(m => m.targetTask == wantedFixTask || m.targetTask == secondaryWantedFixTask);
-            }
-
-            if (memberToUse) {
-
-                let wantedOnTerritory = Math.floor(Math.max(MIN_ON_TERRITORY, members.length * territoryPercent));
-                let currOnTerritory = members.filter(m => m.targetTask === GANG_TASK.territory).length;
-
-                if (wantedOnTerritory > currOnTerritory) {
-                    debugLog(
-                        this.ns,
-                        DebugLevel.info,
-                        `Need more on Territory. Switching ${memberToUse.name} from ${memberToUse.targetTask} to ${GANG_TASK.territory}`
-                    );
-                    memberToUse.targetTask = GANG_TASK.territory;
-                } else {
-                    let mainTask = this.getMainTask(memberToUse);
-                    debugLog(this.ns, DebugLevel.info, `Enough on Territory. Switching ${memberToUse.name} from ${memberToUse.targetTask} to ${mainTask}`);
-                    memberToUse.targetTask = mainTask;
-
-                }
-            } else {
-                debugLog(this.ns, DebugLevel.info, `No member to reassign to regular work`);
-            }
-
+            this.increaseVigilante();
         }
-
     }
 
     private adjustWantedLevelRespect(members: MyMemberInfo[]) {
@@ -303,16 +253,22 @@ export class CrimeController {
 
     private buyEquip(member: GangMemberInfo) {
         let neededEquip = this.equipmentList.filter(e =>
-            //equipTypesToBuy.includes(e.type) &&
-            !member.upgrades.includes(e.name) &&
+            //!member.upgrades.includes(e.name) &&
+            e.type == GANG_EQUIP_TYPES.augmentation && //testing only buying augmentations
             !member.augmentations.includes(e.name)
         );
 
+
+
         if (neededEquip.length > 0) {
+
+            //buy the cheapest equipment that this member doesn't have
             neededEquip.sort((a, b) => a.cost - b.cost);
             let nextEquip = neededEquip[0];
 
-            if (this._player.money >= nextEquip.cost) {
+            let availableMoney = getAvailablePlayerMoney(this.ns, this._player, this.settings);
+
+            if (availableMoney >= nextEquip.cost) {
                 let success = this._gang.purchaseEquipment(member.name, nextEquip.name);
                 if (success) {
                     if (nextEquip.type === GANG_EQUIP_TYPES.augmentation) {
@@ -325,21 +281,15 @@ export class CrimeController {
             }
         }
 
-        //buy the cheapest equipment that this member doesn't have
 
     }
 
     private decreaseVigilante() {
         //we can assign some users to doing real work!
         //debugLog(this._ns, DebugLevel.info, `Wanted penalty is ok! ${wantedPenalty}%`);
-        let memberToUse = this.members.find(m => m.targetTask === GANG_TASK.unassigned);
 
-        if (!memberToUse) {
-            memberToUse = this.members.find(m => m.targetTask == GANG_TASK.vigilante);
-        }
-
+        let memberToUse = this.members.find(m => m.targetTask == GANG_TASK.vigilante);
         if (memberToUse) {
-
             let mainTask = this.getMainTask(memberToUse);
             debugLog(this.ns, DebugLevel.info, `Wanted Level OK!. Switching ${memberToUse.name} from ${memberToUse.targetTask} to ${mainTask}`);
             memberToUse.targetTask = mainTask;
@@ -359,13 +309,13 @@ export class CrimeController {
             return {
                 Name: d.name,
                 'Task': d.task,
+                'AvgAsc Inc.': '+' + formatPercent(d.totalAvgAscIncrease, 2),
+                'Respect': formatBigNumber(d.earnedRespect),
                 'AfterAsc Mult': 'x' + round(d.afterAscAvgMult, 3).toFixed(3),
-                'AvgAsc Inc.': formatPercent(d.totalAvgAscIncrease, 2),
                 'AvgAsc Mult': 'x' + round(d.totalAvgAscMult, 2).toFixed(2),
-                'CombatAsc Mult': 'x' + round(d.combatAvgAscMult, 2).toFixed(2),
-                'HackAsc Mult': 'x' + round(d.hack_asc_mult, 2).toFixed(2),
-                'Avg Combat Stat': round(d.combatAvg).toString(),
-                'Respect': formatBigNumber(d.earnedRespect)
+                //'CombatAsc Mult': 'x' + round(d.combatAvgAscMult, 2).toFixed(2),
+                //'HackAsc Mult': 'x' + round(d.hack_asc_mult, 2).toFixed(2),
+                'Avg Combat Stat': round(d.combatAvg).toString()
             };
 
         });
@@ -391,13 +341,13 @@ export class CrimeController {
         this.ns.print('');
     }
 
-    private displayAugmentInfo(info: GangGenInfo) {
+    private displayAugmentInfo() {
 
         this.ns.print('Next augment:');
 
-        let remainingAugNames = getUnownedFactionAugmentations(this.ns, info.faction);
+        let remainingAugNames = getUnownedFactionAugmentations(this.ns, this.gangInfo.faction);
 
-        let augs = remainingAugNames.map(name => getAugmentFactionCostInfo(this.ns, name, info.faction));
+        let augs = remainingAugNames.map(name => getAugmentFactionCostInfo(this.ns, name, this.gangInfo.faction));
         augs.sort((a, b) => a.baseAdditionalRepCost - b.baseAdditionalRepCost);
 
         /*
@@ -406,7 +356,7 @@ export class CrimeController {
                     //if we can donate to this faction
                     //show how much money we'd need
                     let favorToDonate = ns.getFavorToDonate();
-                    let currFavor = ns.getFactionFavor(targetAug?.fromFaction.name);
+                    let currFavor = ns.singularity.getFactionFavor(targetAug?.fromFaction.name);
                     let donateString = '';
 
                     let additionalRepNeeded = Math.max(0, targetAug.additionalRepNeeded);
@@ -436,11 +386,15 @@ export class CrimeController {
 
     }
 
-    private displayGangStats(info: GangGenInfo) {
+    private displayGangStats() {
         this.ns.print(`Gang Stats:`);
         this.ns.print(`${INDENT_STRING} Crime Mode: ${this.settings.crimeMode}`);
-        this.ns.print(`${INDENT_STRING} Wanted Penalty: ${formatPercent(1 - info.wantedPenalty, 2)}`);
-        this.ns.print(`${INDENT_STRING} Respect: ${formatBigNumber(info.respect, 2)}`);
+        this.ns.print(`${INDENT_STRING} Wanted Penalty: ${formatPercent(1 - this.gangInfo.wantedPenalty, 2)}`);
+        this.ns.print(`${INDENT_STRING} Respect: ${formatBigNumber(this.gangInfo.respect, 2)}, ${formatBigNumber(this.gangInfo.respectGainRate * 5, 2)} resp/sec`);
+        this.ns.print(`${INDENT_STRING} Faction Rep: ${formatBigNumber(this.gangFactionRep)}`);
+
+
+
         this.ns.print('');
     }
 
@@ -450,9 +404,9 @@ export class CrimeController {
         let jobCount: { jobName: string, count: number }[] = [];
         for (let member of members) {
 
-            let count = jobCount.find(c => c.jobName === member.task);
+            let count = jobCount.find(c => c.jobName === member.targetTask);
             if (!count) {
-                count = {jobName: member.task, count: 0};
+                count = {jobName: member.targetTask ?? GANG_TASK.unassigned, count: 0};
                 jobCount.push(count);
             }
             count.count++;
@@ -471,27 +425,31 @@ export class CrimeController {
     private displayStats(members: MyMemberInfo[]) {
         this.ns.clearLog();
 
-        let info = this._gang.getGangInformation();
 
-        this.displayGangStats(info);
+        this.displayGangStats();
 
-        this.displayTerritoryInfo(info);
+        this.displayTerritoryInfo();
 
         this.displayJobStats(members);
 
         this.displayAscensionInfo(members);
 
-        this.displayAugmentInfo(info);
+        this.displayAugmentInfo();
 
         this.ns.print(timestamp());
     }
 
-    private displayTerritoryInfo(info: GangGenInfo) {
+    private displayTerritoryInfo() {
 
         let otherGangsWithTerritory = this.otherGangs.filter(g => g.territory > 0);
         otherGangsWithTerritory.sort((a, b) => b.name.length - a.name.length);
         if (otherGangsWithTerritory.length > 0) {
-            this.ns.print(`Territory: ${formatPercent(info.territory, 2)}, Power: ${round(info.power)}`);
+            let warString = '';
+            if (this.gangInfo.territoryWarfareEngaged) {
+                warString = ', Warfare ENGAGED!';
+
+            }
+            this.ns.print(`Territory: ${formatPercent(this.gangInfo.territory, 2)}, Power: ${round(this.gangInfo.power)}${warString}`);
             let longestName = otherGangsWithTerritory[0].name.length;
             otherGangsWithTerritory.sort((a, b) => {
                 return (b.territory - a.territory) || (b.power - a.power);
@@ -509,7 +467,7 @@ export class CrimeController {
     }
 
     private doTerritoryWarfare(info: GangGenInfo, members: MyMemberInfo[]) {
-        //if our win chance is within this much of TARGET, reduce amount of members doing territory
+
 
         if (info.territoryClashChance > 0) {
             //we want to have >=TARGET_CLASH_WIN_CHANCE with each faction
@@ -532,43 +490,51 @@ export class CrimeController {
                 // 0-----------------------------------------------------------------------------100
                 //                                             [winChance]^
 
-                let windowStart = TARGET_CLASH_WIN_CHANCE - CLASH_CHANCE_WINDOW_SIZE;
+                let windowSize = WIN_CHANCE_TARGET - WIN_CHANCE_TO_START_WAR;
 
-                let percentMembersToUse = (strongestGang.winChance - windowStart) / CLASH_CHANCE_WINDOW_SIZE;
+                //if our win chance is within "CLASH_CHANCE_WINDOW_SIZE" much of "TARGET_CLASH_WIN_CHANCE", reduce amount of members doing territory
+                let percentMembersToUse = (strongestGang.winChance - WIN_CHANCE_TO_START_WAR) / windowSize;
                 percentMembersToUse = Math.min(1, percentMembersToUse); //clamp range to 0-1
                 percentMembersToUse = Math.max(0, percentMembersToUse); //clamp range to 0-1
                 percentMembersToUse = 1 - percentMembersToUse;
 
                 numMembersToUse = Math.ceil(members.length * percentMembersToUse);
 
-                if (info.territory < this.MAX_TERRITORY) {
-                    numMembersToUse = Math.max(MIN_ON_TERRITORY, numMembersToUse);
+                /*
+                if (info.territory < this.MAX_TERRITORY_TARGET) {
+                    numMembersToUse = Math.min(MIN_ON_TERRITORY, numMembersToUse);
                 }
+
+                 */
             }
 
-            let currentDefenders = members.filter(m => m.task === GANG_TASK.territory);
-            let nonDefenders = members.filter(m => m.task !== GANG_TASK.territory);
+            let currentDefenders = members.filter(m => m.targetTask === GANG_TASK.territory);
+            let nonDefenders = members.filter(m => m.targetTask !== GANG_TASK.territory);
+
+            nonDefenders.sort((a, b) => b.totalAvgAscMult - a.totalAvgAscMult);
 
             let additionalNeeded = numMembersToUse - currentDefenders.length;
 
             let msgPrefix = `Current defenders: ${currentDefenders.length} of ${numMembersToUse}.`;
             if (additionalNeeded < 0) {
-                //we have too many, reassign some to... money?
+                //we have too many, re-assess members job
                 let targetMember = currentDefenders[0];
                 let mainTask = this.getMainTask(targetMember);
-                debugLog(this.ns, DebugLevel.info, `${msgPrefix} Too many, switching ${mainTask} from ${targetMember.targetTask} to ${mainTask}`);
                 targetMember.targetTask = mainTask;
+                debugLog(this.ns, DebugLevel.info, `${msgPrefix} Too many, switching ${targetMember.name} from ${targetMember.targetTask} to ${mainTask}`);
+
             } else if (additionalNeeded > 0) {
                 //we need more
                 let targetMember = nonDefenders[0];
+                targetMember.targetTask = GANG_TASK.territory;
                 debugLog(
                     this.ns,
                     DebugLevel.info,
                     `${msgPrefix} Not enough, switching ${targetMember.name} from ${targetMember.targetTask} to ${GANG_TASK.territory}`
                 );
-                targetMember.targetTask = GANG_TASK.territory;
+
             } else {
-                debugLog(this.ns, DebugLevel.info, `${msgPrefix} Not switching anyone`);
+                //debugLog(this.ns, DebugLevel.info, `${msgPrefix} Not switching anyone`);
             }
 
         }
@@ -591,28 +557,40 @@ export class CrimeController {
 
     }
 
+    private calcLinearMemberRespectNeeded(member: MyMemberInfo) {
+        return member.totalAvgAscMult * PER_MEMBER_RESPECT_MULT;
+    }
+
+    private calcExponentialMemberRespectNeeded(member: MyMemberInfo) {
+        return Math.pow(member.totalAvgAscMult, PER_MEMBER_RESPECT_EXP) * PER_MEMBER_RESPECT_MULT;
+    }
+
+    private calcDynamicMemberRespectNeeded(member: MyMemberInfo) {
+        if (this.gangFactionRep >= MAX_GANG_FACTION_REP_NEEDED) {
+            return this.calcLinearMemberRespectNeeded(member);
+        } else {
+            return this.calcExponentialMemberRespectNeeded(member);
+        }
+    }
+
+
     private getMainTask(member: MyMemberInfo): GANG_TASK {
-        let lowCombatAvgThreshold = 20;
 
         let mainTask = GANG_TASK.unassigned;
         if (this.settings.crimeMode) {
 
             if (this.settings.crimeMode == CrimeMode.money) {
 
-                if (member.earnedRespect < (this.adjustedTargetGangRespect / this.members.length)) {
-                    let terrWantedPenaltyGain = this.getTaskWantedPenaltyGain(member, GANG_TASK.terrorism);
-                    if (terrWantedPenaltyGain > 0 && terrWantedPenaltyGain <= WANTED_PENALTY_THRESHOLD) {
-                        //debugLog(this.ns, DebugLevel.info, `Earning respect for ${member.name}, terrWantedPenaltyGain:${terrWantedPenaltyGain}`);
-                        if (terrWantedPenaltyGain < WANTED_PENALTY_THRESHOLD) {
-                            mainTask = GANG_TASK.terrorism;
-                        } else {
-                            mainTask = GANG_TASK.mug;
-                        }
+                if (member.earnedRespect < this.calcDynamicMemberRespectNeeded(member)) {
+                    //they need earn respect first
+                    let respectTask = this.getBestRespectTask(member, [GANG_TASK.terrorism, GANG_TASK.mug]);
+                    if (respectTask) {
+                        mainTask = respectTask;
 
                     } else {
-                        //debugLog(this.ns, DebugLevel.info, `Training combat for ${member.name}, terrWantedPenaltyGain:${terrWantedPenaltyGain}`);
                         mainTask = GANG_TASK.trainCombat;
                     }
+
                 } else {
                     mainTask = GANG_TASK.trafficking;
 
@@ -620,27 +598,21 @@ export class CrimeController {
 
             } else if (this.settings.crimeMode == CrimeMode.territory) {
 
-                if (member.earnedRespect < (this.perMemberRespectTagetMult * member.totalAvgAscMult)) {
+                if (member.earnedRespect < this.calcLinearMemberRespectNeeded(member)) {
 
                     //they need earn respect first
-                    let tasksToTry = [
-                        GANG_TASK.terrorism
-                        //GANG_TASK.mug
-                    ];
 
                     mainTask = GANG_TASK.trainCombat;
 
-                    for (const task of tasksToTry) {
+                    let taskRespGain = this.ns.formulas.gang.respectGain(this.gangInfo, member, this.tasksInfo[GANG_TASK.terrorism]);
+                    let taskWantedGain = this.ns.formulas.gang.wantedLevelGain(this.gangInfo, member, this.tasksInfo[GANG_TASK.terrorism]);
+                    let taskWantedPenaltyGain = 1 - getWantedPenaltyMult(taskRespGain, taskWantedGain);
 
-                        let taskRespGain = this.ns.formulas.gang.respectGain(this.gangInfo, member, this.tasksInfo[task]);
-                        let taskWantedGain = this.ns.formulas.gang.wantedLevelGain(this.gangInfo, member, this.tasksInfo[task]);
-                        let taskWantedPenaltyGain = 1 - getWantedPenaltyMult(taskRespGain, taskWantedGain);
+                    if (taskWantedPenaltyGain < WANTED_PENALTY_THRESHOLD && taskRespGain > 0) {
+                        mainTask = GANG_TASK.terrorism;
 
-                        if (taskWantedPenaltyGain < WANTED_PENALTY_THRESHOLD && taskRespGain > 0) {
-                            mainTask = task;
-                            break;
-                        }
                     }
+
 
                 } else {
                     mainTask = GANG_TASK.territory;
@@ -649,23 +621,12 @@ export class CrimeController {
 
             } else if (this.settings.crimeMode == CrimeMode.respect) {
 
-                let tasksToTry = [
-                    GANG_TASK.terrorism,
-                    GANG_TASK.mug
-                ];
+                let respectTask = this.getBestRespectTask(member, [GANG_TASK.terrorism, GANG_TASK.mug]);
+                if (respectTask) {
+                    mainTask = respectTask;
 
-                mainTask = GANG_TASK.trainCombat;
-
-                for (const task of tasksToTry) {
-
-                    let taskRespGain = this.ns.formulas.gang.respectGain(this.gangInfo, member, this.tasksInfo[task]);
-                    let taskWantedGain = this.ns.formulas.gang.wantedLevelGain(this.gangInfo, member, this.tasksInfo[task]);
-                    let taskWantedPenaltyGain = 1 - getWantedPenaltyMult(taskRespGain, taskWantedGain);
-
-                    if (taskWantedPenaltyGain < WANTED_PENALTY_THRESHOLD && taskRespGain > 0) {
-                        mainTask = task;
-                        break;
-                    }
+                } else {
+                    mainTask = GANG_TASK.trainCombat;
                 }
 
             }
@@ -705,178 +666,99 @@ export class CrimeController {
         }
     }
 
-    private managerMemberJobs() {
+    private managerMemberJobsMoney() {
+        let priorityTasks = [GANG_TASK.vigilante, GANG_TASK.trainCombat];
 
-        this.members.forEach(m => {
-            //m.targetTask = GANG_TASK.unassigned; //everyone is unassigned
-            m.targetTask = m.task as GANG_TASK; //keep doing what you were doing
-            //m.targetTask = this.getMainTask(m);//start with everyone allocated to their 'best' job
-        });
-
-        if (MIN_ON_TERRITORY + minOnMainTask > this.members.length) {
-            debugLog(this.ns, DebugLevel.error, 'Not enough members for minimum allocations!', {
-                minOnTerritory: MIN_ON_TERRITORY,
-                minOnMoney: minOnMainTask
-            });
+        if (this.gangInfo.territoryWarfareEngaged) {
+            priorityTasks.push(GANG_TASK.territory);
         }
 
-        this.trainLowestMembers(this.members);
+        this.reassessMemberJobs(priorityTasks);
 
-        if (this.settings.crimeMode === CrimeMode.territory || this.gangInfo.territoryWarfareEngaged) {
+
+        this.adjustWantedLevel();
+
+        if (this.gangInfo.territoryWarfareEngaged) {
             this.doTerritoryWarfare(this.gangInfo, this.members);
-        } else {
-            let wantedOnTerritory = Math.floor(Math.max(MIN_ON_TERRITORY, this.members.length * territoryPercent));
-            let currOnTerritory = this.members.filter(m => m.targetTask === GANG_TASK.territory);
-            //too many on territory, take one off
-            if (currOnTerritory.length > 0 && currOnTerritory.length > wantedOnTerritory) {
-                let targetMember = currOnTerritory[0];
-                debugLog(
-                    this.ns,
-                    DebugLevel.info,
-                    `Too many on Territory. Switching ${targetMember.name} from ${targetMember.targetTask} to ${GANG_TASK.unassigned}`
-                );
-                targetMember.targetTask = GANG_TASK.unassigned;
-            }
         }
 
-        this.adjustWantedLevel(this.members);
+        this.trainLowestMembers(priorityTasks);
 
-        for (let member of this.members) {
-            if (member.task === GANG_TASK.vigilante) {
-                member.targetTask = member.task as GANG_TASK;
-            } else {
-                //if we're on one of these tasks, reassess
-                member.targetTask = this.getMainTask(member);
-            }
-        }
-
-        if (this.wantedLevelOk()) {
-            this.decreaseVigilante();
-        } else {
-            this.increaseVigilante();
-        }
-
-        //assign tasks
-        for (let member of this.members) {
-            this._gang.setMemberTask(member.name, member.targetTask ?? member.task);
-        }
+        this.assignTargetTasks();
 
     }
 
     private managerMemberJobsRespect() {
-        this.members.forEach(m => {
-            m.targetTask = m.task as GANG_TASK; //keep doing what you were doing
-        });
+        let priorityTasks = [GANG_TASK.vigilante, GANG_TASK.trainCombat];
 
         if (this.gangInfo.territoryWarfareEngaged) {
             this.doTerritoryWarfare(this.gangInfo, this.members);
-        } else {
-            let wantedOnTerritory = Math.floor(Math.max(MIN_ON_TERRITORY, this.members.length * territoryPercent));
-            let currOnTerritory = this.members.filter(m => m.targetTask === GANG_TASK.territory);
-            //too many on territory, take one off
-            if (currOnTerritory.length > 0 && currOnTerritory.length > wantedOnTerritory) {
-                let targetMember = currOnTerritory[0];
-                debugLog(
-                    this.ns,
-                    DebugLevel.info,
-                    `Too many on Territory. Switching ${targetMember.name} from ${targetMember.targetTask} to ${GANG_TASK.unassigned}`
-                );
-                targetMember.targetTask = GANG_TASK.unassigned;
-            }
         }
 
-        for (let member of this.members) {
-            if (member.task === GANG_TASK.vigilante) {
-                member.targetTask = member.task as GANG_TASK;
-            } else {
-                //if we're on one of these tasks, reassess
-                member.targetTask = this.getMainTask(member);
-            }
-        }
+        this.reassessMemberJobs(priorityTasks);
 
-        this.trainLowestMembers(this.members);
+        this.trainLowestMembers(priorityTasks);
 
-        if (this.wantedLevelOk()) {
-            this.decreaseVigilante();
-        } else {
-            this.increaseVigilante();
-        }
+        this.adjustWantedLevel();
 
-        //assign tasks
-        for (let member of this.members) {
-            this._gang.setMemberTask(member.name, member.targetTask ?? member.task);
-        }
+        this.assignTargetTasks();
     }
 
     private managerMemberJobsTerritory() {
+        let priorityTasks = [GANG_TASK.vigilante];
 
-        for (let member of this.members) {
-            if (member.task === GANG_TASK.vigilante) {
+        this.reassessMemberJobs(priorityTasks);
 
-                member.targetTask = member.task as GANG_TASK;
+        this.adjustedNumberToTrain = 1;
+        this.adjustWantedLevel();
 
-            } else {
-                //if we're not fixing wanted penalty, reassess
-                member.targetTask = this.getMainTask(member);
-            }
-        }
-
-        this.trainLowestMembers(this.members);
-
-        if (this.wantedLevelOk()) {
-            this.decreaseVigilante();
-        } else {
-            this.increaseVigilante();
-        }
-
-        //assign tasks
-        for (let member of this.members) {
-            this._gang.setMemberTask(member.name, member.targetTask ?? member.task);
-        }
+        this.assignTargetTasks();
     }
 
-    private trainLowestMembers(members: MyMemberInfo[]) {
+    private trainLowestMembers(priorityTasks: GANG_TASK[]) {
 
-        if (members.length > 0) {
+        if (this.members.length > 0) {
 
             //reset anyone who was training
-            let trainees = members.filter(m => m.targetTask === GANG_TASK.trainCombat || m.targetTask === GANG_TASK.trainHacking);
-            trainees.forEach(m => m.targetTask = GANG_TASK.unassigned);
+            let oldTrainees = this.members.filter(m => m.targetTask === GANG_TASK.trainCombat || m.targetTask === GANG_TASK.trainHacking);
+            //trainees.forEach(m => m.targetTask = GANG_TASK.unassigned);
 
-            //this.members.sort((a, b) => (a.combatAvg + a.combatAvgAscMult) - (b.combatAvg + b.combatAvgAscMult));
+
             this.members.sort((a, b) => a.afterAscAvgMult - b.afterAscAvgMult);
 
-            //this.members.sort((a, b) => a.hack_mult - b.hack_mult);
 
-            let newTrainees = [];
-            for (let i = 0; i < this.members.length; i++) {
 
-                if (members[i].targetTask !== GANG_TASK.vigilante) {
+            let currentTrainees: string[] = [];
+            for (const member of this.members) {
 
-                    this.members[i].targetTask = GANG_TASK.trainCombat;
+                if (!priorityTasks.includes(member.targetTask) || member.targetTask === GANG_TASK.trainCombat) {
 
-                    newTrainees.push(this.members[i].name);
-                    if (newTrainees.length >= this.adjustedNumberToTrain) {
+                    if (member.targetTask !== GANG_TASK.trainCombat) {
+                        debugLog(this.ns, DebugLevel.info, `New Trainee! Switching ${member.name} from ${member.targetTask} to ${GANG_TASK.trainCombat}`);
+                        member.targetTask = GANG_TASK.trainCombat;
+                    } else {
+                        //they were already training
+                    }
+
+
+                    currentTrainees.push(member.name);
+                    if (currentTrainees.length >= this.adjustedNumberToTrain) {
                         break;
                     }
 
                 }
 
             }
-            //debugLog(this.ns, DebugLevel.info, `Training lowest ${numberToTrain} members! ${newTrainees.join(', ')}`);
-            /*
-            if (false && lowestHackMember.hackMult < lowestCombatMember.avgCombatMult) {
-                debugLog(this.ns, DebugLevel.info, `Lowest member. Switching ${lowestHackMember.member.name} from ${lowestHackMember.member.targetTask} to ${GANG_TASK.trainHacking}`);
-                lowestHackMember.member.targetTask = GANG_TASK.trainHacking;
-            } else {
-                debugLog(this.ns, DebugLevel.info, `Lowest member. Switching ${lowestCombatMember.member.name} from ${lowestCombatMember.member.targetTask} to ${GANG_TASK.trainCombat}`);
-
-                for (let i = 0; i < numberToTrain && avgCombatStatsList.length; i++) {
-                    avgCombatStatsList[1].member.targetTask = GANG_TASK.trainCombat;
+            //if they didn't get assigned to training this go, get them their next task
+            oldTrainees.forEach(m => {
+                if (!currentTrainees.includes(m.name)) {
+                    let mainTask = this.getMainTask(m);
+                    debugLog(this.ns, DebugLevel.info, `No longer training! Switching ${m.name} from ${m.targetTask} to ${mainTask}`);
+                    m.targetTask = mainTask;
                 }
+            });
 
-            }
-*/
+
         }
 
     }
@@ -891,6 +773,7 @@ export class CrimeController {
 
     private updateData() {
         this.gangInfo = this._gang.getGangInformation();
+        this.gangFactionRep = this.ns.singularity.getFactionRep(this.gangInfo.faction);
         this.wantedPenalty = (1 - this.ns.formulas.gang.wantedPenalty(this.gangInfo));
         this._player = this.ns.getPlayer();
 
@@ -902,6 +785,7 @@ export class CrimeController {
         this.members.forEach(m => {
             let results = this._gang.getAscensionResult(m.name);
             m.ascResults = results;
+            m.targetTask = m.task as GANG_TASK;
 
             let totalAvgAscMult = ((m.agi_asc_mult + m.def_asc_mult + m.dex_asc_mult + m.str_asc_mult + m.hack_asc_mult + m.cha_asc_mult) / 6.0);
             let combatAvgAscMult = (m.agi_asc_mult + m.def_asc_mult + m.dex_asc_mult + m.str_asc_mult) / 4.0;
@@ -952,13 +836,53 @@ export class CrimeController {
         });
 
         this.adjustedAscensionThreshold = 1 + (((MAX_ASCENSION_THRESHOLD - 1) * getGangDiscountMult(this.ns)));
-        this.adjustedTargetGangRespect = MAX_TARGET_GANG_RESPECT;
-
+        this.adjustedAscensionThreshold = Math.max(this.adjustedAscensionThreshold, MIN_ASCENSION_THRESHOLD);
         this.adjustedNumberToTrain = Math.ceil(this.members.length * MAX_PERCENT_TO_TRAIN * getGangDiscountMult(this.ns));
 
     }
 
     private wantedLevelOk() {
         return this.wantedPenalty <= WANTED_PENALTY_THRESHOLD || this.gangInfo.wantedLevel === 1;
+    }
+
+    private getBestRespectTask(member: MyMemberInfo, tasksToTry: GANG_TASK[]): GANG_TASK | undefined {
+        let respectTask: GANG_TASK | undefined;
+        for (const task of tasksToTry) {
+
+            let taskRespGain = this.ns.formulas.gang.respectGain(this.gangInfo, member, this.tasksInfo[task]);
+            let taskWantedGain = this.ns.formulas.gang.wantedLevelGain(this.gangInfo, member, this.tasksInfo[task]);
+            let taskWantedPenaltyGain = 1 - getWantedPenaltyMult(taskRespGain, taskWantedGain);
+
+            if (taskWantedPenaltyGain < WANTED_PENALTY_THRESHOLD && taskRespGain > 0) {
+                respectTask = task;
+                break;
+            }
+        }
+
+        return respectTask;
+
+    }
+
+    private reassessMemberJobs(priorityTasks: GANG_TASK[]) {
+        for (let member of this.members) {
+            if (!priorityTasks.includes(member.targetTask)) {
+                //if we're not fixing wanted penalty, reassess
+                let mainTask = this.getMainTask(member);
+                if (mainTask !== member.targetTask) {
+                    debugLog(this.ns, DebugLevel.info, `Reassessing ${member.name}. Switching from ${member.targetTask} to ${mainTask}`);
+                    member.targetTask = mainTask;
+                }
+            }
+        }
+    }
+
+    private assignTargetTasks() {
+        for (let member of this.members) {
+            if (member.targetTask === GANG_TASK.unassigned) {
+                member.targetTask = this.getMainTask(member);
+            }
+
+            this._gang.setMemberTask(member.name, member.targetTask);
+        }
     }
 }

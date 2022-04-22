@@ -1,7 +1,7 @@
-﻿import { HashSpendOptions } from '/lib/consts';
-import { round, timestamp } from 'lib/utils';
-import { AutocompleteData, NS } from 'NetscriptDefinitions';
-import { FlagSchema } from 'types';
+﻿import {HashSpendOptions} from '/lib/consts';
+import {round, timestamp} from 'lib/utils';
+import {AutocompleteData, NS} from 'NetscriptDefinitions';
+import {FlagSchema} from 'types';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     console.log(`autocomplete()`, args);
@@ -26,6 +26,7 @@ export function autocomplete(data: AutocompleteData, args: any[]) {
 
 const flagSchema: FlagSchema = [
     ['sell', false],
+    ['bbRank', false],
     ['incMaxMoney', ''],
     ['decMinSec', '']
 
@@ -34,11 +35,18 @@ const flagSchema: FlagSchema = [
 export async function main(ns: NS) {
 
     ns.tail();
-    // ns.disableLog('ALL');
+    ns.disableLog('ALL');
 
-    let flags = ns.flags([
-        ['sell', false]
-    ]);
+    let flags = ns.flags(flagSchema);
+    let sell = flags.sell;
+    let bbRank = flags.bbRank;
+
+    let spendFor = HashSpendOptions.none;
+    if (sell) {
+        spendFor = HashSpendOptions.money;
+    } else if (bbRank) {
+        spendFor = HashSpendOptions.bbRank;
+    }
 
     let target = 'ecorp';
     while (true) {
@@ -56,9 +64,10 @@ export async function main(ns: NS) {
                     ns.print(`Increased max money on ${target} to ${formatCurrency(ns.getServer(target).moneyMax)}!`);
                 }
         */
-        ns.hacknet.spendHashes(HashSpendOptions.money);
 
-        ns.print(`${timestamp()}Hashes: ${round(ns.hacknet.numHashes())}`);
+        ns.hacknet.spendHashes(spendFor);
+
+        ns.print(`${timestamp()}Hashes: ${round(ns.hacknet.numHashes())}. ${spendFor}`);
 
         await ns.sleep(1000);
     }

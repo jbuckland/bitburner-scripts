@@ -10,7 +10,7 @@ import {
     getThreadsNeededToWeakenHost,
     makePriorityTargetList
 } from 'lib/utils';
-import {NS, ProcessInfo, RunningScript} from 'NetscriptDefinitions';
+import {NS, ProcessInfo} from 'NetscriptDefinitions';
 import {IControllerConfig, ITargetWorkInfo, ServerInfo, Task, TaskType} from 'types';
 
 const MIN_MONEY = 5000;
@@ -36,7 +36,7 @@ export function updateTaskList(ns: NS, taskList: Task[]) {
         let host = getAllHosts(ns)[i];
 
         //look for SCRIPTS.weaken
-        let weakenScriptInfo: RunningScript = ns.getRunningScript(SCRIPTS.weaken, host);
+        let weakenScriptInfo = ns.getRunningScript(SCRIPTS.weaken, host);
         if (weakenScriptInfo && weakenScriptInfo.threads > 0) {
 
             let weakenTarget = weakenScriptInfo.args[0];
@@ -49,7 +49,8 @@ export function updateTaskList(ns: NS, taskList: Task[]) {
                     allocatedThreads: []
                 };
             }
-            if (!weakenTask.allocatedThreads.find(t => t.pid === weakenScriptInfo.pid)) {
+            let weakenScriptPid = weakenScriptInfo.pid;
+            if (!weakenTask.allocatedThreads.find(t => t.pid === weakenScriptPid)) {
                 ns.print(`${host} was running ${SCRIPTS.weaken} and we didn't know about it! Logging it`, weakenScriptInfo);
 
                 weakenTask.allocatedThreads.push({
@@ -62,7 +63,7 @@ export function updateTaskList(ns: NS, taskList: Task[]) {
         }
 
         //look for SCRIPTS.grow
-        let growScriptInfo: RunningScript = ns.getRunningScript(SCRIPTS.grow, host);
+        let growScriptInfo = ns.getRunningScript(SCRIPTS.grow, host);
         if (growScriptInfo && growScriptInfo.threads > 0) {
 
             let growTarget = growScriptInfo.args[0];
@@ -75,7 +76,8 @@ export function updateTaskList(ns: NS, taskList: Task[]) {
                     allocatedThreads: []
                 };
             }
-            if (!growTask.allocatedThreads.find(t => t.pid === growScriptInfo.pid)) {
+            let growScriptPid = growScriptInfo.pid;
+            if (!growTask.allocatedThreads.find(t => t.pid === growScriptPid)) {
                 ns.print(`${host} was running ${SCRIPTS.grow} and we didn't know about it! Logging it`, growScriptInfo);
 
                 growTask.allocatedThreads.push({
@@ -88,7 +90,7 @@ export function updateTaskList(ns: NS, taskList: Task[]) {
         }
 
         //look for SCRIPTS.hack
-        let hackScriptInfo: RunningScript = ns.getRunningScript(SCRIPTS.hack, host);
+        let hackScriptInfo = ns.getRunningScript(SCRIPTS.hack, host);
         if (hackScriptInfo && hackScriptInfo.threads > 0) {
 
             let hackTarget = hackScriptInfo.args[0];
@@ -104,7 +106,8 @@ export function updateTaskList(ns: NS, taskList: Task[]) {
             }
 
             //if we don't already know about this process, log it
-            if (!hackTask.allocatedThreads.find(t => t.pid === hackScriptInfo.pid)) {
+            let hackScriptPid = hackScriptInfo.pid;
+            if (!hackTask.allocatedThreads.find(t => t.pid === hackScriptPid)) {
                 ns.print(`${host} was running ${SCRIPTS.hack} and we didn't know about it! Logging it`, hackScriptInfo);
 
                 hackTask.allocatedThreads.push({

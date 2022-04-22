@@ -1,20 +1,79 @@
-import { addScripts } from '/addScripts';
-import { DARK_DATA, DebugLevel, HOME, MAX_HOME_SERVER_RAM, NON_HACKING_AUGMENTS, SCRIPTS, THE_RED_PILL, TOAST_DURATION, TOAST_VARIANT } from '/lib/consts';
-import { singleHack, useAvailableRunnersForWork } from '/lib/hack-utils';
+import {addScripts} from '/addScripts';
 import {
-    debugLog, formatBigNumber, formatBigRam, formatBigTime, formatCurrency, formatPercent, getAllRamUsage, getAllRunners, getDonationNeededForReputation,
-    getHacknetIncome, getPlayerTools, getServerFreeRam, getSettings, getUnownedFactionAugmentations, indent, myGetScriptIncome, round, setSettings, timestamp
+    COMPANY_FACTIONS,
+    DARK_DATA,
+    DebugLevel,
+    GANG_FACTIONS,
+    HACK_FACTIONS,
+    HOME,
+    MAX_HOME_SERVER_RAM,
+    NON_HACKING_AUGMENTS,
+    OTHER_FACTIONS,
+    SCRIPTS,
+    THE_RED_PILL,
+    TOAST_DURATION,
+    TOAST_VARIANT
+} from '/lib/consts';
+import {useAvailableRunnersForWork, useRunnersForWork} from '/lib/hack-utils';
+import {
+    debugLog,
+    filterFirstAvailableRunnerForScriptThreads,
+    formatBigNumber,
+    formatBigRam,
+    formatCurrency,
+    formatPercent,
+    getAllRamUsage,
+    getAllRunners,
+    getAvailablePlayerMoney,
+    getDonationNeededForReputation,
+    getFirstAvailableRunnerForScript,
+    getGangIncome,
+    getHacknetIncome,
+    getPlayerTools,
+    getRandomId,
+    getServerFreeRam,
+    getSettings,
+    getThreadsAvailableForScript,
+    getUnownedFactionAugmentations,
+    indent,
+    myGetScriptIncome,
+    round,
+    runHack,
+    setSettings
 } from '/lib/utils';
-import { getAllTargetWorkInfo, isReadyForBatch } from '/lib/utils-controller';
-import { getGangIncome } from '/lib/utils-crime';
+import {getAllTargetWorkInfo, isReadyForBatch} from '/lib/utils-controller';
 import {
-    displayHeader, displayServerStats, doInstallReset, getHomeServers, getNextHomeServerSize, getReputationGainRate, HomeServer, installBackdoors,
-    purchaseProgram, upgradeHomeComputer
+    bigFactionList,
+    calcNextFavorResetAmount,
+    claimedEarnedFactionRep,
+    displayFactionProgress,
+    displayHeader,
+    displayHomeUpgradeInfo,
+    displayNextAugmentInfo,
+    displayNFGInfo,
+    displayServerStats,
+    displayWorldDaemonProgress,
+    doInstallReset,
+    getAvailableCityFactions,
+    getCompany,
+    getHomeServers,
+    getNextHomeServerSize,
+    getReputationGainRate,
+    HomeServer,
+    installBackdoors,
+    isCompanyFaction,
+    ITargetAugmentation,
+    joinFactions,
+    leaveTheCave,
+    makeMoneyCostTimeString,
+    purchaseProgram,
+    workOnReputation
 } from '/lib/utils-player';
-import { NS, Player } from '/NetscriptDefinitions';
-import { getRunnerJobsForScript, makeBatchRequest } from '/old-controllers/batch';
-import { IRamUsage } from '/old-controllers/home-controller';
-import { IBatchRequest, IDarkwebTool, IGlobalSettings, IRamUsageSettings, IRunnerJob, ITargetWorkInfo, TaskType } from '/types';
+import {NS, Player} from '/NetscriptDefinitions';
+import {getRunnerJobsForScript, makeBatchRequest} from '/old-controllers/batch';
+import {IRamUsage} from '/old-controllers/home-controller';
+import {doDonationReset} from '/old-controllers/player-controller';
+import {IBatchRequest, IDarkwebTool, IFaction, IGlobalSettings, IRamUsageSettings, IRunnerJob, ITargetWorkInfo, RunnerInfo, TaskType} from '/types';
 
 export async function main(ns: NS) {
 
@@ -22,6 +81,8 @@ export async function main(ns: NS) {
     await controller.doRun();
 
 }
+
+const EXP_TARGET: string = 'joesguns';
 
 interface IFactionInfo {
     favor: number;
@@ -48,13 +109,18 @@ interface IPlayerTools {
     sql: boolean;
 }
 
+
 class MegaController {
-    private readonly DEFAULT_RAM_USAGE_SETTINGS: IRamUsageSettings = { batchPct: .80, prepPct: .40, sharePct: .10, expPct: .10 };
+    private readonly DEFAULT_RAM_USAGE_SETTINGS: IRamUsageSettings = {batchPct: .80, prepPct: .40, sharePct: .10, expPct: .99};
     private readonly HACK_PCT_MAX: number = .90;
     private readonly HACK_PCT_MIN: number = 0.005;
     private readonly HACK_PCT_SCALAR: number = 0.1;
     private readonly SLEEP_TIME: number = 1000;
+    private adjustedBatchPct: number = this.DEFAULT_RAM_USAGE_SETTINGS.batchPct;
+    private adjustedExpPct: number = this.DEFAULT_RAM_USAGE_SETTINGS.expPct;
     private adjustedPrepPct: number = this.DEFAULT_RAM_USAGE_SETTINGS.prepPct;
+    private adjustedSharePct: number = this.DEFAULT_RAM_USAGE_SETTINGS.sharePct;
+    private availableMoney: number = 0;
     private costMultiplierBeforeBuying: number = 2;
     private expGain: number = 0;
     private gangMoneyGain: number = 0;
@@ -71,10 +137,19 @@ class MegaController {
     private settings: IGlobalSettings = {};
     private singleGrowRam: number;
     private singleWeakenRam: number;
+    private targetAug: ITargetAugmentation | undefined;
     private targetWorkInfos: ITargetWorkInfo[] = [];
     private totalMoneyGain: number = 0;
     private unownedAugmentationInfo: IAugmentationInfo[] = [];
     private workReadyForBatch: ITargetWorkInfo[] = [];
+    private doSharing: boolean = false;
+    private expRam: number = 0;
+    private shareScriptRam: number = 0;
+    private doEXPing: boolean = false;
+    private batchSuccesses: number = 0;
+    private runners: RunnerInfo[] = [];
+    private favorToDonate: number = 0;
+
 
     constructor(private ns: NS) {
         ns.tail();
@@ -83,6 +158,9 @@ class MegaController {
         this.neededFavorToDonate = this.ns.getFavorToDonate();
         this.singleWeakenRam = this.ns.getScriptRam(SCRIPTS.weaken);
         this.singleGrowRam = this.ns.getScriptRam(SCRIPTS.grow);
+        this.expRam = this.ns.getScriptRam(SCRIPTS.expGain);
+        this.shareScriptRam = this.ns.getScriptRam(SCRIPTS.myShare);
+        this.favorToDonate = ns.getFavorToDonate();
     }
 
     public async doRun() {
@@ -96,13 +174,26 @@ class MegaController {
 
             ////////////////
             //do work
+            this.upgradeHomeComputer();
             this.buyDarkwebTools();
             await installBackdoors(this.ns);
-            upgradeHomeComputer(this.ns);
+            claimedEarnedFactionRep(this.ns, true); //should be before purchaseAvailableAugmentations()
             this.purchaseAvailableAugmentations();
+
+            await this.doReputationWork();
+
+
+
+            joinFactions(this.ns);
+
             await this.tryPurchaseServer();
 
-            await this.doHacking();
+
+            await this.doRunnerWork();
+
+
+
+            await leaveTheCave(this.ns);
 
             this.updateRunTime();
             await this.ns.sleep(this.SLEEP_TIME);
@@ -132,15 +223,15 @@ class MegaController {
             smallestServer = homeServers[0];
             aServerNeedsUpgraded = smallestServer && smallestServer.maxRam < MAX_HOME_SERVER_RAM;
         }
-
-        debugLog(this.ns, DebugLevel.info, 'tryPurchaseServer()', {
-            nextRamSize,
-            serverCost,
-            playerHasEnoughMoney,
-            homeServersFull,
-            smallestServer
-        });
-
+        /*
+                debugLog(this.ns, DebugLevel.info, 'tryPurchaseServer()', {
+                    nextRamSize,
+                    serverCost,
+                    playerHasEnoughMoney,
+                    homeServersFull,
+                    smallestServer
+                });
+        */
         if (playerHasEnoughMoney) {
             if (homeServersFull && smallestServer && aServerNeedsUpgraded) {
                 //delete
@@ -164,7 +255,7 @@ class MegaController {
     private buyDarkwebTools() {
 
         if (!this.player.tor && this.player.money > DARK_DATA.torCost) {
-            this.player.tor = this.ns.purchaseTor();
+            this.player.tor = this.ns.singularity.purchaseTor();
             this.ns.toast(`TOR router purchased!`, TOAST_VARIANT.success, TOAST_DURATION);
         }
 
@@ -191,12 +282,14 @@ class MegaController {
                 if (!this.playerTools.alink) {
                     this.playerTools.alink = purchaseProgram(this.ns, this.player, DARK_DATA.tools.alink);
                 }
+                /* I really have no use for these two
                 if (!this.playerTools.scan1) {
                     this.playerTools.scan1 = purchaseProgram(this.ns, this.player, DARK_DATA.tools.scan1);
                 }
                 if (!this.playerTools.scan2) {
                     this.playerTools.scan2 = purchaseProgram(this.ns, this.player, DARK_DATA.tools.scan2);
                 }
+                 */
                 if (!this.playerTools.prof) {
                     this.playerTools.prof = purchaseProgram(this.ns, this.player, DARK_DATA.tools.prof);
                 }
@@ -210,9 +303,9 @@ class MegaController {
     private displayHackingInfo() {
         this.ns.print(`Hacking:`);
         this.ns.print(`${indent()}Prep RAM Percent: ${formatPercent(this.adjustedPrepPct)}`);
-        this.ns.print(`${indent()}Batch RAM Percent: ${formatPercent(this.DEFAULT_RAM_USAGE_SETTINGS.batchPct)}`);
+        this.ns.print(`${indent()}Batch RAM Percent: ${formatPercent(this.adjustedBatchPct)}`);
         this.ns.print(`${indent()}Num. Ready for Batch: ${this.workReadyForBatch.length}`);
-        this.ns.print(`${indent()}Hack RAM Percent: ${formatPercent(this.settings.hackPercent ?? 0, 3)}`);
+        this.ns.print(`${indent()}Hack \$\$ Percent: ${formatPercent(this.settings.hackPercent ?? 0, 3)}`);
         this.ns.print('');
     }
 
@@ -247,11 +340,19 @@ class MegaController {
 
         this.displayIncomeStats();
 
+        displayWorldDaemonProgress(this.ns);
+
         this.displayNextDarkwebTool();
+        displayNextAugmentInfo(this.ns, this.targetAug);
+        displayFactionProgress(this.ns);
+        displayNFGInfo(this.ns);
+
+
+        displayHomeUpgradeInfo(this.ns);
+        displayServerStats(this.ns, this.costMultiplierBeforeBuying);
+
 
         this.displayHackingInfo();
-
-        displayServerStats(this.ns, this.costMultiplierBeforeBuying);
         this.displayRamUsage();
 
     }
@@ -278,17 +379,16 @@ class MegaController {
                 this.ns.print(`INFO You have enough to buy ${nextTool.name}!`);
             }
 
-            let incomePerSec = this.totalMoneyGain;
-            let remainingCost = nextTool.cost - this.player.money;
+            let etaString = makeMoneyCostTimeString(this.ns, nextTool.cost);
 
-            let etaTime = new Date();
-            let estTimeLeft = (remainingCost / incomePerSec) * 1000;
-            etaTime.setTime(new Date().getTime() + estTimeLeft);
-            let etaString = etaTime.toLocaleString('en-US', { hour: 'numeric', minute: 'numeric', second: 'numeric' });
+            //let etaTime = new Date();
+            //let estTimeLeft = (remainingCost / incomePerSec) * 1000;
+            //etaTime.setTime(new Date().getTime() + estTimeLeft);
+            //let etaString = etaTime.toLocaleString('en-US', {hour: 'numeric', minute: 'numeric', second: 'numeric'});
 
             this.ns.print(`Next Darkweb tool: '${nextTool.name}'`);
-            this.ns.print(`${indent()}Cost: \$${formatBigNumber(nextTool.cost)}, +\$${formatBigNumber(remainingCost)}`);
-            this.ns.print(`${indent()}Time left: ${formatBigTime(estTimeLeft).padStart(6)}, ETA: ${etaString}`);
+            this.ns.print(`${indent()}Cost: ${etaString}`);
+            //this.ns.print(`${indent()}Time left: ${formatBigTime(estTimeLeft).padStart(6)}, ETA: ${etaString}`);
 
             if (!this.player.tor && this.player.money >= DARK_DATA.torCost) {
                 this.ns.print(`INFO You have enough to buy the TOR router!`);
@@ -307,22 +407,31 @@ class MegaController {
         let pad1: number = 7;
         let pad2: number = 5;
         this.ns.print(`Total RAM Usage:  (${formatBigRam(this.ramUsage.totalMax)})`);
+
         this.ns.print(`${indent()}Batch: ${formatBigRam(this.ramUsage.batchRam).padStart(pad1)}, ${formatPercent(this.ramUsage.batchRam /
             this.ramUsage.totalMax, 1).padStart(pad2)}`);
+
         this.ns.print(`${indent()}Hack:  ${formatBigRam(this.ramUsage.batchRam).padStart(pad1)}, ${formatPercent(
             this.ramUsage.hackRam / this.ramUsage.totalMax,
             1
         ).padStart(pad2)}`);
+
         this.ns.print(`${indent()}Prep:  ${formatBigRam(this.ramUsage.prepRam).padStart(pad1)}, ${formatPercent(
             this.ramUsage.prepRam / this.ramUsage.totalMax,
             1
         ).padStart(pad2)}`);
+
         this.ns.print(`${indent()}Share: ${formatBigRam(this.ramUsage.shareRam).padStart(pad1)}, ${formatPercent(this.ramUsage.shareRam /
             this.ramUsage.totalMax, 1).padStart(pad2)}`);
+
         this.ns.print(`${indent()}EXP:   ${formatBigRam(this.ramUsage.expRam).padStart(pad1)}, ${formatPercent(
             this.ramUsage.expRam / this.ramUsage.totalMax,
             1
         ).padStart(pad2)}`);
+
+        this.ns.print(`${indent()}Stanek:${formatBigRam(this.ramUsage.stanekRam).padStart(pad1)}, ${formatPercent(this.ramUsage.stanekRam /
+            this.ramUsage.totalMax, 1).padStart(pad2)}`);
+
         this.ns.print(`${indent()}Other: ${formatBigRam(this.ramUsage.otherRam).padStart(pad1)}, ${formatPercent(this.ramUsage.otherRam /
             this.ramUsage.totalMax, 1).padStart(pad2)}`);
         this.ns.print(`${indent()}Total: ${formatBigRam(this.ramUsage.totalUsed).padStart(pad1)}, ${formatPercent(
@@ -339,25 +448,22 @@ class MegaController {
 
         //we know how many threads we need for each step,
         //split the threads across as many runners as needed
-
-        let runners = getAllRunners(ns);
-
         let jobs: IRunnerJob[] = [];
 
         let batchPartParams = [
-            { script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack },
+            {script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack},
             {
                 script: SCRIPTS.batchWeaken,
                 threads: request.weakenThreadsNeededFromHack,
                 delay: request.delayUntilWeakenHack
             },
-            { script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow },
-            { script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow }
+            {script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow},
+            {script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow}
         ];
         let batchId = request.batchId;
         for (const param of batchPartParams) {
             if (success) {
-                let taskJobs = getRunnerJobsForScript(ns, runners, param.script, param.threads, request.target, param.delay, batchId);
+                let taskJobs = getRunnerJobsForScript(this.ns, this.runners, param.script, param.threads, request.target, param.delay, batchId);
                 if (taskJobs) {
                     jobs.push(...taskJobs);
                 } else {
@@ -370,7 +476,7 @@ class MegaController {
         }
 
         for (const j of jobs) {
-            //debugLog(ns, DebugLevel.info, `Batch Job: '${j.scriptName}', t=${j.threads}, Runner:[${j.runner}] args:${j.args}`,)
+            //debugLog(this.ns, DebugLevel.info, `Batch Job: '${j.scriptName}', t=${j.threads}, Runner:[${j.runner}] args:${j.args}`,)
 
             //do the job
             let procId = ns.exec(j.scriptName, j.runner, j.threads, ...j.args);
@@ -394,48 +500,26 @@ class MegaController {
                 );
             }
 
+            if (success) {
+                let runner = this.runners.find(r => r.hostname === j.runner);
+                if (runner) {
+                    runner.freeRam -= j.ramUsed;
+                } else {
+                    debugLog(this.ns, DebugLevel.error, `Could not find runner ${j.runner} for the job!`, {job: j});
+                }
+            }
+
         }
         return success;
     }
 
     private async doHacking() {
 
-        if (this.workReadyForBatch.length > 0) {
-            let batchSuccesses = await this.doMaxBatches();
 
-            if (batchSuccesses === 0) {
-                //decrease the hack percent
-                let newHackPercent = (this.settings.hackPercent ?? 0) * (1 - this.HACK_PCT_SCALAR);
-                newHackPercent = Math.max(round(newHackPercent, 3), this.HACK_PCT_MIN);
-
-                if (newHackPercent !== this.settings.hackPercent) {
-                    setSettings(this.ns, { hackPercent: newHackPercent });
-                }
-            } else if (batchSuccesses >= this.workReadyForBatch.length) {
-
-                let newHackPercent = (this.settings.hackPercent ?? 0) * (1 + this.HACK_PCT_SCALAR);
-                newHackPercent = Math.min(round(newHackPercent, 3), this.HACK_PCT_MAX);
-
-                if (newHackPercent !== this.settings.hackPercent) {
-                    setSettings(this.ns, { hackPercent: newHackPercent });
-                }
-
-            }
-
-        } else {
-            let minHackTarget = this.targetWorkInfos.find(w => !isReadyForBatch(w));
-            if (minHackTarget) {
-                singleHack(this.ns, minHackTarget.target.hostname);
-            }
-        }
-
-        this.prepAllTargets();
 
     }
 
     private async doMaxBatches(): Promise<number> {
-
-        console.log(`${timestamp()} Running batches!`);
         const MAX_PASSES = 5;
 
         let totalSuccessfulBatchCount = 0;
@@ -447,7 +531,7 @@ class MegaController {
 
         let batchRunThisPass = false;
 
-        let maxBatchRamToUse = this.DEFAULT_RAM_USAGE_SETTINGS.batchPct * this.ramUsage.totalMax;
+        let maxBatchRamToUse = this.adjustedBatchPct * this.ramUsage.totalMax;
         let batchRamUsed = this.ramUsage.batchRam;
         //let batchUsagePercent = batchRamUsed / this.ramUsage.totalMax;
 
@@ -489,6 +573,114 @@ class MegaController {
         return totalSuccessfulBatchCount;
     }
 
+
+
+    private findNextAugmentationToWorkToward(): ITargetAugmentation | undefined {
+
+        //based on the Rep we have right now,
+        // which faction has the augmentation that requires the least additional reputation?
+        let allFactions: IFaction[] = [];
+
+
+        //only include hacking factions that we've joined, else we might not be able to work for them yet.
+        let joinedHackingFactions = Object.values(HACK_FACTIONS).filter(faction => this.player.factions.includes(faction.name));
+        allFactions.push(...joinedHackingFactions);
+
+        allFactions.push(...Object.values(COMPANY_FACTIONS));
+
+        //only add gang factions we've already joined, since they're hard to join
+        let joinedGangFactions = Object.values(GANG_FACTIONS).filter(gangFac => this.player.factions.includes(gangFac.name));
+        allFactions.push(...joinedGangFactions);
+
+
+        let availableCityFactions = getAvailableCityFactions(this.ns);
+        allFactions.push(...availableCityFactions);
+
+        if (this.player.factions.includes(OTHER_FACTIONS.netburner.name)) {
+            allFactions.push(OTHER_FACTIONS.netburner);
+        }
+
+        //if we have a Gang, remove it's faction because we can't 'work' for them directly
+        if (this.ns.gang.inGang()) {
+            let gangFaction = this.ns.gang.getGangInformation().faction;
+            allFactions = allFactions.filter(f => f.name !== gangFaction);
+        }
+
+        let lowestAdditionsRepCostAdjusted = Number.MAX_VALUE;
+        let lowestAdditionalRepCost = Number.MAX_VALUE;
+
+        //TODO
+        //we want to find the FACTION that we want to target first
+        //then find the next augment in that faction
+
+        let targetAug: ITargetAugmentation | undefined;
+
+        let repMult = this.player.faction_rep_mult;
+
+        for (let i = 0; i < allFactions.length; i++) {
+            let faction = allFactions[i];
+            let factionFavorMult = 1 + (this.ns.singularity.getFactionFavor(faction.name) / 100.0);
+
+            let totalRepMult = factionFavorMult * repMult;
+
+
+            let neededAugments = getUnownedFactionAugmentations(this.ns, faction.name);
+
+            //filter out non hacking augments
+            neededAugments = neededAugments.filter(a => {
+                return !NON_HACKING_AUGMENTS.find(nha => nha === a);
+            });
+
+
+            if (neededAugments.length > 0) {
+                for (let i1 = 0; i1 < neededAugments.length; i1++) {
+                    const a = neededAugments[i1];
+                    let rawRepCost = this.ns.singularity.getAugmentationRepReq(a);
+                    let currRep = this.ns.singularity.getFactionRep(faction.name);
+                    let moneyCost = this.ns.singularity.getAugmentationPrice(a);
+
+                    let additionalRepCost = rawRepCost - currRep;
+                    let adjustedRepCost = additionalRepCost / totalRepMult;
+
+                    if (isCompanyFaction(faction.name)) {
+                        let company = getCompany(this.ns, faction.name);
+                        if (company) {
+                            //we need to take into consideration how long it would take to join the company
+                            let compRep = this.ns.singularity.getCompanyRep(faction.name);
+                            let additionalCompanyRep = company?.repNeededForInvite - compRep;
+
+                            let companyFavorMult = 1 + (this.ns.singularity.getCompanyFavor(faction.name) / 100.0);
+                            let repMult = this.player.company_rep_mult;
+
+                            let totalCompanyMult = companyFavorMult * repMult;
+                            additionalCompanyRep /= totalCompanyMult;
+
+                            adjustedRepCost += additionalCompanyRep;
+                        }
+
+                    }
+
+                    //if we already have the rep for a desired aug, we'll just buy it when we have the money
+                    if (adjustedRepCost < lowestAdditionsRepCostAdjusted && adjustedRepCost > 0) {
+
+                        lowestAdditionsRepCostAdjusted = adjustedRepCost;
+
+                        targetAug = {
+                            augName: a,
+                            fromFaction: faction,
+                            additionalRepNeeded: additionalRepCost,
+                            totalRepCost: rawRepCost,
+                            moneyCost: moneyCost
+                        };
+                        lowestAdditionalRepCost = additionalRepCost;
+                    }
+                }
+            }
+        }
+
+        return targetAug;
+    }
+
     private prepAllTargets(): { growThreadsStarted: number, weakenThreadsStarted: number, } {
         let weakenThreadsStarted = 0;
         let growThreadsStarted = 0;
@@ -499,7 +691,7 @@ class MegaController {
         for (const work of this.targetWorkInfos) {
             if (prepPercent < this.adjustedPrepPct) {
 
-                weakenThreadsStarted += useAvailableRunnersForWork(this.ns, work.target.hostname, SCRIPTS.weaken, work.threadInfos[TaskType.weaken], 1);
+                weakenThreadsStarted += useRunnersForWork(this.ns, this.runners, work.target.hostname, SCRIPTS.weaken, work.threadInfos[TaskType.weaken], 1);
                 growThreadsStarted += useAvailableRunnersForWork(this.ns, work.target.hostname, SCRIPTS.grow, work.threadInfos[TaskType.grow], 1);
 
                 prepRamUsed += weakenThreadsStarted * this.singleWeakenRam;
@@ -512,7 +704,7 @@ class MegaController {
             }
 
         }
-        return { weakenThreadsStarted, growThreadsStarted };
+        return {weakenThreadsStarted, growThreadsStarted};
     }
 
     private purchaseAvailableAugmentations() {
@@ -520,7 +712,7 @@ class MegaController {
         this.unownedAugmentationInfo.sort((a, b) => b.moneyCost - a.moneyCost);
         this.unownedAugmentationInfo.forEach(augInfo => {
             //we have the money to buy it
-            if (this.player.money >= augInfo.moneyCost) {
+            if (this.availableMoney >= augInfo.moneyCost) {
 
                 let currRepWithFaction = 0;
                 let currFavorWithFaction = 0;
@@ -530,12 +722,12 @@ class MegaController {
                     currFavorWithFaction = factionInfo.favor;
                 } else {
                     //TODO move this to updateData()
-                    currRepWithFaction = this.ns.getFactionRep(augInfo.faction);
-                    currFavorWithFaction = this.ns.getFactionFavor(augInfo.faction);
+                    currRepWithFaction = this.ns.singularity.getFactionRep(augInfo.faction);
+                    currFavorWithFaction = this.ns.singularity.getFactionFavor(augInfo.faction);
                 }
 
                 if (augInfo.repRequirement <= currRepWithFaction) {
-                    let success = this.ns.purchaseAugmentation(augInfo.faction, augInfo.name);
+                    let success = this.ns.singularity.purchaseAugmentation(augInfo.faction, augInfo.name);
                     if (success) {
                         this.ns.toast(`'${augInfo.name}' purchased from ${augInfo.faction}!`, TOAST_VARIANT.success, TOAST_DURATION);
 
@@ -545,7 +737,7 @@ class MegaController {
                         let augsForThisFaction = this.unownedAugmentationInfo.filter(a => a.faction === augInfo.faction);
                         if (augsForThisFaction.length === 0 && this.player.isWorking && this.player.currentWorkFactionName === augInfo.faction) {
                             this.ns.toast(`Purchased the last augmentation from ${augInfo.faction}!`, TOAST_VARIANT.info, TOAST_DURATION);
-                            this.ns.stopAction();
+                            this.ns.singularity.stopAction();
                         }
 
                     } else {
@@ -566,10 +758,10 @@ class MegaController {
                         let donationAmountNeeded = getDonationNeededForReputation(this.ns, additionalRepNeeded);
 
                         if (this.player.money >= augInfo.moneyCost + donationAmountNeeded) {
-                            let success = this.ns.donateToFaction(augInfo.faction, donationAmountNeeded);
+                            let success = this.ns.singularity.donateToFaction(augInfo.faction, donationAmountNeeded);
                             if (success) {
                                 this.ns.toast(
-                                    `Donated ${formatCurrency(donationAmountNeeded)} to ${augInfo.faction} for ${additionalRepNeeded} reputation!`,
+                                    `Donated ${formatCurrency(donationAmountNeeded)} to ${augInfo.faction} for ${formatBigNumber(additionalRepNeeded)} reputation!`,
                                     TOAST_VARIANT.success,
                                     TOAST_DURATION
                                 );
@@ -597,25 +789,83 @@ class MegaController {
         this.settings = getSettings(this.ns);
 
         this.player = this.ns.getPlayer();
+        this.availableMoney = getAvailablePlayerMoney(this.ns, this.player, this.settings);
         this.targetWorkInfos = getAllTargetWorkInfo(this.ns);
+
+
         this.workReadyForBatch = this.targetWorkInfos.filter(w => isReadyForBatch(w));
-        console.log(`this.workReadyForBatch count: ${this.workReadyForBatch.length}`);
+
+        this.targetAug = this.findNextAugmentationToWorkToward();
+        /*
+                //we we're targeting a hacking faction that we haven't joined yet,
+                //we won't be 'doing' anything.
+                //Find an augment we CAN work towards
+                if (this.targetAug) {
+                    let factionName = this.targetAug.fromFaction.name;
+                    if (isHackingFaction(factionName) && !this.player.factions.includes(factionName)) {
+                        this.targetAug = this.findNextAugmentationToWorkToward();
+                    }
+                }
+        */
+
+        if (this.targetAug) {
+
+
+
+            if (this.targetAug.moneyCost <= this.availableMoney) {
+                //we have enough money,
+                //turn down batch %
+                this.adjustedBatchPct = .1;
+                this.adjustedSharePct = .5;
+                this.adjustedExpPct = .5;
+            } else {
+                this.adjustedBatchPct = this.DEFAULT_RAM_USAGE_SETTINGS.batchPct;
+                this.adjustedSharePct = this.DEFAULT_RAM_USAGE_SETTINGS.sharePct;
+                this.adjustedExpPct = this.DEFAULT_RAM_USAGE_SETTINGS.expPct;
+            }
+        }
+
+        if (this.player.isWorking && this.player.currentWorkFactionName) {
+            this.doSharing = true;
+        } else {
+            //since we're not using it for sharing, might as well use it for exp
+            this.adjustedExpPct += this.adjustedSharePct;
+            this.adjustedSharePct = 0;
+        }
+
+        let expTarget = this.targetWorkInfos.find(t => t.target.hostname === EXP_TARGET);
+        if (expTarget) {
+            //only run exp work if the EXP Target doesn't need weakening
+            if (expTarget.threadInfos[TaskType.weaken].moreNeeded === 0) {
+                this.doEXPing = true;
+
+            } else {
+                debugLog(this.ns, DebugLevel.warn, `[${EXP_TARGET}] needed weakening!`);
+            }
+        } else {
+            debugLog(this.ns, DebugLevel.warn, `Missing exp target! [${EXP_TARGET}]`);
+        }
+
+
 
         if (this.workReadyForBatch.length === 0) {
             //if we have nothing ready for batch, let prep use all the ram
             this.adjustedPrepPct *= 1.1;
-            this.adjustedPrepPct = Math.min(1.00, this.adjustedPrepPct);
+            let MAX_PREP_RAM = .8;
+            this.adjustedPrepPct = Math.min(MAX_PREP_RAM, this.adjustedPrepPct);
         } else {
             this.adjustedPrepPct = this.DEFAULT_RAM_USAGE_SETTINGS.prepPct;
         }
+
+
 
         this.playerFactionInfo = [];
         this.unownedAugmentationInfo = [];
         this.player.factions.forEach(faction => {
             this.playerFactionInfo.push({
                 name: faction,
-                reputation: this.ns.getFactionRep(faction),
-                favor: this.ns.getFactionFavor(faction)
+                reputation: this.ns.singularity.getFactionRep(faction),
+                favor: this.ns.singularity.getFactionFavor(faction)
             });
 
             let remainingAugs = getUnownedFactionAugmentations(this.ns, faction);
@@ -623,8 +873,8 @@ class MegaController {
                 if (!NON_HACKING_AUGMENTS.includes(aug)) {
                     this.unownedAugmentationInfo.push({
                         name: aug,
-                        moneyCost: this.ns.getAugmentationPrice(aug),
-                        repRequirement: this.ns.getAugmentationRepReq(aug),
+                        moneyCost: this.ns.singularity.getAugmentationPrice(aug),
+                        repRequirement: this.ns.singularity.getAugmentationRepReq(aug),
                         faction: faction
                     });
                 }
@@ -644,10 +894,228 @@ class MegaController {
 
         this.totalMoneyGain = this.scriptMoneyGain + this.gangMoneyGain + this.hacknetMoneyGain;
 
+        if (this.batchSuccesses === 0) {
+            //decrease the hack percent
+            let newHackPercent = (this.settings.hackPercent ?? 0) * (1 - this.HACK_PCT_SCALAR);
+            newHackPercent = Math.max(round(newHackPercent, 3), this.HACK_PCT_MIN);
+
+            if (newHackPercent !== this.settings.hackPercent) {
+                setSettings(this.ns, {hackPercent: newHackPercent});
+            }
+        } else if (this.batchSuccesses >= this.workReadyForBatch.length) {
+
+            let newHackPercent = (this.settings.hackPercent ?? 0) * (1 + this.HACK_PCT_SCALAR);
+            newHackPercent = Math.min(round(newHackPercent, 3), this.HACK_PCT_MAX);
+
+            if (newHackPercent !== this.settings.hackPercent) {
+                setSettings(this.ns, {hackPercent: newHackPercent});
+            }
+
+        }
+
+        this.runners = getAllRunners(this.ns);
+
     }
 
     private updateRunTime() {
         this.scriptRunTime = new Date().getTime() - this.lastStartTime;
     }
 
+    private upgradeHomeComputer() {
+
+        if (this.availableMoney > this.ns.singularity.getUpgradeHomeRamCost()) {
+            let success = this.ns.singularity.upgradeHomeRam();
+            if (success) {
+                let server = this.ns.getServer(HOME);
+                this.ns.toast(`Home Computer RAM upgraded to ${formatBigRam(server.maxRam)}!!`, TOAST_VARIANT.info, TOAST_DURATION);
+            }
+        } else if (this.player.money > this.ns.singularity.getUpgradeHomeCoresCost()) {
+            let success = this.ns.singularity.upgradeHomeCores();
+            if (success) {
+                let server = this.ns.getServer(HOME);
+                this.ns.toast(`Home Computer Cores upgraded to ${server.cpuCores}!!`, TOAST_VARIANT.info, TOAST_DURATION);
+            }
+        }
+    }
+
+    private async doExtra() {
+
+
+
+    }
+
+    private async doExtraShare(): Promise<number> {
+        let shareThreads = 0;
+
+
+        if (this.player.isWorking && this.player.currentWorkFactionName) {
+
+            let ramUsedToShare = this.ramUsage.shareRam;
+            let maxRamToUse = this.ramUsage.totalMax * this.adjustedSharePct;
+            let singleShareRam = this.ns.getScriptRam(SCRIPTS.myShare);
+
+
+            for (const runner of this.runners) {
+                let availableThreads = getThreadsAvailableForScript(this.ns, runner.hostname, SCRIPTS.myShare);
+                availableThreads = Math.floor(availableThreads * .8);
+                if (availableThreads > 0) {
+                    let procId = this.ns.exec(SCRIPTS.myShare, runner.hostname, availableThreads, getRandomId());
+                    if (procId > 0) {
+                        //debugLog(this.ns, DebugLevel.success, `Starting ${availableThreads} share threads!`);
+                        shareThreads += availableThreads;
+                        let ramUsed = availableThreads * singleShareRam;
+                        runner.freeRam -= ramUsed;
+                        ramUsedToShare += ramUsed;
+                    } else {
+                        debugLog(this.ns, DebugLevel.error, `Unable to start ${availableThreads} share threads on ${runner.hostname}!`);
+                    }
+                }
+                if (ramUsedToShare >= maxRamToUse) {
+                    break;
+                }
+
+            }
+
+        }
+        return shareThreads;
+    }
+
+    private async doExtraGainExp(): Promise<number> {
+        let extraThreads = 0;
+
+        let usage = getAllRamUsage(this.ns);
+        let singleExpRam = this.ns.getScriptRam(SCRIPTS.expGain);
+        let expRamUsage = this.ramUsage.expRam;
+        let expPercent = expRamUsage / this.ramUsage.totalMax;
+
+        let maxPasses = 10;
+        let currPass = 0;
+
+        while (expPercent < this.adjustedExpPct && currPass < maxPasses) {
+            currPass++;
+            let runner = getFirstAvailableRunnerForScript(this.ns, SCRIPTS.expGain);
+            if (runner) {
+                let availableThreads = getThreadsAvailableForScript(this.ns, runner, SCRIPTS.expGain);
+                let threadsToRun = Math.floor(availableThreads);
+                if (threadsToRun > 0) {
+
+                    let procId = this.ns.exec(SCRIPTS.expGain, runner, threadsToRun, EXP_TARGET, getRandomId());
+                    if (procId > 0) {
+                        extraThreads += threadsToRun;
+                        expRamUsage += threadsToRun * singleExpRam;
+                        //debugLog(this.ns, DebugLevel.success, `Running ${threadsToRun} EXP Gain threads`);
+                    } else {
+                        debugLog(this.ns, DebugLevel.error, `Unable to run EXP script on ${EXP_TARGET}`);
+                    }
+                }
+            } else {
+                //debugLog(this.ns, DebugLevel.warn, `No available runners to run EXP script on ${EXP_TARGET}`);
+            }
+
+            usage = getAllRamUsage(this.ns);
+            expPercent = this.ramUsage.expRam / this.ramUsage.totalMax;
+
+            await this.ns.sleep(10);
+        }
+
+        return extraThreads;
+
+    }
+
+    private async doRunnerWork() {
+
+
+        if (this.workReadyForBatch.length > 0) {
+            this.batchSuccesses = await this.doMaxBatches();
+
+        } else {
+            let minHackTarget = this.targetWorkInfos.find(w => !isReadyForBatch(w));
+            if (minHackTarget) {
+                let runner = filterFirstAvailableRunnerForScriptThreads(this.ns, this.runners, SCRIPTS.hack, 1);
+                if (runner) {
+                    let pid = runHack(this.ns, runner.hostname, minHackTarget.target.hostname, 1);
+                    if (pid) {
+                        runner.freeRam -= this.ns.getScriptRam(SCRIPTS.hack);
+                    } else {
+
+                    }
+                } else {
+                    //debugLog(ns, DebugLevel.warn, `No available runner for singleHack()`);
+
+                }
+
+                //singleHack(this.ns, minHackTarget.target.hostname);
+            }
+        }
+
+
+
+        this.prepAllTargets();
+
+        if (this.doSharing) {
+            await this.doExtraShare();
+        }
+
+        if (this.doEXPing) {
+            await this.doExtraGainExp();
+        }
+    }
+
+    private async doReputationWork() {
+        let targetFaction: IFaction;
+
+        if (this.targetAug) {
+            targetFaction = this.targetAug.fromFaction;
+
+
+
+            let bigFactionProgress: any[] = [];
+            bigFactionList.forEach(faction => {
+                if (this.player.factions.includes(faction.name)) {
+                    let currFavor = this.ns.singularity.getFactionFavor(faction.name);
+                    let gainedFavor = this.ns.singularity.getFactionFavorGain(faction.name);
+
+                    let nextResetAmount = calcNextFavorResetAmount(this.ns, currFavor);
+                    let remainingFavorUntilReset = nextResetAmount - currFavor - gainedFavor;
+
+
+                    bigFactionProgress.push({
+                        faction: faction,
+                        currFavor,
+                        gainedFavor,
+                        nextResetAmount,
+                        remainingFavorUntilReset
+                    });
+                }
+            });
+
+
+
+            //if we're ready to reset this faction, we can target the next big faction
+            bigFactionProgress = bigFactionProgress.filter(f => f.remainingFavorUntilReset > 0);
+            bigFactionProgress = bigFactionProgress.filter(f => {
+                let factionAugments = getUnownedFactionAugmentations(this.ns, f.faction.name);
+                factionAugments = factionAugments.filter(aug => !NON_HACKING_AUGMENTS.includes(aug));
+                return factionAugments.length > 0;
+            });
+            if (bigFactionProgress.length > 0) {
+                bigFactionProgress.sort((a, b) => {
+                    return a.nextResetAmount - b.nextResetAmount ||
+                        a.remainingFavorUntilReset - b.remainingFavorUntilReset;
+                });
+                targetFaction = bigFactionProgress[0].faction;
+            }
+
+
+
+            debugLog(this.ns, DebugLevel.info, `Target Faction to work on: ${targetFaction.name}`, bigFactionProgress);
+            workOnReputation(this.ns, targetFaction, this.targetAug.totalRepCost, this.settings.autoSwitchTasks);
+
+            await doDonationReset(this.ns, bigFactionList);
+
+        } else {
+            debugLog(this.ns, DebugLevel.warn, `No target augmentation!`);
+        }
+
+    }
 }

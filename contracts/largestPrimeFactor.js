@@ -9,46 +9,46 @@ A prime factor is a factor that is a prime number. What is the largest prime fac
 
 //finds primes up to a given number
 
-let targetNumber = 948027250;
+//let targetNumber = 948027250;
+//let targetNumber = 159311770;
 
-let primes = sieveOfEratosthenes(targetNumber/2);
-
-console.log(primes);
+let targetNumber = 159311770;
 
 
-function sieveOfEratosthenes(maxNumber) {
-    let numbers = [false, false];
-    for (let i = 2; i <= maxNumber; i++) {
-        numbers.push(true)
+//let primes = sieveOfEratosthenes(targetNumber / 2);
+//console.log(`Prime Numbers:`, primes);
+
+let largestPrimeFactor = maxPrimeFactor(targetNumber);
+
+console.log(`Largest Prime factor of ${targetNumber}: ${largestPrimeFactor}`)
+
+
+function maxPrimeFactor(n) {
+    let maxPrime = -1;
+    while (n % 2 === 0) {
+        n = n / 2;
+        maxPrime = 2;
     }
 
+    while (n % 3 === 0) {
+        n = n / 3;
+        maxPrime = 3;
+    }
 
-    let currPrime = 2;
-
-    while (currPrime < maxNumber / 2) {
-
-        let i = 2;
-        let multipleOfPrime = 0;
-        while (multipleOfPrime <= maxNumber) {
-            multipleOfPrime = currPrime * i;
-            numbers[multipleOfPrime] = false;
-            i++;
+    for (let i = 5; i <= Math.sqrt(n); i += 6) {
+        while (n % i === 0) {
+            maxPrime = i;
+            n = n / i;
         }
-
-        currPrime = numbers.findIndex((value, index) => index > currPrime && value === true)
-        if (!currPrime) {
-            break;
+        while (n % (i + 2) === 0) {
+            maxPrime = i + 2;
+            n = n / (i + 2);
         }
     }
 
-    numbers = numbers.map((isPrime, index) => {
-        if (isPrime) {
-            return index;
-        } else {
-            return 0;
-        }
-    });
-
-    return numbers.filter(n => n > 0);
-
+    if (n > 4) {
+        return n;
+    } else {
+        return maxPrime;
+    }
 }

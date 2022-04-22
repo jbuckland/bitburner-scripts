@@ -24,5 +24,5 @@ Output: [1*0+5, 10-5]
 let numberString = '10951';
 let target = -37;
 
-//9*5=45
+//["46998", 4]
 

@@ -1,9 +1,9 @@
-import { displayHeader } from '/lib/utils-player';
-import { FlagSchema, IGlobalSettings } from '/types';
-import { addScripts } from 'addScripts';
-import { DebugLevel, HacknetMode, HashSpendOptions, TOAST_DURATION, TOAST_VARIANT } from 'lib/consts';
-import { debugLog, formatBigNumber, formatCurrency, getHacknetHashGain, getSettings, indent, round, timestamp } from 'lib/utils';
-import { AutocompleteData, Hacknet, NodeStats, NS, Player } from 'NetscriptDefinitions';
+import {displayHeader} from '/lib/utils-player';
+import {FlagSchema, IGlobalSettings} from '/types';
+import {addScripts} from 'addScripts';
+import {DebugLevel, HacknetMode, HashSpendOptions, TOAST_DURATION, TOAST_VARIANT} from 'lib/consts';
+import {debugLog, formatBigNumber, formatCurrency, getAvailablePlayerMoney, getHacknetHashGain, getSettings, indent, round, timestamp} from 'lib/utils';
+import {AutocompleteData, Hacknet, NodeStats, NS, Player} from 'NetscriptDefinitions';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     data.flags(flagSchema);
@@ -115,7 +115,7 @@ class HacknetController {
     public updateData() {
         this.settings = getSettings(this.ns);
         this.player = this.ns.getPlayer();
-        this.availableMoney = this.player.money * this.MONEY_PCT_TO_USE;//only spend up to 75% of current money
+        this.availableMoney = getAvailablePlayerMoney(this.ns, this.player, this.settings);
         this.upgradeData = this.getUpgradeData();
         if (this.upgradeData.length > 0) {
             this.upgradeData = this.upgradeData.filter(u => u.costBenefit < (this.settings.maxHashCostBen ?? 0));
@@ -181,7 +181,7 @@ class HacknetController {
 
         this.ns.print('Hacknet Info:');
         this.ns.print(`${indent()}Node Count: ${this.hnNodeCount}, Next Cost: ${formatCurrency(this.newNodeCost)}`);
-        this.ns.print(`${indent()}Hashes: ${round(this.ns.hacknet.numHashes(), 1)}, ${round(getHacknetHashGain(this.ns), 2)}/sec`);
+        this.ns.print(`${indent()}Hashes: ${round(this.ns.hacknet.numHashes(), 1)}, ${round(getHacknetHashGain(this.ns), 3).toFixed(3)}/sec`);
         this.ns.print(`${indent()}Using Hashes to '${this.spendTarget}'`);
         this.ns.print('');
 
@@ -193,7 +193,7 @@ class HacknetController {
             let cost = `\$${formatBigNumber(this.bestUpgrade.upgradeCost)}`;
             let costBen = formatCurrency(this.bestUpgrade.costBenefit);
             this.ns.print(`${indent()}Next: [${name}] +${type}`);
-            this.ns.print(`${indent()}Cost: ${cost}, Benefit: ${round(this.bestUpgrade.upgradeBenefit, 6)}, Cost/Ben: ${costBen}`);
+            this.ns.print(`${indent()}Cost: ${cost}, Benefit: ${round(this.bestUpgrade.upgradeBenefit, 3).toFixed(3)}, Cost/Ben: ${costBen}`);
         }
 
         this.ns.print('');

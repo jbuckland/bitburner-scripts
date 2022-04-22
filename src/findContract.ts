@@ -1,9 +1,11 @@
-import { HOSTS } from 'lib/consts';
-import { NS } from 'NetscriptDefinitions';
+import {ITableData, Table} from '/lib/utils-table';
+import {HOSTS} from 'lib/consts';
+import {NS} from 'NetscriptDefinitions';
 
 interface IContract {
     name: string;
     host: string;
+    type: string;
 }
 
 export async function main(ns: NS) {
@@ -18,7 +20,11 @@ export async function main(ns: NS) {
         let files = ns.ls(host);
 
         let hostContacts = files.filter(f => f.endsWith('.cct')).map(c => {
-            return { host: host, name: c } as IContract;
+            return {
+                host: host,
+                name: c,
+                type: ns.codingcontract.getContractType(c, host)
+            } as IContract;
         });
 
         contractList.push(...hostContacts);
@@ -27,11 +33,24 @@ export async function main(ns: NS) {
 
     if (contractList.length > 0) {
         ns.print(`Found ${contractList.length} contracts!`);
+
+        let table = new Table(ns);
+        let tableData: ITableData[] = [];
+
         contractList.forEach(cont => {
-            ns.print(`${cont.host}: ${cont.name}`);
+            tableData.push({
+                'Server': cont.host,
+                'Type': cont.type,
+                'Filename': cont.name
+            });
+            //ns.print(`${cont.host}: ${cont.name}`);
         });
 
-        await navigator.clipboard.writeText(`lconnect ${contractList[0].host}`);
+        table.setData(tableData);
+        table.headerRow['Type'].align = 'left';
+
+        table.print();
+        await navigator.clipboard.writeText(`lcon ${contractList[0].host}`);
         ns.print(`Connect command for first contract copied to clipboard!`);
 
     } else {

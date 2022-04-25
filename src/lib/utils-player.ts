@@ -40,7 +40,6 @@ import {
     getTotalIncome,
     getUnownedFactionAugmentations,
     hasRedPillInstalled,
-    hasRemainingAugmentionsToBuy,
     indent,
     logBase,
     longConnect,
@@ -656,8 +655,11 @@ export function joinFactions(ns: NS) {
 
     invites.forEach(factionName => {
         if (!cityFactions.includes(factionName)) {
-            ns.singularity.joinFaction(factionName);
-            ns.toast(`Joined ${factionName}!`, TOAST_VARIANT.info, TOAST_DURATION);
+
+            if (getUnownedFactionAugmentations(ns, factionName).length > 0) {
+                ns.singularity.joinFaction(factionName);
+                ns.toast(`Joined ${factionName}!`, TOAST_VARIANT.info, TOAST_DURATION);
+            }
         }
     });
 
@@ -727,7 +729,7 @@ export async function purchaseAvailableAugmentations(ns: NS) {
         if (remainingAugs.length === 0 && player.isWorking && player.currentWorkFactionName === faction) {
 
             ns.toast(`Purchased the last augmentation from ${faction}!`, TOAST_VARIANT.info, TOAST_DURATION);
-            if (hasRemainingAugmentionsToBuy(ns)) {
+            if (getUnownedFactionAugmentations(ns, faction).length === 0) {
                 ns.singularity.stopAction();
             }
 

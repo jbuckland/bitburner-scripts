@@ -1,12 +1,9 @@
 import {ITableData, Table} from '/lib/utils-table';
+import {IContract} from '/types';
 import {HOSTS} from 'lib/consts';
 import {NS} from 'NetscriptDefinitions';
 
-interface IContract {
-    name: string;
-    host: string;
-    type: string;
-}
+
 
 export async function main(ns: NS) {
     ns.tail();
@@ -36,6 +33,8 @@ export async function main(ns: NS) {
 
         let table = new Table(ns);
         let tableData: ITableData[] = [];
+
+        contractList.sort((a, b) => a.type.localeCompare(b.type));
 
         contractList.forEach(cont => {
             tableData.push({

@@ -1,5 +1,5 @@
 import {SCRIPTS} from '/lib/consts';
-import {getAllRunners, getThreadsAvailableForScript} from '/lib/utils';
+import {formatPercent, getAllRunners, getThreadsAvailableForRamUse, Timer} from '/lib/utils';
 import {displayHeader} from '/lib/utils-player';
 import {NS} from '/NetscriptDefinitions';
 
@@ -10,43 +10,61 @@ export async function main(ns: NS) {
 
 }
 
+
+
 class ShareController {
-    private SLEEP_TIME: number = 1000;
+    private SLEEP_TIME: number = 10010;
     private lastRunTime: number = 0;
     private runTime: number = 0;
     private shareThreadsStarted: number = 0;
+    private shareBonus: number = 0;
+    private timer: Timer;
 
     constructor(private ns: NS) {
         ns.tail();
         ns.disableLog('ALL');
-
+        this.timer = new Timer(this);
     }
 
     public async doRun() {
 
+
+
+        let runners = getAllRunners(this.ns);
+        let shareRamUse = this.ns.getScriptRam(SCRIPTS.myShare);
+
         while (true) {
+            this.timer.startTimer('headerStuff');
             this.lastRunTime = new Date().getTime();
             this.updateData();
+            this.displayInfo();
+            this.timer.stopTimer('headerStuff');
 
 
-            let runners = getAllRunners(this.ns);
-
+            this.timer.startTimer('sharing');
             this.shareThreadsStarted = 0;
             runners.forEach(runner => {
 
-                let threadsAvailable = getThreadsAvailableForScript(this.ns, runner.hostname, SCRIPTS.myShare);
+
+                let threadsAvailable = getThreadsAvailableForRamUse(this.ns, runner.hostname, shareRamUse);
                 if (threadsAvailable > 0) {
+                    this.timer.startTimer('sharing:exec');
                     let pid = this.ns.exec(SCRIPTS.myShare, runner.hostname, threadsAvailable);
+                    this.timer.stopTimer('sharing:exec');
                     if (pid > 0) {
                         this.shareThreadsStarted += threadsAvailable;
                     }
 
                 }
             });
+            this.timer.stopTimer('sharing');
 
 
-            this.displayInfo();
             this.runTime = new Date().getTime() - this.lastRunTime;
+
+            this.timer.printAll(this.ns);
+            this.timer.resetAll();
+
             await this.ns.sleep(this.SLEEP_TIME);
         }
 
@@ -57,12 +75,15 @@ class ShareController {
         displayHeader(this.ns, this.runTime);
         this.ns.print(`Share threads started this pass: ${this.shareThreadsStarted}`);
 
+        this.ns.print(`Share bonus: +${formatPercent(this.shareBonus)}%`);
+
+
         //stuff here
 
 
     }
 
     private updateData() {
-
+        this.shareBonus = this.ns.getSharePower() - 1;
     }
 }

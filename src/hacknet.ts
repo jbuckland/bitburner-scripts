@@ -1,9 +1,9 @@
-import { displayHeader } from '/lib/utils-player';
-import { FlagSchema, IGlobalSettings } from '/types';
-import { addScripts } from 'addScripts';
-import { DebugLevel, HacknetMode, HashSpendOptions, TOAST_DURATION, TOAST_VARIANT } from 'lib/consts';
-import { debugLog, formatBigNumber, formatCurrency, getAvailablePlayerMoney, getHacknetHashGain, getSettings, indent, round, timestamp } from 'lib/utils';
-import { AutocompleteData, Hacknet, NodeStats, NS, Player } from 'NetscriptDefinitions';
+import {displayHeader} from '/lib/utils-player';
+import {FlagSchema, IGlobalSettings} from '/types';
+import {addScripts} from 'addScripts';
+import {DebugLevel, HacknetMode, HashSpendOptions, TOAST_DURATION, TOAST_VARIANT} from 'lib/consts';
+import {debugLog, formatBigNumber, formatCurrency, getAvailablePlayerMoney, getHacknetHashGain, getSettings, indent, round, timestamp} from 'lib/utils';
+import {AutocompleteData, Hacknet, NodeStats, NS, Player} from 'NetscriptDefinitions';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     data.flags(flagSchema);
@@ -65,6 +65,7 @@ class HacknetController {
     private player!: Player;
     private settings!: IGlobalSettings;
     private upgradeData: HacknetUpgrade[] = [];
+    private COST_MULTIPLIER: number = 2;
 
     constructor(private ns: NS, private spendTarget: HashSpendOptions) {
         this.hn = ns.hacknet;
@@ -98,7 +99,7 @@ class HacknetController {
 
                 if (this.bestUpgrade) {
 
-                    if (this.availableMoney >= this.bestUpgrade.upgradeCost) {
+                    if (this.availableMoney >= this.bestUpgrade.upgradeCost * this.COST_MULTIPLIER) {
                         this.buyUpgrade(this.bestUpgrade);
                         this.availableMoney -= this.bestUpgrade.upgradeCost;
                     }
@@ -130,6 +131,9 @@ class HacknetController {
         }
         this.newNodeCost = this.hn.getPurchaseNodeCost();
         this.hnNodeCount = this.hn.numNodes();
+
+        this.ns.formulas.hacknetServers.constants();
+
     }
 
     private async buyNextNode() {
@@ -186,7 +190,7 @@ class HacknetController {
         this.ns.print('');
 
         this.ns.print(`Upgrades:`);
-        this.ns.print(`${indent()}Max Cost/Ben: ${formatCurrency(this.settings.maxHashCostBen ?? 0)}`);
+        this.ns.print(`${indent()}Max Cost/Ben: ${formatCurrency(this.settings.maxHashCostBen ?? 0,1)}`);
         if (this.bestUpgrade) {
             let name = this.bestUpgrade.node.name;
             let type = this.bestUpgrade.upgradeType;

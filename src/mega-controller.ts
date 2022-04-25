@@ -1,10 +1,12 @@
-import { addScripts } from '/addScripts';
+import {addScripts} from '/addScripts';
 import {
-    COMPANY_FACTIONS,
+    CITY_FACTIONS,
     DARK_DATA,
     DebugLevel,
+    FactionType,
     GANG_FACTIONS,
     HACK_FACTIONS,
+    HACKING_AUGMENTS,
     HOME,
     MAX_HOME_SERVER_RAM,
     NON_HACKING_AUGMENTS,
@@ -14,7 +16,7 @@ import {
     TOAST_DURATION,
     TOAST_VARIANT
 } from '/lib/consts';
-import { useAvailableRunnersForWork, useRunnersForWork } from '/lib/hack-utils';
+import {useAvailableRunnersForWork, useRunnersForWork} from '/lib/hack-utils';
 import {
     debugLog,
     filterFirstAvailableRunnerForScriptThreads,
@@ -41,7 +43,7 @@ import {
     runHack,
     setSettings
 } from '/lib/utils';
-import { getAllTargetWorkInfo, isReadyForBatch } from '/lib/utils-controller';
+import {getAllTargetWorkInfo, isReadyForBatch} from '/lib/utils-controller';
 import {
     bigFactionList,
     calcNextFavorResetAmount,
@@ -54,7 +56,6 @@ import {
     displayServerStats,
     displayWorldDaemonProgress,
     doInstallReset,
-    getAvailableCityFactions,
     getCompany,
     getHomeServers,
     getNextHomeServerSize,
@@ -69,11 +70,11 @@ import {
     purchaseProgram,
     workOnReputation
 } from '/lib/utils-player';
-import { NS, Player } from '/NetscriptDefinitions';
-import { getRunnerJobsForScript, makeBatchRequest } from '/old-controllers/batch';
-import { IRamUsage } from '/old-controllers/home-controller';
-import { doDonationReset } from '/old-controllers/player-controller';
-import { IBatchRequest, IDarkwebTool, IFaction, IGlobalSettings, IRamUsageSettings, IRunnerJob, ITargetWorkInfo, RunnerInfo, TaskType } from '/types';
+import {NS, Player} from '/NetscriptDefinitions';
+import {getRunnerJobsForScript, makeBatchRequest} from '/old-controllers/batch';
+import {IRamUsage} from '/old-controllers/home-controller';
+import {doDonationReset} from '/old-controllers/player-controller';
+import {IBatchRequest, IDarkwebTool, IFaction, IGlobalSettings, IRamUsageSettings, IRunnerJob, ITargetWorkInfo, RunnerInfo, TaskType} from '/types';
 
 export async function main(ns: NS) {
 
@@ -109,8 +110,10 @@ interface IPlayerTools {
     sql: boolean;
 }
 
+
+
 class MegaController {
-    private readonly DEFAULT_RAM_USAGE_SETTINGS: IRamUsageSettings = { batchPct: .80, prepPct: .40, sharePct: .10, expPct: .99 };
+    private readonly DEFAULT_RAM_USAGE_SETTINGS: IRamUsageSettings = {batchPct: .80, prepPct: .40, sharePct: .10, expPct: .99};
     private readonly HACK_PCT_MAX: number = .90;
     private readonly HACK_PCT_MIN: number = 0.005;
     private readonly HACK_PCT_SCALAR: number = 0.1;
@@ -149,6 +152,7 @@ class MegaController {
     private runners: RunnerInfo[] = [];
     private favorToDonate: number = 0;
 
+
     constructor(private ns: NS) {
         ns.tail();
         ns.disableLog('ALL');
@@ -184,7 +188,10 @@ class MegaController {
 
             await this.tryPurchaseServer();
 
-            await this.doRunnerWork();
+            if (this.settings.doRunnerWork) {
+                await this.doRunnerWork();
+
+            }
 
             await leaveTheCave(this.ns);
 
@@ -442,14 +449,14 @@ class MegaController {
         let jobs: IRunnerJob[] = [];
 
         let batchPartParams = [
-            { script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack },
+            {script: SCRIPTS.batchHack, threads: request.hackThreadCount, delay: request.delayUntilHack},
             {
                 script: SCRIPTS.batchWeaken,
                 threads: request.weakenThreadsNeededFromHack,
                 delay: request.delayUntilWeakenHack
             },
-            { script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow },
-            { script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow }
+            {script: SCRIPTS.batchGrow, threads: request.growThreadsNeeded, delay: request.delayUntilGrow},
+            {script: SCRIPTS.batchWeaken, threads: request.weakenThreadsNeededFromGrow, delay: request.delayUntilWeakenGrow}
         ];
         let batchId = request.batchId;
         for (const param of batchPartParams) {
@@ -496,7 +503,7 @@ class MegaController {
                 if (runner) {
                     runner.freeRam -= j.ramUsed;
                 } else {
-                    debugLog(this.ns, DebugLevel.error, `Could not find runner ${j.runner} for the job!`, { job: j });
+                    debugLog(this.ns, DebugLevel.error, `Could not find runner ${j.runner} for the job!`, {job: j});
                 }
             }
 
@@ -562,34 +569,129 @@ class MegaController {
         return totalSuccessfulBatchCount;
     }
 
+
+    private getFactionWorkInfo(): IFactionWorkInfo[] {
+
+        //PlayerObjectGeneralMethods.tsx checkForFactionInvitations()
+
+
+        let factionWorkInfos: IFactionWorkInfo[] = [];
+        /*
+          * include if we can immediately work on the faction or not
+          * isFactionJoined
+          * timeToJoinFaction ??
+            * city faction require money
+            * gang factions require -karma
+            * hacking factions effectively require hack skill
+            * netburner requires certain level of a hacknode
+            * companies require company rep
+            * daedalus requires a bunch of stuff
+          * augRepRequirement
+          * augMoneyCost
+          * remainingAugsAfterNext
+         */
+        let allFactions = [
+            ...Object.values(GANG_FACTIONS),
+            ...Object.values(CITY_FACTIONS),
+            ...Object.values(HACK_FACTIONS),
+            ...Object.values(OTHER_FACTIONS)
+        ];
+
+        //TODO replace this with settings
+        let buyHackingAugs: boolean = true;
+        let buyCombatAugs: boolean = false;
+        let buyBBAugs: boolean = false;
+        let buyCompanyAugs: boolean = false;
+        let buyHacknetAugs: boolean = false;
+
+
+        let augmentationList: any[] = [];
+
+
+
+        Object.values(GANG_FACTIONS).forEach(faction => {
+
+
+            let unownedAugs = getUnownedFactionAugmentations(this.ns, faction.name);
+
+            //we only care about some augs
+            unownedAugs = unownedAugs.filter(aug => {
+                return (buyHackingAugs && HACKING_AUGMENTS.includes(aug)) ||
+                    (buyCombatAugs && NON_HACKING_AUGMENTS.includes(aug));
+            });
+
+            unownedAugs.forEach(augName => {
+
+                if (!augmentationList.some(a => a.name === augName)) {
+                    augmentationList.push({
+                        preReqCount: this.ns.singularity.getAugmentationPrereq(augName).length,
+                        moneyCost: this.ns.singularity.getAugmentationPrice(augName),
+                        repRequired: this.ns.singularity.getAugmentationRepReq(augName)
+
+                    });
+
+                }
+
+            });
+
+            let facWorkInfo = {
+                name: faction.name,
+                type: FactionType.gang,
+                isJoined: this.player.factions.includes(faction.name),
+                timeToJoin:-1,
+                wantedAugCount: unownedAugs.length
+
+            };
+
+
+
+        });
+
+
+
+        return factionWorkInfos;
+    }
+
     private findNextAugmentationToWorkToward(): ITargetAugmentation | undefined {
 
         //based on the Rep we have right now,
         // which faction has the augmentation that requires the least additional reputation?
-        let allFactions: IFaction[] = [];
+        let allFactions: IFaction[] = this.player.factions.map(factionName => {
+            return {name: factionName};
+        });
+        allFactions = allFactions.filter(f => f.name !== OTHER_FACTIONS.cotmg.name);
 
-        //only include hacking factions that we've joined, else we might not be able to work for them yet.
-        let joinedHackingFactions = Object.values(HACK_FACTIONS).filter(faction => this.player.factions.includes(faction.name));
-        allFactions.push(...joinedHackingFactions);
 
-        allFactions.push(...Object.values(COMPANY_FACTIONS));
-
-        //only add gang factions we've already joined, since they're hard to join
-        let joinedGangFactions = Object.values(GANG_FACTIONS).filter(gangFac => this.player.factions.includes(gangFac.name));
-        allFactions.push(...joinedGangFactions);
-
-        let availableCityFactions = getAvailableCityFactions(this.ns);
-        allFactions.push(...availableCityFactions);
-
-        if (this.player.factions.includes(OTHER_FACTIONS.netburner.name)) {
-            allFactions.push(OTHER_FACTIONS.netburner);
-        }
 
         //if we have a Gang, remove it's faction because we can't 'work' for them directly
         if (this.ns.gang.inGang()) {
             let gangFaction = this.ns.gang.getGangInformation().faction;
             allFactions = allFactions.filter(f => f.name !== gangFaction);
         }
+        /*
+                //only include hacking factions that we've joined, else we might not be able to work for them yet.
+                let joinedHackingFactions = Object.values(HACK_FACTIONS).filter(faction => this.player.factions.includes(faction.name));
+                allFactions.push(...joinedHackingFactions);
+        
+                allFactions.push(...Object.values(COMPANY_FACTIONS));
+        
+                //only add gang factions we've already joined, since they're hard to join
+                let joinedGangFactions = Object.values(GANG_FACTIONS).filter(gangFac => this.player.factions.includes(gangFac.name));
+                allFactions.push(...joinedGangFactions);
+        
+                //let availableCityFactions = getAvailableCityFactions(this.ns);
+                //allFactions.push(...availableCityFactions);
+                
+                //if we have a Gang, remove it's faction because we can't 'work' for them directly
+                if (this.ns.gang.inGang()) {
+                    let gangFaction = this.ns.gang.getGangInformation().faction;
+                    allFactions = allFactions.filter(f => f.name !== gangFaction);
+                }
+                
+                if (this.player.factions.includes(OTHER_FACTIONS.netburner.name)) {
+                    allFactions.push(OTHER_FACTIONS.netburner);
+                }
+                */
 
         let lowestAdditionsRepCostAdjusted = Number.MAX_VALUE;
         let lowestAdditionalRepCost = Number.MAX_VALUE;
@@ -602,10 +704,8 @@ class MegaController {
 
         let repMult = this.player.faction_rep_mult;
 
-        for (let i = 0; i < allFactions.length; i++) {
-            let faction = allFactions[i];
+        allFactions.forEach(faction => {
             let factionFavorMult = 1 + (this.ns.singularity.getFactionFavor(faction.name) / 100.0);
-
             let totalRepMult = factionFavorMult * repMult;
 
             let neededAugments = getUnownedFactionAugmentations(this.ns, faction.name);
@@ -659,7 +759,7 @@ class MegaController {
                     }
                 }
             }
-        }
+        });
 
         return targetAug;
     }
@@ -687,7 +787,7 @@ class MegaController {
             }
 
         }
-        return { weakenThreadsStarted, growThreadsStarted };
+        return {weakenThreadsStarted, growThreadsStarted};
     }
 
     private purchaseAvailableAugmentations() {
@@ -820,7 +920,7 @@ class MegaController {
                 this.doEXPing = true;
 
             } else {
-                debugLog(this.ns, DebugLevel.warn, `[${EXP_TARGET}] needed weakening!`);
+                //debugLog(this.ns, DebugLevel.warn, `[${EXP_TARGET}] needed weakening!`);
             }
         } else {
             debugLog(this.ns, DebugLevel.warn, `Missing exp target! [${EXP_TARGET}]`);
@@ -876,7 +976,7 @@ class MegaController {
             newHackPercent = Math.max(round(newHackPercent, 3), this.HACK_PCT_MIN);
 
             if (newHackPercent !== this.settings.hackPercent) {
-                setSettings(this.ns, { hackPercent: newHackPercent });
+                setSettings(this.ns, {hackPercent: newHackPercent});
             }
         } else if (this.batchSuccesses >= this.workReadyForBatch.length) {
 
@@ -884,7 +984,7 @@ class MegaController {
             newHackPercent = Math.min(round(newHackPercent, 3), this.HACK_PCT_MAX);
 
             if (newHackPercent !== this.settings.hackPercent) {
-                setSettings(this.ns, { hackPercent: newHackPercent });
+                setSettings(this.ns, {hackPercent: newHackPercent});
             }
 
         }
@@ -1082,4 +1182,7 @@ class MegaController {
         }
 
     }
+}
+
+interface IFactionWorkInfo {
 }

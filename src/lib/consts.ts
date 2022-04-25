@@ -1,6 +1,6 @@
-import { ICityFaction, ICompanyFaction, IControllerConfig, IDarkwebTool, IFaction, IHackFaction, IServerFaction } from 'types';
+import {ICityFaction, ICompanyFaction, IControllerConfig, IDarkwebTool, IFaction, IHackFaction, IServerFaction} from 'types';
 
-export const WORLD_DAEMON: IServerFaction = { name: 'w0r1d_d43m0n', hostname: 'w0r1d_d43m0n' };
+export const WORLD_DAEMON: IServerFaction = {name: 'w0r1d_d43m0n', hostname: 'w0r1d_d43m0n'};
 export const DEFAULT_RAM_BUFFER = 90;
 export const DEFAULT_TARGET_HACK_PERCENT = .1;
 export const HOME = 'home';
@@ -124,53 +124,55 @@ export enum TOAST_VARIANT {
 export const DARK_DATA = {
     torCost: 200000,
     tools: {
-        brute: { name: 'BruteSSH.exe', cost: 500000, createSkill: 50 } as IDarkwebTool,
-        ftp: { name: 'FTPCrack.exe', cost: 1500000, createSkill: 100 } as IDarkwebTool,
-        smtp: { name: 'relaySMTP.exe', cost: 5000000, createSkill: 250 } as IDarkwebTool,
-        http: { name: 'HTTPWorm.exe', cost: 30000000, createSkill: 500 } as IDarkwebTool,
-        scan1: { name: 'DeepscanV1.exe', cost: 500000, createSkill: 75 } as IDarkwebTool,
-        scan2: { name: 'DeepscanV2.exe', cost: 25000000, createSkill: 400 } as IDarkwebTool,
-        sql: { name: 'SQLInject.exe', cost: 250000000, createSkill: 750 } as IDarkwebTool,
-        alink: { name: 'AutoLink.exe', cost: 1000000, createSkill: 25 } as IDarkwebTool,
-        prof: { name: 'ServerProfiler.exe', cost: 500000, createSkill: 50 } as IDarkwebTool
+        brute: {name: 'BruteSSH.exe', cost: 500000, createSkill: 50} as IDarkwebTool,
+        ftp: {name: 'FTPCrack.exe', cost: 1500000, createSkill: 100} as IDarkwebTool,
+        smtp: {name: 'relaySMTP.exe', cost: 5000000, createSkill: 250} as IDarkwebTool,
+        http: {name: 'HTTPWorm.exe', cost: 30000000, createSkill: 500} as IDarkwebTool,
+        scan1: {name: 'DeepscanV1.exe', cost: 500000, createSkill: 75} as IDarkwebTool,
+        scan2: {name: 'DeepscanV2.exe', cost: 25000000, createSkill: 400} as IDarkwebTool,
+        sql: {name: 'SQLInject.exe', cost: 250000000, createSkill: 750} as IDarkwebTool,
+        alink: {name: 'AutoLink.exe', cost: 1000000, createSkill: 25} as IDarkwebTool,
+        prof: {name: 'ServerProfiler.exe', cost: 500000, createSkill: 50} as IDarkwebTool
 
     }
 };
 
+export enum FactionType {
+    gang = 'Gang',
+    city = 'City',
+    hack = 'Hack',
+    other = 'Other'
+}
+
 export const GANG_FACTIONS = {
-    snakes: { name: 'Slum Snakes' } as IFaction,
-    tetrads: { name: 'Tetrads' } as IFaction,
-    silhouette: { name: 'Silhouette' } as IFaction,
-    speakers: { name: 'Speakers for the Dead' } as IFaction,
-    army: { name: 'The Dark Army' } as IFaction,
-    syndicate: { name: 'The Syndicate' } as IFaction
+    snakes: {name: 'Slum Snakes'} as IFaction,
+    tetrads: {name: 'Tetrads'} as IFaction,
+    silhouette: {name: 'Silhouette'} as IFaction,
+    speakers: {name: 'Speakers for the Dead'} as IFaction,
+    army: {name: 'The Dark Army'} as IFaction,
+    syndicate: {name: 'The Syndicate'} as IFaction
 
 };
 
 export const HACK_FACTIONS = {
-    csec: { name: 'CyberSec', hostname: 'CSEC' } as IHackFaction,
-    nite: { name: 'NiteSec', hostname: 'avmnite-02h' } as IHackFaction,
-    blackHand: { name: 'The Black Hand', hostname: 'I.I.I.I' } as IHackFaction,
-    bitrunners: { name: 'BitRunners', hostname: 'run4theh111z' } as IHackFaction,
-    daedalus: { name: 'Daedalus', hostname: '' } as IHackFaction
+    csec: {name: 'CyberSec', hostname: 'CSEC'} as IHackFaction,
+    nite: {name: 'NiteSec', hostname: 'avmnite-02h'} as IHackFaction,
+    blackHand: {name: 'The Black Hand', hostname: 'I.I.I.I'} as IHackFaction,
+    bitrunners: {name: 'BitRunners', hostname: 'run4theh111z'} as IHackFaction,
+    daedalus: {name: 'Daedalus', hostname: ''} as IHackFaction
 };
-
-export enum CITIES {
-    aevum = 'Aevum',
-
-}
 
 export const OTHER_FACTIONS = {
-    netburner: { name: 'Netburners' } as IFaction,
-    cotmg: { name: 'Church of the Machine God' }
+    netburner: {name: 'Netburners'} as IFaction,
+    cotmg: {name: 'Church of the Machine God'}
 };
 export const CITY_FACTIONS = {
-    aevum: { name: 'Aevum', homeCity: 'Aevum' } as ICityFaction,
-    sec12: { name: 'Sector-12', homeCity: 'Sector-12' } as ICityFaction,
-    tian: { name: 'Tian Di Hui', homeCity: 'Chongqing' } as ICityFaction,
-    tokyo: { name: 'New Tokyo', homeCity: 'New Tokyo' } as ICityFaction,
-    vol: { name: 'Volhaven', homeCity: 'Volhaven' } as ICityFaction,
-    ishi: { name: 'Ishima', homeCity: 'Ishima' } as ICityFaction
+    aevum: {name: 'Aevum', homeCity: 'Aevum'} as ICityFaction,
+    sec12: {name: 'Sector-12', homeCity: 'Sector-12'} as ICityFaction,
+    tian: {name: 'Tian Di Hui', homeCity: 'Chongqing'} as ICityFaction,
+    tokyo: {name: 'New Tokyo', homeCity: 'New Tokyo'} as ICityFaction,
+    vol: {name: 'Volhaven', homeCity: 'Volhaven'} as ICityFaction,
+    ishi: {name: 'Ishima', homeCity: 'Ishima'} as ICityFaction
 
 };
 
@@ -381,10 +383,10 @@ export enum SCRIPTS_OLD_CONTROLLERS {
 }
 
 export const playerControllers: IControllerConfig[] = [
-    { scriptName: SCRIPTS_OLD_CONTROLLERS.playerController0, sequenceNumber: 0, ramBuffer: 16, ramReq: 0 },
-    { scriptName: SCRIPTS_OLD_CONTROLLERS.playerController1, sequenceNumber: 1, ramBuffer: 32, ramReq: 0 },
-    { scriptName: SCRIPTS_OLD_CONTROLLERS.playerController2, sequenceNumber: 2, ramBuffer: 32, ramReq: 0 },
-    { scriptName: SCRIPTS_OLD_CONTROLLERS.playerController, sequenceNumber: 3, ramBuffer: 190, ramReq: 0 }
+    {scriptName: SCRIPTS_OLD_CONTROLLERS.playerController0, sequenceNumber: 0, ramBuffer: 16, ramReq: 0},
+    {scriptName: SCRIPTS_OLD_CONTROLLERS.playerController1, sequenceNumber: 1, ramBuffer: 32, ramReq: 0},
+    {scriptName: SCRIPTS_OLD_CONTROLLERS.playerController2, sequenceNumber: 2, ramBuffer: 32, ramReq: 0},
+    {scriptName: SCRIPTS_OLD_CONTROLLERS.playerController, sequenceNumber: 3, ramBuffer: 190, ramReq: 0}
 ];
 
 export const OVERVIEW_EXTRA_0_ID = 'overview-extra-hook-0';
@@ -504,6 +506,8 @@ export const FragmentEffect: { [key: number]: string } = {
     6: 'Hack() power',
     7: 'Grow() power',
 
+    10: 'Strength Skill',
+
     12: 'Defense Skill',
     14: 'Dexterity Skill',
     16: 'Agility Skill',
@@ -527,23 +531,40 @@ export type StanekFragmentLocation = { x: number, y: number, id: number, rotatio
 export const STANEK_PATTERNS = {
     x5y6: {
         hacking: [
-            { 'x': 4, 'y': 2, 'id': 25, 'rotation': 3 },
-            { 'x': 0, 'y': 3, 'id': 28, 'rotation': 0 },
-            { 'x': 0, 'y': 2, 'id': 0, 'rotation': 0 },
-            { 'x': 4, 'y': 0, 'id': 1, 'rotation': 1 },
-            { 'x': 1, 'y': 0, 'id': 6, 'rotation': 2 },
-            { 'x': 0, 'y': 0, 'id': 5, 'rotation': 3 },
-            { 'x': 2, 'y': 1, 'id': 101, 'rotation': 1 }
+            {'x': 4, 'y': 2, 'id': 25, 'rotation': 3},
+            {'x': 0, 'y': 3, 'id': 28, 'rotation': 0},
+            {'x': 0, 'y': 2, 'id': 0, 'rotation': 0},
+            {'x': 4, 'y': 0, 'id': 1, 'rotation': 1},
+            {'x': 1, 'y': 0, 'id': 6, 'rotation': 2},
+            {'x': 0, 'y': 0, 'id': 5, 'rotation': 3},
+            {'x': 2, 'y': 1, 'id': 101, 'rotation': 1}
         ],
         hack_hacknet_rep: [
-            { 'x': 4, 'y': 0, 'id': 1, 'rotation': 1 },
-            { 'x': 1, 'y': 0, 'id': 6, 'rotation': 2 },
-            { 'x': 0, 'y': 0, 'id': 5, 'rotation': 3 },
-            { 'x': 1, 'y': 1, 'id': 0, 'rotation': 0 },
-            { 'x': 0, 'y': 3, 'id': 21, 'rotation': 0 },
-            { 'x': 3, 'y': 2, 'id': 25, 'rotation': 0 },
-            { 'x': 2, 'y': 4, 'id': 20, 'rotation': 0 }
+            {'x': 4, 'y': 0, 'id': 1, 'rotation': 1},
+            {'x': 1, 'y': 0, 'id': 6, 'rotation': 2},
+            {'x': 0, 'y': 0, 'id': 5, 'rotation': 3},
+            {'x': 1, 'y': 1, 'id': 0, 'rotation': 0},
+            {'x': 0, 'y': 3, 'id': 21, 'rotation': 0},
+            {'x': 3, 'y': 2, 'id': 25, 'rotation': 0},
+            {'x': 2, 'y': 4, 'id': 20, 'rotation': 0}
         ]
 
     } as StanekPatternCollection
 };
+
+
+export enum CodingContractType {
+    unknown = 'UNKNOWN',
+    arrayJumpingGame2 = 'Array Jumping Game II',
+    algorithmicStockTrader1 = 'Algorithmic Stock Trader I',
+    algorithmicStockTrader2 = 'Algorithmic Stock Trader II',
+    algorithmicStockTrader3 = 'Algorithmic Stock Trader III',
+    findAllValidMathExpressions = 'Find All Valid Math Expressions',
+    hammingCodesBinToInt = 'HammingCodes: Encoded Binary to Integer',
+    hammingCodesIntToBin = 'HammingCodes: Integer to encoded Binary',
+    mergeOverlappingIntervals = 'Merge Overlapping Intervals',
+    sanitizeParens = `Sanitize Parentheses in Expression`,
+    subarrayWithMaxSum = 'Subarray with Maximum Sum',
+    uniquePathsInAGrid1 = 'Unique Paths in a Grid I',
+    uniquePathsInAGrid2 = 'Unique Paths in a Grid II',
+}

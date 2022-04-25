@@ -1,4 +1,4 @@
-import { IRamUsage } from '/old-controllers/home-controller';
+import {IRamUsage} from '/old-controllers/home-controller';
 import {
     CITY_FACTIONS,
     COMPANY_FACTIONS,
@@ -19,8 +19,8 @@ import {
     SCRIPTS,
     THE_RED_PILL
 } from 'lib/consts';
-import { ActiveFragment, NS, Player } from 'NetscriptDefinitions';
-import { IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo } from 'types';
+import {ActiveFragment, NS, Player} from 'NetscriptDefinitions';
+import {IDebugMessage, IFaction, IGlobalSettings, IServerNode, ITargetWorkInfo, RunnerInfo, ServerInfo} from 'types';
 
 export function timerStart(ns: NS, label: string) {
     let settings = getSettings(ns);
@@ -141,7 +141,7 @@ export function findServerNodeRecursive(currentNode: IServerNode, targetHostname
  * gets the server node tree starting with HOME
  */
 export function getServerTree(ns: NS): IServerNode {
-    let rootNode: IServerNode = { hostname: HOME, children: [] };
+    let rootNode: IServerNode = {hostname: HOME, children: []};
     rootNode.children = getChildrenRecursive(rootNode);
 
     return rootNode;
@@ -473,21 +473,7 @@ export function getAllFactions(): IFaction[] {
     return factions;
 }
 
-export function hasRemainingAugmentionsToBuy(ns: NS) {
-    let hasMoreAugs = false;
 
-    let allFactions = getAllFactions();
-
-    for (let i = 0; i < allFactions.length; i++) {
-        let faction = allFactions[i];
-
-        if (getUnownedFactionAugmentations(ns, faction.name).length > 0) {
-            hasMoreAugs = true;
-            break;
-        }
-    }
-    return hasMoreAugs;
-}
 
 export function getUnownedFactionAugmentations(ns: NS, factionName: string): string[] {
     let factionAugments = ns.singularity.getAugmentationsFromFaction(factionName);
@@ -495,6 +481,21 @@ export function getUnownedFactionAugmentations(ns: NS, factionName: string): str
 
     let remainingFactionAugments = factionAugments.filter(a => !myAugments.includes(a));
     return remainingFactionAugments;
+}
+
+
+export function getThreadsAvailableForRamUse(ns: NS, hostname: string, scriptRamUsage: number) {
+
+    let hostFreeRam = getServerFreeRam(ns, hostname);
+
+    //Hack to reserve some free ram on HOME
+    if (hostname === HOME) {
+        hostFreeRam = Math.max(0, hostFreeRam - getReservedHomeRam(ns));
+    }
+
+
+    return Math.floor(hostFreeRam / scriptRamUsage);
+
 }
 
 export function getThreadsAvailableForScript(ns: NS, hostname: string, scriptName: string) {
@@ -776,6 +777,7 @@ export function getSettings(ns: NS): IGlobalSettings {
         autoStartWork: true,
         forceSwitchWork: true,
         debug: false,
+        doRunnerWork: true,
         hackPercent: DEFAULT_TARGET_HACK_PERCENT,
         ramBuffer: DEFAULT_RAM_BUFFER,
         crimeMode: CrimeMode.money,
@@ -1036,4 +1038,138 @@ export function myIsBusy(ns: NS): boolean {
     }
 
     return defaultIsBusy || bbIsBusy;
+}
+
+
+
+export interface ITiming {
+    name: string;
+    start: number;
+    end: number;
+    duration: number;
+    runCount: number;
+
+}
+
+
+export class Timer {
+    constructor(private parent: any) {
+    }
+
+    public timings: { [key: string]: ITiming } = {};
+
+    /**
+     * Starts a timer. If a timer with the same name already exists, it will reset the start time.
+     * @param name
+     */
+    public startTimer(name: string) {
+        let timer = this.timings[name];
+        if (!timer) {
+            timer = {
+                name: name,
+                start: 0,
+                end: 0,
+                duration: 0,
+                runCount: 0
+            };
+            this.timings[name] = timer;
+        }
+        timer.start = new Date().getTime();
+
+
+    }
+
+    public stopTimer(name: string) {
+        let timer = this.timings[name];
+        if (timer) {
+            timer.end = new Date().getTime();
+            timer.duration += timer.end - timer.start;
+
+            timer.runCount++;
+            timer.start = 0;
+        }
+
+    }
+
+    public getTimer(name: string): ITiming | undefined {
+        return this.timings[name];
+    }
+
+
+
+    public logAll() {
+        console.log(`Timers for: ${this.parent.constructor.name}`);
+        Object.values(this.timings).forEach(timing => {
+            if (timing.runCount > 1) {
+                console.log(`[${timing.name}]: Avg: ${timing.duration / timing.runCount}ms, Total: ${timing.duration}ms, Count: ${timing.runCount}`);
+            } else {
+                console.log(`[${timing.name}]: ${timing.duration}ms`);
+            }
+
+        });
+    }
+
+    public printAll(ns: NS) {
+        ns.print(`Timer Info:`);
+        Object.values(this.timings).forEach(timing => {
+            if (timing.runCount > 1) {
+                ns.print(`[${timing.name}]: Avg: ${round(timing.duration / timing.runCount, 2)}ms, Total: ${round(timing.duration, 2)}ms, Count: ${timing.runCount}`);
+            } else {
+                ns.print(`[${timing.name}]: ${round(timing.duration, 2)}ms`);
+            }
+
+        });
+    }
+
+
+    public resetAll() {
+        this.timings = {};
+    }
+
+
+}
+
+
+export function convertBool(value: string): boolean | undefined {
+
+    if (value === 'true') {
+        return true;
+    } else if (value === 'false') {
+        return false;
+    } else {
+        return undefined;
+    }
+}
+
+
+export class ValueGainAverage {
+    private expEntries: { time: number, value: number }[] = [];
+
+    public averageDuration: number = 120000;
+
+    public addEntry(value: number) {
+        this.expEntries.push({time: new Date().getTime(), value: value});
+    }
+
+    public getAverage(): number {
+        let avgValueGain = 0;
+
+        let now = new Date().getTime();
+        this.expEntries = this.expEntries.filter(e => now - e.time < this.averageDuration);
+        this.expEntries.sort((a, b) => a.time - b.time);
+
+
+        if (this.expEntries.length > 1) {
+            let longestAgo = this.expEntries[0];
+            let mostRecent = this.expEntries[this.expEntries.length - 1];
+
+            let duration = (mostRecent.time - longestAgo.time) / 1000.0;
+            let valueGain = mostRecent.value - longestAgo.value;
+            avgValueGain = valueGain / duration;
+        }
+
+        return avgValueGain;
+
+    }
+
 }

@@ -28,9 +28,10 @@ const scriptList = [
     SCRIPTS.weaken,
     SCRIPTS.expGain,
     SCRIPTS.chargeFragment,
+    SCRIPTS.myShare,
 
     //these are utility files
-    'share.js',
+
     '/lib/consts.js',
     '/lib/utils.js'
 

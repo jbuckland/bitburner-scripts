@@ -1,9 +1,9 @@
-import { CrimeMode, FragmentEffect, OTHER_FACTIONS, SCRIPTS, STANEK_PATTERNS } from '/lib/consts';
-import { formatBigNumber, getAllRunners, runChargeFragment } from '/lib/utils';
-import { displayHeader } from '/lib/utils-player';
-import { ITableData, Table } from '/lib/utils-table';
-import { ActiveFragment, AutocompleteData, Fragment, NS } from '/NetscriptDefinitions';
-import { FlagSchema } from '/types';
+import {CrimeMode, FragmentEffect, OTHER_FACTIONS, SCRIPTS, STANEK_PATTERNS} from '/lib/consts';
+import {formatBigNumber, getAllRunners, runChargeFragment} from '/lib/utils';
+import {displayHeader} from '/lib/utils-player';
+import {ITableData, Table} from '/lib/utils-table';
+import {ActiveFragment, AutocompleteData, Fragment, NS} from '/NetscriptDefinitions';
+import {FlagSchema} from '/types';
 
 export function autocomplete(data: AutocompleteData, args: any[]) {
     console.log(`autocomplete()`, args);
@@ -110,8 +110,8 @@ class StanekController {
                 'Id': frag.id.toString(),
                 'Effect': effectString,
                 'Charge': formatBigNumber(frag.numCharge * frag.highestCharge, 3),
-                'Power': frag.power.toString(),
-                'Charge Threads': formatBigNumber(frag.startedChargeThreads),
+                //'Power': frag.power.toString(),
+                'Threads': formatBigNumber(frag.startedChargeThreads),
                 'Highest Charge': frag.highestCharge.toString()
             });
 
@@ -206,7 +206,7 @@ class StanekController {
 
     public async loadPattern() {
 
-        let selection = await this.ns.prompt('Select the pattern to load', { type: 'select', choices: Object.keys(STANEK_PATTERNS.x5y6) });
+        let selection = await this.ns.prompt('Select the pattern to load', {type: 'select', choices: Object.keys(STANEK_PATTERNS.x5y6)});
 
         if (selection) {
             let doLoad = await this.ns.prompt(`Are you sure you want to remove all fragments an load the [${selection}] pattern?`);

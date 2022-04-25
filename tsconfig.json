@@ -27,6 +27,6 @@
     }
   },
   "exclude": [
-    "./contracts/*"
+    "./contracts-old/*"
   ]
 }

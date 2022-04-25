@@ -1,8 +1,6 @@
-import {CITY_FACTIONS, COMPANY_FACTIONS, GANG_FACTIONS, HACK_FACTIONS, NON_HACKING_AUGMENTS, OTHER_FACTIONS} from '/lib/consts';
-import {getAvailableCityFactions} from '/lib/utils-player';
-import {getUnownedFactionAugmentations, timestamp} from 'lib/utils';
+import {formatBigTime, timestamp} from 'lib/utils';
 import {NS} from 'NetscriptDefinitions';
-import {IFaction, INetscriptExtra} from 'types';
+import {INetscriptExtra} from 'types';
 
 export async function main(ns: NS & INetscriptExtra) {
     ns.tail();
@@ -40,63 +38,63 @@ export async function main(ns: NS & INetscriptExtra) {
     //get all remaining augments
     let player = ns.getPlayer();
 
-/*
-    let augs: any[] = [];
+    /*
+        let augs: any[] = [];
+    
+    
+        let joinedGangFactions = Object.values(GANG_FACTIONS).filter(gangFac => player.factions.includes(gangFac.name));
+    
+        let allFactions: IFaction[] = [
+            ...Object.values(CITY_FACTIONS),
+            ...Object.values(HACK_FACTIONS),
+            ...Object.values(COMPANY_FACTIONS),
+            ...joinedGangFactions
+        ];
+    
+        allFactions = filterUnavailableCityFactions(ns, allFactions);
+    
+        if (player.factions.includes(OTHER_FACTIONS.netburner.name)) {
+            allFactions.push(OTHER_FACTIONS.netburner);
+        }
+    
+        //if we have a Gang, remove it's faction because we can't 'work' for them directly
+        if (ns.gang.inGang()) {
+            let gangFaction = ns.gang.getGangInformation().faction;
+            allFactions = allFactions.filter(f => f.name !== gangFaction);
+        }
+    
+    
+    
+        allFactions.forEach(faction => {
+    
+            let factionAugs = getUnownedFactionAugmentations(ns, faction.name)
+                .filter(aName => !NON_HACKING_AUGMENTS.includes(aName))
+                //.filter(aName => !augs.some(a => a.name === aName))
+                .map(aName => {
+                    return {
+                        faction: faction.name,
+                        duplicate: augs.some(a => a.name === aName),
+                        name: aName
+                    };
+                });
+    
+            augs.push(...factionAugs);
+    
+    
+        });
+    
+        //augs.sort((a, b) => a.faction.localeCompare(b.faction));
+    
+    
+        augs.forEach(aug => {
+            ns.print(aug);
+        });
+    
+    */
+    let startTime = new Date().getTime();
+    await ns.share();
 
-
-    let joinedGangFactions = Object.values(GANG_FACTIONS).filter(gangFac => player.factions.includes(gangFac.name));
-
-    let allFactions: IFaction[] = [
-        ...Object.values(CITY_FACTIONS),
-        ...Object.values(HACK_FACTIONS),
-        ...Object.values(COMPANY_FACTIONS),
-        ...joinedGangFactions
-    ];
-
-    allFactions = filterUnavailableCityFactions(ns, allFactions);
-
-    if (player.factions.includes(OTHER_FACTIONS.netburner.name)) {
-        allFactions.push(OTHER_FACTIONS.netburner);
-    }
-
-    //if we have a Gang, remove it's faction because we can't 'work' for them directly
-    if (ns.gang.inGang()) {
-        let gangFaction = ns.gang.getGangInformation().faction;
-        allFactions = allFactions.filter(f => f.name !== gangFaction);
-    }
-
-
-
-    allFactions.forEach(faction => {
-
-        let factionAugs = getUnownedFactionAugmentations(ns, faction.name)
-            .filter(aName => !NON_HACKING_AUGMENTS.includes(aName))
-            //.filter(aName => !augs.some(a => a.name === aName))
-            .map(aName => {
-                return {
-                    faction: faction.name,
-                    duplicate: augs.some(a => a.name === aName),
-                    name: aName
-                };
-            });
-
-        augs.push(...factionAugs);
-
-
-    });
-
-    //augs.sort((a, b) => a.faction.localeCompare(b.faction));
-
-
-    augs.forEach(aug => {
-        ns.print(aug);
-    });
-
-*/
-
-    ns.bladeburner.getCurrentAction()
-
-
-    ns.print(ns.singularity.isBusy());
+    let duration = new Date().getTime() - startTime;
+    ns.print(`Share took ${formatBigTime(duration)}`);
 
 }

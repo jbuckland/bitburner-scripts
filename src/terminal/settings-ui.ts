@@ -1,20 +1,67 @@
-﻿import { CrimeMode, DebugLevel, HacknetMode } from 'lib/consts';
-import { debugLog, getSettings, setSettings, timestamp } from 'lib/utils';
-import { addOptionsToSelect, ISelectOption, makeMainUIContainer } from 'lib/utils-ui';
-import { NS } from 'NetscriptDefinitions';
-import { IGlobalSettings, INetscriptExtra } from 'types';
+﻿import {CrimeMode, DebugLevel, HacknetMode} from 'lib/consts';
+import {debugLog, getSettings, setSettings} from 'lib/utils';
+import {addOptionsToSelect, ISelectOption, makeMainUIContainer} from 'lib/utils-ui';
+import {NS} from 'NetscriptDefinitions';
+import {IGlobalSettings, INetscriptExtra} from 'types';
 
 interface ISettingsView {
     setForceSwitchWork(value: boolean): void;
+
     setAutoStartWork(value: boolean): void;
+
     setCrimeModeSelection(value: string): void;
+
     setHacknetModeSelection(hacknetMode: string): void;
+
+    setMaxCostBen(value: number): void;
 }
 
 export async function main(ns: NS & INetscriptExtra) {
     ns.tail();
     ns.clearLog();
     ns.disableLog('ALL');
+
+    let template = `
+        <style>
+            #mainContainer{
+                background-color: rgba(51,63,136,0.19);            
+            }
+            
+            .settingsRow{                
+                padding:5px;
+            }
+            
+            input[type='checkbox']{
+                transform: scale(1.75);
+            }
+            
+            select{
+              font-size: 16px;
+              font-weight: bold;
+            }
+            input{
+              font-size: 16px;
+              font-weight: bold;
+            }
+        
+        </style>
+        
+        <div class="settingsRow">
+            <label>Auto Start Work:</label> <input id="chkAutoStartWork" type="checkbox">
+        </div>
+        <div class="settingsRow">
+            <label>Force Switch Work:</label> <input id="chkForceSwitchWork" type="checkbox">
+        </div>        
+        <div class="settingsRow">
+          <label>Crime Mode:</label> <select id="cmbCrimeMode"></select>
+        </div> 
+        <div class="settingsRow">
+          <label>Hacknet Mode:</label> <select id="cmbHacknetMode"></select>
+        </div>        
+       <!-- <div class="settingsRow">
+          <label>Max Hacknet Cost/Ben:</label> <input id="numMaxCostBen" type="number"/>
+        </div>-->
+        `;
 
     let view: ISettingsView = {
         setHacknetModeSelection(hacknetMode: string): void {
@@ -36,6 +83,11 @@ export async function main(ns: NS & INetscriptExtra) {
             if (chkAutoStartWork) {
                 chkAutoStartWork.checked = value;
             }
+        },
+        setMaxCostBen(value: number) {
+            if (numMaxCostBen && value != numMaxCostBen.valueAsNumber) {
+                numMaxCostBen.valueAsNumber = value;
+            }
         }
     };
 
@@ -43,45 +95,8 @@ export async function main(ns: NS & INetscriptExtra) {
     let chkForceSwitchWork: HTMLInputElement;
     let cmbCrimeMode: HTMLSelectElement;
     let cmbHacknetMode: HTMLSelectElement;
-    let template = `
-        <style>
-            body{
-               /* size: 14px;*/
-            }
-            
-            #mainContainer{
-                background-color: rgba(51,63,136,0.19);            
-            }
-            
-            .settingsRow{                
-                padding:5px;
-            }
-            
-            input[type='checkbox']{
-                /*height:20px;width: 20px;*/
-                   transform: scale(1.75);
-            }
-            
-            select{
-              font-size: 16px;
-              font-weight: bold;
-            }
-        
-        </style>
-        
-        <div class="settingsRow">
-            <label>Auto Start Work:</label> <input id="chkAutoStartWork" type="checkbox">
-        </div>
-        <div class="settingsRow">
-            <label>Force Switch Work:</label> <input id="chkForceSwitchWork" type="checkbox">
-        </div>        
-        <div class="settingsRow">
-          <label>Crime Mode:</label> <select id="cmbCrimeMode"></select>
-        </div> 
-        <div class="settingsRow">
-          <label>Hacknet Mode:</label> <select id="cmbHacknetMode"></select>
-        </div>        
-        `;
+    let numMaxCostBen: HTMLInputElement;
+
 
     let controller = new SettingsUiController(ns, view);
     let mainContainer = makeMainUIContainer(ns);
@@ -99,6 +114,14 @@ export async function main(ns: NS & INetscriptExtra) {
         chkForceSwitchWork = document.getElementById('chkForceSwitchWork') as HTMLInputElement;
         if (chkForceSwitchWork) {
             chkForceSwitchWork.onclick = () => controller.onChange_forceSwitchWork(chkForceSwitchWork.checked);
+        }
+
+        numMaxCostBen = document.getElementById('numMaxCostBen') as HTMLInputElement;
+        if (numMaxCostBen) {
+            //numMaxCostBen.onchange = (event) => controller.onChange_maxCostBen(event.target?.value);
+            numMaxCostBen.addEventListener('change', (event) => {
+                controller.onChange_maxCostBen(numMaxCostBen.valueAsNumber);
+            });
         }
 
         cmbCrimeMode = document.getElementById('cmbCrimeMode') as HTMLSelectElement;
@@ -130,17 +153,17 @@ class SettingsUiController {
     constructor(private ns: NS, private view: ISettingsView) {
 
         for (let crimeModeKey in CrimeMode) {
-            this.crimeModeOptions.push({ text: crimeModeKey, value: crimeModeKey });
+            this.crimeModeOptions.push({text: crimeModeKey, value: crimeModeKey});
         }
         for (let modeKey in HacknetMode) {
-            this.hacknetModeOptions.push({ text: modeKey, value: modeKey });
+            this.hacknetModeOptions.push({text: modeKey, value: modeKey});
         }
 
     }
 
     public init() {
-        this.settings = getSettings(this.ns);
-        if (this.settings) {
+        let updatedSettings = getSettings(this.ns);
+        if (updatedSettings) {
             if (this.settings.crimeMode) {
                 this.view.setCrimeModeSelection(this.settings.crimeMode);
             }
@@ -150,29 +173,39 @@ class SettingsUiController {
 
             this.view.setAutoStartWork(this.settings.autoStartWork ?? false);
             this.view.setForceSwitchWork(this.settings.forceSwitchWork ?? false);
+
+            //if (updatedSettings.maxHashCostBen !== this.settings.maxHashCostBen) {
+            //this.view.setMaxCostBen(this.settings.maxHashCostBen || 0);
+            //}
+
+            this.settings = updatedSettings;
         }
     }
 
     public onChange_crimeMode(value: string) {
         console.log(`onChange_crimeMode()`, value);
         if (value) {
-            setSettings(this.ns, { crimeMode: value as CrimeMode });
+            setSettings(this.ns, {crimeMode: value as CrimeMode});
         }
     }
 
     public onChange_hacknetMode(value: string) {
         debugLog(this.ns, DebugLevel.info, `onChange_hacknetMode(${value})`);
         if (value) {
-            setSettings(this.ns, { hacknetMode: value as HacknetMode });
+            setSettings(this.ns, {hacknetMode: value as HacknetMode});
         }
     }
 
     public onChange_forceSwitchWork(checked: boolean) {
-        setSettings(this.ns, { forceSwitchWork: checked });
+        setSettings(this.ns, {forceSwitchWork: checked});
     }
 
     public onChange_AutoStartWork(checked: boolean) {
-        setSettings(this.ns, { autoStartWork: checked });
+        setSettings(this.ns, {autoStartWork: checked});
+    }
+
+    public onChange_maxCostBen(valueAsNumber: number) {
+        setSettings(this.ns, {maxHashCostBen: valueAsNumber});
     }
 }
 

@@ -1,5 +1,5 @@
-import { CrimeMode, DebugLevel, EventType, HacknetMode } from 'lib/consts';
-import { GangOtherInfoObject } from 'NetscriptDefinitions';
+import {CodingContractType, CrimeMode, DebugLevel, EventType, HacknetMode} from 'lib/consts';
+import {GangOtherInfoObject} from 'NetscriptDefinitions';
 
 export interface ServerInfo {
     currMoney: number;
@@ -92,6 +92,7 @@ export interface IDarkwebTool {
 }
 
 export interface IGlobalSettings {
+    doRunnerWork?: boolean;
     debug?: boolean;
     hackPercent?: number;
     ramBuffer?: number;
@@ -201,4 +202,11 @@ export interface IRunnerJob {
     threads: number,
     ramUsed: number,
     args: any[]
+}
+
+export interface IContract {
+    name: string;
+    host: string;
+    type: CodingContractType;
+    targetFaction?: string;
 }

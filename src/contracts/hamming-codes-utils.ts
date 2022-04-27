@@ -22,9 +22,8 @@ export function convertToBitArray(bitString: string): number[] {
 
 export function convertBitArrayToDecimal(bitArray: number[]) {
     let decNum = 0;
-    bitArray.forEach(bit => {
-        decNum = decNum << 1;
-        decNum = decNum + bit;
+    bitArray.reverse().forEach((bit, index) => {
+        decNum += Math.pow(2, index) * bit;        
     });
     return decNum;
 }

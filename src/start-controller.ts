@@ -17,8 +17,11 @@ export async function main(ns: NS) {
 class StartController {
     private SLEEP_TIME: number = 1000;
     private scriptsToStart: string[] = [
+        SCRIPTS.basicCrime,
+        SCRIPTS.hacknet,
         SCRIPTS.megaController,
-        SCRIPTS.watcher
+        SCRIPTS.watcher,
+        SCRIPTS.stanek
 
     ];
     private runningScriptInfo: IScriptInfo[] = [];

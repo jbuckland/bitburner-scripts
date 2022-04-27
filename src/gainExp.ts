@@ -115,8 +115,8 @@ class TemplateController {
 
     private updateData() {
         this.targetInfo = getServerInfo(this.ns, this.target);
-
         this.targetIsReady = this.targetInfo.currSecurity === this.targetInfo.minSecurity && this.targetInfo.currMoney === this.targetInfo.maxMoney;
+      
 
         this.player = this.ns.getPlayer();
 

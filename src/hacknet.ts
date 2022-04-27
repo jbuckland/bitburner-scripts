@@ -56,7 +56,7 @@ class HacknetController {
     private readonly COST_THRESHOLD_TO_NOTIFY = 1e9;
     private readonly MAX_RAM = 8192;
     private readonly MONEY_PCT_TO_USE = 1;
-    private readonly SLEEP_TIME = 100;
+    private readonly SLEEP_TIME = 1000;
     private availableMoney: number = 0;
     private bestUpgrade: HacknetUpgrade | undefined;
     private hn: Hacknet;
@@ -81,7 +81,7 @@ class HacknetController {
             this.updateData();
             this.displayInfo();
 
-            this.spendHashes();
+
 
             let shouldBuyNode = false;
             if (this.settings.hacknetMode === HacknetMode.money) {
@@ -107,7 +107,7 @@ class HacknetController {
                 }
 
             }
-
+            this.spendHashes();
             await this.ns.sleep(this.SLEEP_TIME);
 
         }
@@ -190,7 +190,7 @@ class HacknetController {
         this.ns.print('');
 
         this.ns.print(`Upgrades:`);
-        this.ns.print(`${indent()}Max Cost/Ben: ${formatCurrency(this.settings.maxHashCostBen ?? 0,1)}`);
+        this.ns.print(`${indent()}Max Cost/Ben: ${formatCurrency(this.settings.maxHashCostBen ?? 0, 1)}`);
         if (this.bestUpgrade) {
             let name = this.bestUpgrade.node.name;
             let type = this.bestUpgrade.upgradeType;

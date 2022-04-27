@@ -25,7 +25,7 @@ export function getCodingContracts(ns: NS): IContract[] {
 
             return {
                 host: host,
-                name: contractFileName,
+                filename: contractFileName,
                 type: ns.codingcontract.getContractType(contractFileName, host),
                 targetFaction: targetFaction
             } as IContract;

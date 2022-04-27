@@ -30,6 +30,7 @@ import {
     formatBigNumber,
     formatBigRam,
     formatBigTime,
+    formatPercent,
     getAllHosts,
     getDonationNeededForReputation,
     getGangIncome,
@@ -41,14 +42,13 @@ import {
     getUnownedFactionAugmentations,
     hasRedPillInstalled,
     indent,
-    logBase,
     longConnect,
     myGetScriptIncome,
     round,
     timestamp
 } from 'lib/utils';
 import {NS, Player} from 'NetscriptDefinitions';
-import {ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer} from 'types';
+import {IAugmentationInfo, ICityFaction, ICompanyFaction, ICompanyJob, IDarkwebTool, IFaction, IRunnerServer} from 'types';
 
 export async function leaveTheCave(ns: NS) {
     let player = ns.getPlayer();
@@ -580,7 +580,9 @@ export function getAvailableCityFactions(ns: NS): ICityFaction[] {
 
 }
 
-export function getAugmentFactionCostInfo(ns: NS, augmentName: string, factionName: string) {
+
+
+export function getAugmentFactionCostInfo(ns: NS, augmentName: string, factionName: string): IAugmentationInfo {
     let player = ns.getPlayer();
     let baseRepCost = ns.singularity.getAugmentationRepReq(augmentName);
     let currRep = ns.singularity.getFactionRep(factionName);
@@ -618,7 +620,7 @@ export function getAugmentFactionCostInfo(ns: NS, augmentName: string, factionNa
         baseAdditionalRepCost,
         totalRepMult,
         adjustedAdditionalRepCost
-    };
+    } as IAugmentationInfo;
 
 }
 
@@ -983,113 +985,158 @@ export function displayRunnerStats(ns: NS) {
 
 }
 
-export function displayFactionProgress(ns: NS) {
+export function displayReputationFactionProgress(ns: NS) {
+
+}
+
+export function displayReputationCompanyProgress(ns: NS) {
+
+}
+
+export function displayReputationProgress(ns: NS) {
 
     let player = ns.getPlayer();
 
-    //show who I AM working for, not who I should be
-    let factionWorkingFor: string | undefined;
+    let workType: 'Faction' | 'Company' | 'Unknown' = 'Unknown';
+    let groupWorkingFor: string | undefined;
 
     if (player.currentWorkFactionName) {
-        factionWorkingFor = player.currentWorkFactionName;
+        groupWorkingFor = player.currentWorkFactionName;
+        workType = 'Faction';
     } else if (player.companyName) {
-        factionWorkingFor = player.companyName;
+        groupWorkingFor = player.companyName;
+        workType = 'Company';
     }
 
-    if (factionWorkingFor) {
+    if (groupWorkingFor && workType !== 'Unknown') {
 
-        let factionTypeString = '';
-        let currRep = 0;
-        let remainingRep = 0;
-        let gainedRep = player.workRepGained;
+        //let currRep = 0;
+        //let currFavor = 0;
+        //let remainingFavorToDonation = 0;
+        //let gainedFavor = 0;
+        //let nextFavorResetAmount = 0;
+        //let remainingFavorToReset = 0;
+        //let remainingRepNeededForReset = 0;
 
-        let currFavor = 0;
-        let remainingFavor = 0;
-        let gainedFavor = 0;
-        let penaltyString = '';
+        //let gainedRep = player.workRepGained;
+        //let repIncome = getReputationGainRate(ns);
 
-        if (player.currentWorkFactionName) {
-            factionTypeString = `Faction`;
-            currRep = ns.singularity.getFactionRep(factionWorkingFor);
-            currFavor = ns.singularity.getFactionFavor(factionWorkingFor);
-            gainedFavor = ns.singularity.getFactionFavorGain(factionWorkingFor);
-        } else if (isCompanyFaction(factionWorkingFor)) {
-            factionTypeString = `Company`;
-            currRep = ns.singularity.getCompanyRep(factionWorkingFor);
-            let company = getCompany(ns, factionWorkingFor);
+
+
+        if (workType === 'Company') {
+            let remainingRep = 0;
+            let currRep = ns.singularity.getCompanyRep(groupWorkingFor);
+            let company = getCompany(ns, groupWorkingFor);
             if (company) {
                 remainingRep = company.repNeededForInvite - currRep;
             }
+            let quitPenalty = getCompanyQuitPenalty(ns, groupWorkingFor);
+            let currFavor = ns.singularity.getCompanyFavor(groupWorkingFor);
 
-            currFavor = ns.singularity.getCompanyFavor(factionWorkingFor);
-            gainedFavor = ns.singularity.getCompanyFavorGain(factionWorkingFor);
+            let gainedRep = player.workRepGained;
+            let repIncome = getReputationGainRate(ns);
 
-            let quitPenalty = getCompanyQuitPenalty(ns, factionWorkingFor);
-            penaltyString = ` (${formatBigNumber(gainedRep * (1 - quitPenalty))} after -${round(quitPenalty * 100)}%)`;
+            //let remainingFavorToReset = nextFavorResetAmount - currFavor - gainedFavor;
+            let gainedFavor = ns.singularity.getCompanyFavorGain(groupWorkingFor);
+            let remainingFavorToDonation = ns.getFavorToDonate() - currFavor - gainedFavor;
 
-        } else {
+
+
+            /////////////////
+            let currentRepString = formatBigNumber(currRep);
+            let gainedRepString = formatBigNumber(gainedRep);
+            let gainRateString = `${formatBigNumber(repIncome)} rep/sec`;
+            let penaltyString = ` (${formatBigNumber(gainedRep * (1 - quitPenalty))} after -${round(quitPenalty * 100)}%)`;
+            let remainingRepString = formatBigNumber(remainingRep);
+
+            let currentFavorString = formatBigNumber(currFavor);
+            let gainedFavorString = formatBigNumber(gainedFavor);
+            let remainingFavorString = '';
+            if (remainingFavorToDonation > 0) {
+                remainingFavorString = `${formatBigNumber(remainingFavorToDonation)}, `;
+            }
+
+            ns.print(`Current Reputation Progress:`);
+            ns.print(`${indent()}${workType}: [${groupWorkingFor}]`);
+
+            ns.print(`${indent()}Reputation: Current: ${currentRepString}, Gained: ${gainedRepString} ${penaltyString}, ${gainRateString}`);
+            ns.print(`${indent(2)}Remaining: ${remainingRepString}`);
+
+            ns.print(`${indent()}Favor: Current: ${currentFavorString}, Gained: ${gainedFavorString}`);
+            //if (bigFaction && remainingFavorToDonation > 0) {
+            //    ns.print(`${indent(2)}Remaining: ${remainingFavorString}, +${round(remainingFavorToReset, 1)} until reset!`);
+            //}
+            ns.print(`${indent(2)}Remaining: ${remainingFavorString}`);
+
+
+
+        } else if (workType === 'Faction') {
+
+
+            let currRep = ns.singularity.getFactionRep(groupWorkingFor);
+            let currFavor = ns.singularity.getFactionFavor(groupWorkingFor);
+            let gainedFavor = ns.singularity.getFactionFavorGain(groupWorkingFor);
+            let remainingFavorToDonation = ns.getFavorToDonate() - currFavor - gainedFavor;
+            let gainedRep = player.workRepGained;
+            let repIncome = getReputationGainRate(ns);
+
+
+            let nextFavorResetAmount = 0;
+            let repNeededThisTimeForReset = 0;
+            let repAtStartOfReset = 0;
+
+            let bigFaction = bigFactionList.find(f => f.name === groupWorkingFor);
+            if (bigFaction) {
+
+                nextFavorResetAmount = calcNextFavorResetAmount(ns, currFavor);
+
+                repAtStartOfReset = ns.formulas.reputation.calculateFavorToRep(currFavor);
+                //let totalFactionRepNeededToDonate = ns.formulas.reputation.calculateFavorToRep(ns.getFavorToDonate());
+                //let additionalRepNeededToDonate = totalFactionRepNeededToDonate - factionRepAtStartOfReset;
+
+                let totalFactionRepNeededToNextReset = ns.formulas.reputation.calculateFavorToRep(nextFavorResetAmount);
+
+                repNeededThisTimeForReset = totalFactionRepNeededToNextReset - repAtStartOfReset - currRep;
+            }
+
+
+            let remainingFavorToReset = nextFavorResetAmount - currFavor - gainedFavor;
+
+
+
+            /////////////////////
+            let currentRepString = formatBigNumber(currRep);
+            let gainedRepString = formatBigNumber(gainedRep);
+            let repGainRateString = `${formatBigNumber(repIncome)} rep/sec`;
+
+            let shareString = `+${formatPercent(ns.getSharePower() - 1)}`;
+
+            let currentFavorString = formatBigNumber(currFavor);
+            let gainedFavorString = formatBigNumber(gainedFavor);
+            let remainingFavorString = formatBigNumber(remainingFavorToDonation);
+            let resetEtaString = makeRepCostTimeString(ns, repNeededThisTimeForReset, (repNeededThisTimeForReset - currRep));
+
+            ns.print(`Current Reputation Progress:`);
+            ns.print(`${indent()}${workType}: [${groupWorkingFor}]`);
+
+            ns.print(`${indent()}Reputation: Current: ${currentRepString}, Gained: ${gainedRepString}, ${repGainRateString}`);
+            ns.print(`${indent()}Share Bonus: ${shareString}`);
+
+            ns.print(`${indent()}Favor: Current: ${currentFavorString}, Gained: ${gainedFavorString}`);
+            if (bigFaction && remainingFavorToDonation > 0) {
+                ns.print(`${indent(2)}Remaining: ${remainingFavorString}, +${round(remainingFavorToReset, 1)} until reset!`);
+
+
+
+                ns.print(`${indent(2)}${resetEtaString}`);
+            }
+
+
 
         }
 
-        //////////////////////
-        // Header
-        //////////////////////
-        ns.print(`Faction Progress:`);
-        ns.print(`${indent()}Current ${factionTypeString}: [${factionWorkingFor}]`);
-
-        //////////////////////
-        // Reputation
-        //////////////////////
-        let repHeader = `${indent()}Reputation:`;
-        let currentRepString = `Current: ${formatBigNumber(currRep)}`;
-        let remainingRepString = `Remaining: ${formatBigNumber(remainingRep)}`;
-
-        let gainedRepString = `Gained: ${formatBigNumber(gainedRep)}${penaltyString}`;
-
-        ns.print(`${repHeader} ${currentRepString}, ${gainedRepString}`);
-
-        ///////////////
-        // Favor
-        ///////////////
-        let favorHeader = `${indent()}Favor:`;
-
-        let currentFavorString = `Current: ${formatBigNumber(currFavor)}`;
-
-        let remainingFavorString = '';
-        if (ns.getFavorToDonate() - currFavor > 0) {
-            remainingFavorString = `Remaining: ${formatBigNumber(ns.getFavorToDonate() - currFavor)}, `;
-        }
-
-        let gainedFavorString = `Gained: ${formatBigNumber(gainedFavor)}`;
-        ns.print(`${favorHeader} ${currentFavorString}, ${remainingFavorString}${gainedFavorString}`);
-
-        let bigFaction = bigFactionList.find(f => f.name === factionWorkingFor);
-        if (bigFaction) {
-            //show ETA to next big faction reset
-
-            let nextResetAmount = calcNextFavorResetAmount(ns, currFavor);
-            let remainingFavorUntilReset = nextResetAmount - currFavor - gainedFavor;
-
-            let totalFactionRep = 0;
-            let repNeededForReset = 0;
-
-            let currentRep = 0;
-
-            ns.print(`${indent(2)}+${round(remainingFavorUntilReset, 1)} favor until reset!`);
-
-            //calculate how much more rep needed to get to that
-            //how much total rep is needed to get to the reset point?
-            let totalFavor = 1 + (logBase(1.02, (currentRep + 25000) / 25500));
-
-            // ns.faction
-
-            //how much rep do we have now based on favor?
-
-        }
-
-        let shareString = `${indent()}Share Bonus: +${round((ns.getSharePower() - 1) * 100)}%`;
-        ns.print(`${shareString}`);
         ns.print('');
+
     } else {
         //ns.print(`${repHeader}: none!`);
     }

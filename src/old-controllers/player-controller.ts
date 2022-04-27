@@ -6,7 +6,7 @@ import {
     bigFactionList,
     buyDarkwebTools,
     claimedEarnedFactionRep,
-    displayFactionProgress,
+    displayReputationProgress,
     displayHacknetInfo,
     displayHomeUpgradeInfo,
     displayIncomeStats,
@@ -87,7 +87,7 @@ export async function main(ns: NS) {
         displayWorldDaemonProgress(ns);
         displayNextDarkwebTool(ns); //+0.6
         displayNextAugmentInfo(ns, targetAug);
-        displayFactionProgress(ns);
+        displayReputationProgress(ns);
         displayHomeUpgradeInfo(ns);
         serverMgr.displayServerStats();
         displayHacknetInfo(ns);

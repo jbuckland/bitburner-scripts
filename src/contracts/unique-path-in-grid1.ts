@@ -1,10 +1,12 @@
 import {Grid, GridDirection} from '/contracts/grid-utils';
-import {ICell, IContractSolution} from '/contracts/types';
+import {ICell, IContractSolver} from '/contracts/types';
 import {CodingContractType} from '/lib/consts';
+import {NS} from '/NetscriptDefinitions';
 
 
 
-export class UniquePathInGrid1 implements IContractSolution {
+export class UniquePathInGrid1 implements IContractSolver {
+    public debug: boolean = false;
 
     /**Unique Paths in a Grid I
      You are attempting to solve a Coding Contract. You have 10 tries remaining, after which the contract will self-destruct.
@@ -23,6 +25,8 @@ export class UniquePathInGrid1 implements IContractSolution {
     public type: CodingContractType = CodingContractType.uniquePathsInAGrid1;
     private destCell: ICell | undefined;
 
+    constructor(private ns: NS) {
+    }
 
     public solve(gridSize: number[]): string[] | number {
         let answerNumber: number = 0;
@@ -124,13 +128,13 @@ export class UniquePathInGrid1 implements IContractSolution {
 
 interface IPathNode {
     cell: ICell;
-    sourceNodes: ICell[];
     destNodes: ICell[];
+    sourceNodes: ICell[];
     validPathCount: number;
 }
 
 interface IGridPath {
-    route: ICell[];
     currentCell: ICell;
+    route: ICell[];
 }
 

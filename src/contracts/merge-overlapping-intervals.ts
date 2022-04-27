@@ -1,7 +1,9 @@
-import {IContractSolution} from '/contracts/types';
+import {IContractSolver} from '/contracts/types';
 import {CodingContractType} from '/lib/consts';
+import {NS} from '/NetscriptDefinitions';
 
-export class MergeOverlappingIntervals implements IContractSolution {
+export class MergeOverlappingIntervals implements IContractSolver {
+    public debug: boolean=false;
     /* Merge Overlapping Intervals
     Given the following array of array of numbers representing a list of intervals, merge all overlapping intervals.
     
@@ -16,6 +18,9 @@ export class MergeOverlappingIntervals implements IContractSolution {
     The intervals must be returned in ASCENDING order. You can assume that in an interval, the first number will always be smaller than the second.
     */
     public type: CodingContractType = CodingContractType.mergeOverlappingIntervals;
+
+    constructor(private ns: NS) {
+    }
 
     public solve(input: number[][]): string[] {
 

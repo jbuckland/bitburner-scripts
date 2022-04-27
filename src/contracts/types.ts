@@ -1,9 +1,10 @@
 import {GridDirection} from '/contracts/grid-utils';
 import {CodingContractType} from '/lib/consts';
 
-export interface IContractSolution {
+export interface IContractSolver {
 
     type: CodingContractType;
+    debug: boolean;
 
     solve(input: any): string[] | number;
 
@@ -12,13 +13,14 @@ export interface IContractSolution {
 
 
 export interface IGridDirectionOption {
-    direction: GridDirection;
     destCell: ICell;
+    direction: GridDirection;
 }
 
 export interface ICell {
+    isPassable: boolean;
+    value: number;
     x: number,
     y: number;
-    value: number;
-    isPassable: boolean;
 }
+

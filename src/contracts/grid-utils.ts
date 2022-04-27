@@ -5,42 +5,6 @@ export class Grid {
     public width: number = 0;
     private cells: ICell[][] = [];
 
-
-
-    public setGridSize(width: number, height: number, defaultValue: number) {
-        this.height = height;
-        this.width = width;
-        this.cells = [];
-        for (let y = 0; y < height; y++) {
-            let row: ICell[] = [];
-
-            for (let x = 0; x < width; x++) {
-                let cell: ICell = {x: x, y: y, isPassable: true, value: defaultValue};
-                row.push(cell);
-            }
-
-            this.cells.push(row);
-        }
-
-    }
-
-    public setGridData(gridData: number[][]) {
-        this.height = gridData.length;
-        this.width = gridData[0].length;
-
-        this.cells = gridData.map((row, y) => {
-            return row.map((cellValue, x) => {
-                return {
-                    x: x,
-                    y: y,
-                    isPassable: cellValue !== 1,
-                    value: cellValue
-                } as ICell;
-
-            });
-        });
-    }
-
     public getCell(x: number, y: number): ICell | undefined {
         let cell: ICell | undefined;
 
@@ -51,7 +15,6 @@ export class Grid {
 
         return cell;
     }
-
 
     public getOptions(srcCell: ICell): IGridDirectionOption[] {
         let options: IGridDirectionOption[] = [];
@@ -114,6 +77,40 @@ export class Grid {
         isValid = isValid && cell.isPassable;
 
         return isValid;
+    }
+
+    public setGridData(gridData: number[][]) {
+        this.height = gridData.length;
+        this.width = gridData[0].length;
+
+        this.cells = gridData.map((row, y) => {
+            return row.map((cellValue, x) => {
+                return {
+                    x: x,
+                    y: y,
+                    isPassable: cellValue !== 1,
+                    value: cellValue
+                } as ICell;
+
+            });
+        });
+    }
+
+    public setGridSize(width: number, height: number, defaultValue: number) {
+        this.height = height;
+        this.width = width;
+        this.cells = [];
+        for (let y = 0; y < height; y++) {
+            let row: ICell[] = [];
+
+            for (let x = 0; x < width; x++) {
+                let cell: ICell = {x: x, y: y, isPassable: true, value: defaultValue};
+                row.push(cell);
+            }
+
+            this.cells.push(row);
+        }
+
     }
 
 }

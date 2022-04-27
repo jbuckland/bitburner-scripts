@@ -19,7 +19,7 @@ export async function main(ns: NS) {
         let hostContacts = files.filter(f => f.endsWith('.cct')).map(c => {
             return {
                 host: host,
-                name: c,
+                filename: c,
                 type: ns.codingcontract.getContractType(c, host)
             } as IContract;
         });
@@ -40,7 +40,7 @@ export async function main(ns: NS) {
             tableData.push({
                 'Server': cont.host,
                 'Type': cont.type,
-                'Filename': cont.name
+                'Filename': cont.filename
             });
             //ns.print(`${cont.host}: ${cont.name}`);
         });

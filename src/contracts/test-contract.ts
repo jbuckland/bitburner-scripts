@@ -1,6 +1,8 @@
-import {UniquePathInGrid1} from '/contracts/unique-path-in-grid1';
+import {getSolverForContract} from '/contracts/utils-contracts';
+import {CodingContractType} from '/lib/consts';
 import {timestamp} from '/lib/utils';
 import {NS} from '/NetscriptDefinitions';
+import {IContract} from '/types';
 
 
 
@@ -11,46 +13,41 @@ export async function main(ns: NS) {
 
     ns.print(timestamp());
 
-    let solver = new UniquePathInGrid1();
+
+    let target: IContract = {filename: 'contract-62245-NWO.cct', host: 'phantasy', type: CodingContractType.unknown};
+
+    let solver = getSolverForContract(ns, target);
+    if (solver) {
+        solver.debug = true;
+        //displayDescription(target);
+
+        let data = ns.codingcontract.getData(target.filename, target.host);
+        let numTries = ns.codingcontract.getNumTriesRemaining(target.filename, target.host);
 
 
+        ns.print(`Contract: ${target.filename}, Host: ${target.host}`);
+        ns.print(`Running "${solver.type}" Solver:`);
+        ns.print(`Number of tries remaining: ${numTries}`);
 
-    let target = {host: 'run4theh111z', file: 'contract-311437.cct'};
+        ns.print(`Data:`);
+        if (Array.isArray(data)) {
 
-    //displayDescription(target);
-
-    let data = ns.codingcontract.getData(target.file, target.host);
-    let numTries = ns.codingcontract.getNumTriesRemaining(target.file, target.host);
-
-
-    ns.print(`Contract: ${target.file}, Host: ${target.host}`);
-    ns.print(`Running "${solver.type}" Solver:`);
-    ns.print(`Number of tries remaining: ${numTries}`);
-
-    ns.print(`Data:`);
-    if (Array.isArray(data)) {
-
-        if (Array.isArray(data[0])) {
-            ns.print('[');
-            data.forEach(row => ns.print('  ', row));
-            ns.print(']');
+            if (Array.isArray(data[0])) {
+                ns.print('[');
+                data.forEach(row => ns.print('  ', row));
+                ns.print(']');
+            } else {
+                ns.print(data);
+            }
         } else {
             ns.print(data);
         }
-    } else {
-        ns.print(data);
-    }
-    //ns.print(`Raw Data:`);
-    //ns.print(data);
+        //ns.print(`Raw Data:`);
+        //ns.print(data);
 
 
-    ns.print('');
+        ns.print('');
 
-    let contractType = ns.codingcontract.getContractType(target.file, target.host);
-
-
-    if (contractType === solver.type) {
-        
         let answer = solver.solve(data);
         ns.print('');
         ns.print(`Answer is:`);
@@ -65,7 +62,7 @@ export async function main(ns: NS) {
 
         let ready = false;
         if (ready) {
-            let reward = ns.codingcontract.attempt(answer, target.file, target.host, {returnReward: true});
+            let reward = ns.codingcontract.attempt(answer, target.filename, target.host, {returnReward: true});
 
             if (reward) {
                 ns.print(`Success! ${reward}`);
@@ -77,15 +74,17 @@ export async function main(ns: NS) {
 
 
     } else {
-        ns.print(`Wrong solver for contract. Solver:${solver.type}, Contract:${contractType}`);
+        ns.print(`could not find a solver for ${target.type}`);
     }
 
 
 
-    function displayDescription(target: { file: string; host: string }) {
-        let desc = ns.codingcontract.getDescription(target.file, target.host);
+    function displayDescription(target: IContract) {
+        let desc = ns.codingcontract.getDescription(target.filename, target.host);
         ns.print(desc);
         ns.print('');
     }
+
+
 
 }

@@ -1,8 +1,10 @@
 import {convertToBitArray, isPowerOfTwo} from '/contracts/hamming-codes-utils';
-import {IContractSolution} from '/contracts/types';
+import {IContractSolver} from '/contracts/types';
 import {CodingContractType} from '/lib/consts';
+import {NS} from '/NetscriptDefinitions';
 
-export class HammingCodesIntegerToBinary implements IContractSolution {
+export class HammingCodesIntegerToBinary implements IContractSolver {
+    public debug: boolean = false;
 
     /**HammingCodes: Integer to encoded Binary
 
@@ -48,6 +50,8 @@ export class HammingCodesIntegerToBinary implements IContractSolution {
 
     public type: CodingContractType = CodingContractType.hammingCodesIntToBin;
 
+    constructor(private ns: NS) {
+    }
 
     public solve(decValue: number): string[] | number {
         let answerArray: string[] = [];
@@ -67,7 +71,7 @@ export class HammingCodesIntegerToBinary implements IContractSolution {
             }
         }
 
-        console.log(`encodedBitArray`, encodedBitArray.join(''));
+        this.debugPrint(`encodedBitArray`, encodedBitArray.join(''));
 
         //now that we have our parity placeholders perfectly placed,
         //go through the string again and set the parity bits
@@ -80,12 +84,13 @@ export class HammingCodesIntegerToBinary implements IContractSolution {
             }
         }
 
-        let totalOnesCount = bitArray.reduce((previousValue, currentValue) => previousValue += currentValue);
+        let totalOnesCount = encodedBitArray.filter(bit => bit === 1).length;
+        this.debugPrint(`totalOnesCount: ${totalOnesCount}`);
         encodedBitArray[0] = totalOnesCount % 2;
 
-        console.log('encodedBitArray: ', encodedBitArray);
+        this.debugPrint('encodedBitArray: ', encodedBitArray);
         let encodedBitString = encodedBitArray.join('');
-        console.log('encodedBitString: ', encodedBitString);
+        this.debugPrint('encodedBitString: ', encodedBitString);
 
 
 
@@ -110,6 +115,12 @@ export class HammingCodesIntegerToBinary implements IContractSolution {
 
         return onesCount;
 
+    }
+
+    private debugPrint(msg: string, ...data: any) {
+        if (this.debug) {
+            this.ns.print(`${this.constructor.name}: ${msg}`, data);
+        }
     }
 
 }

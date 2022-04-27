@@ -1,7 +1,9 @@
-import {IContractSolution} from '/contracts/types';
+import {IContractSolver} from '/contracts/types';
 import {CodingContractType} from '/lib/consts';
+import {NS} from '/NetscriptDefinitions';
 
-export class SubarrayWithMaxSum implements IContractSolution {
+export class SubarrayWithMaxSum implements IContractSolver {
+    public debug: boolean=false;
 
     /**Subarray with Maximum Sum
 
@@ -19,6 +21,8 @@ export class SubarrayWithMaxSum implements IContractSolution {
 
     public type: CodingContractType = CodingContractType.subarrayWithMaxSum;
 
+    constructor(private ns: NS) {
+    }
 
     public solve(numbers: number[]): string[] | number {
         let answerNumber: number = 0;

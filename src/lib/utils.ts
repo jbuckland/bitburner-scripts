@@ -69,7 +69,7 @@ export function debugLog(ns: NS, debugLevel: DebugLevel, msg: string, ...data: a
         console.trace();
     } else if (debugLevel === DebugLevel.warn) {
         console.warn(consoleMsg, debugMsg.msg, data);
-        console.trace(consoleMsg, debugMsg.msg, data);
+        //console.trace(consoleMsg, debugMsg.msg, data);
     } else if (debugLevel === DebugLevel.info) {
         console.info(`%c${consoleMsg} ${debugMsg.msg}`, infoStyle, data);
     } else {
@@ -778,6 +778,7 @@ export function getSettings(ns: NS): IGlobalSettings {
         forceSwitchWork: true,
         debug: false,
         doRunnerWork: true,
+        doHackingWork: true,
         hackPercent: DEFAULT_TARGET_HACK_PERCENT,
         ramBuffer: DEFAULT_RAM_BUFFER,
         crimeMode: CrimeMode.money,

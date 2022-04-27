@@ -336,6 +336,8 @@ export const TRAVEL_COST = 200000;
 export enum SCRIPTS {
     //////////////////////////
     //root folder    ,
+    stanek = 'stanek.js',
+    hacknet = 'hacknet.js',
     startController = 'start-controller.js',
     megaController = 'mega-controller.js',
     addScripts = 'addScripts.js',
@@ -409,7 +411,6 @@ export const NON_HACKING_AUGMENTS = [
     'Combat Rib III',
     'CordiARC Fusion Reactor', //combat skill, exp
     'DermaForce Particle Barrier',
-    'Enhanced Social Interaction Implant', //cha skill, exp
     'Graphene Bionic Arms Upgrade', //+85% str dex
     'Graphene Bionic Legs Upgrade', //agi
     'Graphene Bionic Spine Upgrade', // combat skill
@@ -424,14 +425,11 @@ export const NON_HACKING_AUGMENTS = [
     'NEMEAN Subdermal Weave', //def skill
     'Neotra', //+55% str def
     'Neuroreceptor Management Implant', //removes non-focus penalty
-    'nickofolas Congruity Implant', //Removed entropy virus ???
-    'Nuoptimal Nootropic Injector Implant', //+20% company rep
+    'nickofolas Congruity Implant', //Removed entropy virus ???    
     'NutriGen Implant', //combat
     'PCMatrix', //+7.77 everything
     'Photosynthetic Cells', //str def agi
-    'SmartSonar Implant', //dex and crime money
-    'Speech Enhancement', //+10% cha, +10% comp rep
-    'Speech Processor Implant', //cha skill
+    'SmartSonar Implant', //dex and crime money  
     'Synfibril Muscle', //str, def skill
     'Synthetic Heart', //str, agi skill
     'TITN-41 Gene-Modification Injection', //cha
@@ -440,21 +438,64 @@ export const NON_HACKING_AUGMENTS = [
 
 ];
 
+export const COMPANY_AUGMENTS = [
+    'ADR-V1 Pheromone Gene', //10% faction/company rep
+    'ADR-V2 Pheromone Gene',
+    'Enhanced Social Interaction Implant', //cha skill, exp
+    'Nuoptimal Nootropic Injector Implant', //+20% company rep
+    'Social Negotiation Assistant (S.N.A)', //15% faction/company rep, 10% work money
+    'Speech Processor Implant', //cha skill
+    'Speech Enhancement' //+10% cha, +10% comp rep
+]
+
 export const HACKING_AUGMENTS = [
+    'ADR-V1 Pheromone Gene',
+    'ADR-V2 Pheromone Gene',
+    'Artificial Bio-neural Network Implant',
     'Artificial Synaptic Potentiation',
+    'BitRunners Neurolink',
     'BitWire',
-    'CashRoot Starter Kit',
     'Cranial Signal Processors - Gen I',
     'Cranial Signal Processors - Gen II',
-    'Cranial Signal Processors - Gen II',
     'Cranial Signal Processors - Gen III',
+    'Cranial Signal Processors - Gen IV',
+    'Cranial Signal Processors - Gen V',
     'CRTX42-AA Gene Modification',
     'DataJack',
+    'ECorp HVMind Implant',
     'Embedded Netburner Module',
+    'Embedded Netburner Module Analyze Engine',
+    'Embedded Netburner Module Core Implant',
+    'Embedded Netburner Module Core V2 Upgrade',
+    'Embedded Netburner Module Core V3 Upgrade',
+    'Embedded Netburner Module Direct Memory Access Upgrade',
+    'Enhanced Myelin Sheathing',
+    'FocusWire',
+    'Hacknet Node Cache Architecture Neural-Upload',
+    'Hacknet Node Core Direct-Neural Interface',
+    'Hacknet Node CPU Architecture Neural-Upload',
+    'Hacknet Node Kernel Direct-Neural Interface',
+    'Hacknet Node NIC Architecture Neural-Upload',
+    'HyperSight Corneal Implant',
+    'Neural Accelerator',
     'Neural-Retention Enhancement',
     'Neuralstimulator',
+    'NeuroFlux Governor',
+    'Neuronal Densification',
+    'Neurotrainer I',
     'Neurotrainer II',
-    'PCMatrix'
+    'Neurotrainer III',
+    'nextSENS Gene Modification',
+    'OmniTek InfoLoad',
+    'PC Direct-Neural Interface',
+    'PC Direct-Neural Interface Optimization Submodule',
+    'Power Recirculation Core',
+    'Social Negotiation Assistant (S.N.A)',
+    'Synaptic Enhancement Implant',
+    'The Black Hand',
+    'The Red Pill',
+    `The Shadow's Simulacrum`,
+    'Xanipher'
 ];
 
 export const NEURO_FLUX_GOVERNOR = 'NeuroFlux Governor';
@@ -521,7 +562,9 @@ export const FragmentEffect: { [key: number]: string } = {
     101: 'Booster',
     102: 'Booster',
     103: 'Booster',
-    105: 'Booster'
+    104: 'Booster',
+    105: 'Booster',
+    106: 'Booster'
 
 };
 
@@ -553,17 +596,23 @@ export const STANEK_PATTERNS = {
 };
 
 
+
 export enum CodingContractType {
     unknown = 'UNKNOWN',
+    arrayJumpingGame1 = 'Array Jumping Game',
     arrayJumpingGame2 = 'Array Jumping Game II',
     algorithmicStockTrader1 = 'Algorithmic Stock Trader I',
     algorithmicStockTrader2 = 'Algorithmic Stock Trader II',
     algorithmicStockTrader3 = 'Algorithmic Stock Trader III',
     findAllValidMathExpressions = 'Find All Valid Math Expressions',
+    findLargestPrimeFactor = 'Find Largest Prime Factor',
+    generateIpAddresses = 'Generate IP Addresses',
     hammingCodesBinToInt = 'HammingCodes: Encoded Binary to Integer',
     hammingCodesIntToBin = 'HammingCodes: Integer to encoded Binary',
     mergeOverlappingIntervals = 'Merge Overlapping Intervals',
     sanitizeParens = `Sanitize Parentheses in Expression`,
+    shortestPathInGrid = 'Shortest Path in a Grid',
+    spiralizeMatrix = 'Spiralize Matrix',
     subarrayWithMaxSum = 'Subarray with Maximum Sum',
     uniquePathsInAGrid1 = 'Unique Paths in a Grid I',
     uniquePathsInAGrid2 = 'Unique Paths in a Grid II',

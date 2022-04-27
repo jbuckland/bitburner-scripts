@@ -1,9 +1,4 @@
-import {ArrayJumpingGame2} from '/contracts/array-jumping-game2';
-import {HammingCodesBinaryToInteger} from '/contracts/hamming-codes-binary-to-integer';
-import {HammingCodesIntegerToBinary} from '/contracts/hamming-codes-integer-to-binary';
-import {MergeOverlappingIntervals} from '/contracts/merge-overlapping-intervals';
-import {SanitizeParens} from '/contracts/sanitize-parens';
-import {SubarrayWithMaxSum} from '/contracts/subarray-with-max-sum';
+import {getSolverForContract} from '/contracts/utils-contracts';
 import {CodingContractType, CrimeMode, TOAST_DURATION, TOAST_VARIANT} from '/lib/consts';
 import {getCodingContracts} from '/lib/utils-contracts';
 import {displayHeader} from '/lib/utils-player';
@@ -52,6 +47,8 @@ class TemplateController {
     private runTime: number = 0;
     private contractList: IContract[] = [];
     private contractTable: Table;
+    private solvedContracts: IContract[] = [];
+    private solvedRewards: string[] = [];
 
     constructor(private ns: NS) {
         ns.tail();
@@ -64,10 +61,10 @@ class TemplateController {
 
         //while (true) {
         this.updateData();
-        this.displayInfo();
 
         await this.doSolve();
 
+        this.displayInfo();
         this.runTime = new Date().getTime() - this.lastRunTime;
         await this.ns.sleep(this.SLEEP_TIME);
         //}
@@ -80,6 +77,7 @@ class TemplateController {
         //stuff here
 
         this.displayContractList();
+        this.displaySolvedReqards();
 
 
     }
@@ -102,14 +100,17 @@ class TemplateController {
 
 
             this.contractList.forEach(cont => {
-                let solvable = SolvableContractTypes.includes(cont.type);
-                tableData.push({
-                    'Server': cont.host,
-                    'Type': cont.type,
-                    'Faction': cont.targetFaction ?? '',
-                    'Filename': cont.name,
-                    'Solvable': solvable ? 'Yes' : 'No'
-                });
+                if (this.solvedContracts.find(c => c.filename !== cont.filename)) {
+                    let solvable = SolvableContractTypes.includes(cont.type);
+                    tableData.push({
+                        'Server': cont.host,
+                        'Type': cont.type,
+                        'Faction': cont.targetFaction ?? '',
+                        'Filename': cont.filename,
+                        'Solvable': solvable ? 'Yes' : 'No'
+                    });
+                }
+
             });
             tableData.sort((a, b) => a['Solvable'].localeCompare(b['Solvable']));
 
@@ -129,50 +130,29 @@ class TemplateController {
 
         for (const contract of this.contractList) {
             let answer: string[] | number | undefined;
-            let input = this.ns.codingcontract.getData(contract.name, contract.host);
+            let input = this.ns.codingcontract.getData(contract.filename, contract.host);
 
-            switch (contract.type) {
-
-
-                case CodingContractType.arrayJumpingGame2:
-                    answer = new ArrayJumpingGame2().solve(input);
-                    break;
-                case CodingContractType.mergeOverlappingIntervals:
-                    answer = new MergeOverlappingIntervals().solve(input);
-                    break;
-                case CodingContractType.sanitizeParens:
-                    answer = new SanitizeParens().solve(input);
-                    break;
-                case CodingContractType.subarrayWithMaxSum:
-                    answer = new SubarrayWithMaxSum().solve(input);
-                    break;
-                case CodingContractType.hammingCodesBinToInt:
-                    answer = new HammingCodesBinaryToInteger().solve(input);
-                    break;
-                case CodingContractType.hammingCodesIntToBin:
-                    answer = new HammingCodesIntegerToBinary().solve(input);
-                    break;
-
-                case CodingContractType.unknown:
-                case CodingContractType.algorithmicStockTrader1:
-                case CodingContractType.algorithmicStockTrader2:
-                case CodingContractType.algorithmicStockTrader3:
-                case CodingContractType.findAllValidMathExpressions:
-                case CodingContractType.uniquePathsInAGrid1:
-                case CodingContractType.uniquePathsInAGrid2: //we can't solves these yet
-                    continue;
+            let solver = getSolverForContract(this.ns, contract);
+            if (solver) {
+                answer = solver?.solve(input);
             }
 
+
             if (answer) {
-                let msg = `Do you want to submit the following answer to \n${contract.type}:${contract.name}\n${answer}`;
+                let msg = `Do you want to submit the following answer to \n${contract.type}:${contract.filename}\n${answer}
+                \n{filename:'${contract.filename}', host:'${contract.host}', type:${contract.type as CodingContractType}}`;
                 let proceed = await this.ns.prompt(msg, {type: 'boolean'});
 
                 if (proceed) {
-                    let reward = this.ns.codingcontract.attempt(answer, contract.name, contract.host, {returnReward: true}) as string;
+                    let reward = this.ns.codingcontract.attempt(answer, contract.filename, contract.host, {returnReward: true}) as string;
                     if (reward.length > 0) {
                         this.ns.toast(`Contract success! ${reward}`, TOAST_VARIANT.success, TOAST_DURATION);
+
+                        this.solvedContracts.push(contract);
+                        this.solvedRewards.push(reward);
                     } else {
                         this.ns.toast(`Contract FAILED! ${contract.type}`, TOAST_VARIANT.error, TOAST_DURATION);
+                        this.ns.tprint(`Contract FAILED!`, contract);
                         //failed!!!
                     }
                 }
@@ -187,5 +167,9 @@ class TemplateController {
 
 
 
+    }
+
+    private displaySolvedReqards() {
+        
     }
 }

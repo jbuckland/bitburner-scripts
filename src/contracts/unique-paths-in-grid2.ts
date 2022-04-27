@@ -1,8 +1,10 @@
 import {Grid, GridDirection} from '/contracts/grid-utils';
-import {ICell, IContractSolution} from '/contracts/types';
+import {ICell, IContractSolver} from '/contracts/types';
 import {CodingContractType} from '/lib/consts';
+import {NS} from '/NetscriptDefinitions';
 
-export class UniquePathsInGrid2 implements IContractSolution {
+export class UniquePathsInGrid2 implements IContractSolver {
+    public debug: boolean=false;
 
     /**Unique Paths in a Grid II
      You are located in the top-left corner of the following grid:
@@ -24,6 +26,8 @@ export class UniquePathsInGrid2 implements IContractSolution {
 
     public type: CodingContractType = CodingContractType.uniquePathsInAGrid2;
 
+    constructor(private ns: NS) {
+    }
 
     public solve(input: number[][]): string[] | number {
         let answerNumber: number = 0;

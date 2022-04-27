@@ -93,6 +93,7 @@ export interface IDarkwebTool {
 
 export interface IGlobalSettings {
     doRunnerWork?: boolean;
+    doHackingWork?: boolean;
     debug?: boolean;
     hackPercent?: number;
     ramBuffer?: number;
@@ -205,8 +206,18 @@ export interface IRunnerJob {
 }
 
 export interface IContract {
-    name: string;
+    filename: string;
     host: string;
     type: CodingContractType;
     targetFaction?: string;
+}
+
+
+export interface IAugmentationInfo {
+    name: string,
+    price: number,
+    baseRepCost: number,
+    baseAdditionalRepCost: number,
+    totalRepMult: number,
+    adjustedAdditionalRepCost: number
 }

@@ -1,4 +1,4 @@
-import {CrimeMode, HacknetMode, HashSpendOptions} from 'lib/consts';
+import {CrimeMode, HacknetMode, HashSpendOptions} from '/lib/consts';
 import {convertBool, getSettings, setSettings, timestamp} from 'lib/utils';
 import {AutocompleteData, NS} from 'NetscriptDefinitions';
 import {FlagSchema, IGlobalSettings} from 'types';
@@ -59,6 +59,7 @@ const myFlags: IFlagData[] = [
     {name: 'autoStartWork', defaultValue: '', flagType: FlagType.bool, options: ['true', 'false']},
     {name: 'forceSwitchWork', defaultValue: '', flagType: FlagType.bool, options: ['true', 'false']},
     {name: 'doRunnerWork', defaultValue: '', flagType: FlagType.bool, options: ['true', 'false']},
+    {name: 'doHackingWork', defaultValue: '', flagType: FlagType.bool, options: ['true', 'false']},
     {name: 'hashUse', defaultValue: '', flagType: FlagType.enum, options: Object.values(HashSpendOptions)},
     {name: 'crimeMode', defaultValue: '', flagType: FlagType.enum, options: Object.values(CrimeMode)},
     {name: 'hacknetMode', defaultValue: '', flagType: FlagType.enum, options: Object.values(HacknetMode)},

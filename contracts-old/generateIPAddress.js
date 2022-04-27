@@ -14,7 +14,6 @@ Examples:
 25525511135 -> [255.255.11.135, 255.255.111.35]
 1938718066 -> [193.87.180.66]
  */
-let OCTET_COUNT = 4;
 
 //57110170110
 //[57.110.170.110] //Correct!
@@ -24,6 +23,7 @@ let OCTET_COUNT = 4;
 //A: [ '190.51.218.60' ] //WRONG
 //A: [190.51.218.60] //Correct, it's actual the string version of the array, not an array of strings
 
+let OCTET_COUNT = 4;
 let validIpArrays = recurse([], '23103148204')
 
 let validIpAddresses = validIpArrays.map(octetArray => octetArray.join('.'))

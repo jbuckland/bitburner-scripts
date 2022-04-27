@@ -1,7 +1,7 @@
-import {IContractSolution} from '/contracts/types';
+import {BaseSolver} from '/contracts/template-solver';
 import {CodingContractType} from '/lib/consts';
 
-export class SanitizeParens implements IContractSolution {
+export class SanitizeParens extends BaseSolver {
 
     /**
      Given the following string:
@@ -21,22 +21,6 @@ export class SanitizeParens implements IContractSolution {
 
     public type: CodingContractType = CodingContractType.sanitizeParens;
 
-    private validate(parenString: string): { isValid: boolean, counter: number } {
-        let valid = true;
-
-        let counter = 0;
-        for (let i = 0; i < parenString.length; i++) {
-            if (parenString[i] === '(') {
-                counter++;
-            } else if (parenString[i] === ')') {
-                counter--;
-            }
-            if (valid && counter < 0) {
-                valid = false;
-            }
-        }
-        return {counter: counter, isValid: valid};
-    }
 
     public solve(input: string): string[] | number {
         let answerArray: string[] = [];
@@ -45,11 +29,11 @@ export class SanitizeParens implements IContractSolution {
         let result = this.validate(input);
 
         if (result.isValid) {
-            // this.ns.print(`input is already valid!`, input);
+            this.debugPrint(`input is already valid!`, input);
 
         } else {
             if (result.counter === 0) {
-                //this.ns.print(`Correct number of parens, but invalid!`);
+                this.debugPrint(`Correct number of parens, but invalid!`);
                 answerArray = [''];
             } else {
 
@@ -65,7 +49,7 @@ export class SanitizeParens implements IContractSolution {
                 }
                 let numToRemove = Math.abs(result.counter);
 
-                //this.ns.print(`${numToRemove} too many ${extraParenType}!`);
+                this.debugPrint(`${numToRemove} too many ${extraParenType}!`);
                 //remove 'counter' number of 'extraParenType'
 
 
@@ -98,23 +82,13 @@ export class SanitizeParens implements IContractSolution {
         }
 
 
-        //(aaa(()()(())a()))a
-        //(aaa(()()(())a()))a
-
         /*
+        (()))()a(((
         
-        (aaa() () () (()) a () ) )a
+        2 too many (
         
-        (aaa() () () (()) a () ) x)a
+        (()))()a(((
         
-        ( aaa () () () ( () ) a () )a
-        ( aaa () () () ( () ) a () )a dup
-        ( aaa () () () ( () ) a () )a dup
-        ( aaa () () () ( () a () ) )a
-        ( aaa () () () ( () a () ) )a dup
-        ( aaa () () ( ( () ) a () ) )a
-        ( aaa () ( () ( () ) a () ) )a
-        ( aaa ( () () ( () ) a () ) )a
         
         
          */
@@ -122,6 +96,40 @@ export class SanitizeParens implements IContractSolution {
 
 
         return answerArray;
+    }
+
+    private validate(parenString: string): { isValid: boolean, counter: number } {
+        let valid = true;
+
+        let counter = 0;
+        for (let i = 0; i < parenString.length; i++) {
+            if (parenString[i] === '(') {
+                counter++;
+            } else if (parenString[i] === ')') {
+                counter--;
+            }
+            if (valid && counter < 0) {
+                valid = false;
+            }
+        }
+        return {counter: counter, isValid: valid};
+    }
+
+
+    public runTests(): boolean {
+        let pass = true;
+
+        pass = pass && this.solve('(aaa(()()(())a()))a') === [
+            '(aaa()()()(())a())a',
+            '(aaa()()()(()a()))a',
+            '(aaa()()((())a()))a',
+            '(aaa()(()(())a()))a',
+            '(aaa(()()(())a()))a'
+        ];
+
+
+        return pass;
+
     }
 
 }

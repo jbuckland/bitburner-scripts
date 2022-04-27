@@ -1,4 +1,6 @@
-import {formatBigTime, timestamp} from 'lib/utils';
+import {HACK_FACTIONS} from '/lib/consts';
+import {getFactionWorkRepGain} from '/lib/utils-source-code';
+import {timestamp} from 'lib/utils';
 import {NS} from 'NetscriptDefinitions';
 import {INetscriptExtra} from 'types';
 
@@ -91,10 +93,15 @@ export async function main(ns: NS & INetscriptExtra) {
         });
     
     */
-    let startTime = new Date().getTime();
-    await ns.share();
 
-    let duration = new Date().getTime() - startTime;
-    ns.print(`Share took ${formatBigTime(duration)}`);
+    while (true) {
+        player = ns.getPlayer();
+        let factionName = HACK_FACTIONS.blackHand.name;
+        let factionWorkGainRate = getFactionWorkRepGain(ns, player.currentWorkFactionName);
+
+        ns.print(`${factionName} rep gain: ${factionWorkGainRate}/s`);
+
+        await ns.sleep(1000);
+    }
 
 }
